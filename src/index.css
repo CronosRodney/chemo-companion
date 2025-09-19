@@ -2,70 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
-/* OncoTrack Design System - Healthcare focused colors and gradients 
-All colors MUST be HSL for consistency.
+/* OncoTrack Premium Design System - Luxury healthcare experience 
+Sophisticated color palette for class A patients.
 */
 
 @layer base {
   :root {
-    /* Base colors - Clean medical whites and soft grays */
-    --background: 210 20% 98%;
-    --foreground: 215 20% 12%;
+    /* Premium base - Warm whites with subtle sophistication */
+    --background: 210 25% 98%;
+    --foreground: 215 25% 8%;
 
-    /* Card system - Slightly warmer than pure white */
-    --card: 210 15% 99%;
-    --card-foreground: 215 20% 12%;
+    /* Luxury card system - Pearl white with depth */
+    --card: 210 20% 100%;
+    --card-foreground: 215 25% 8%;
 
-    /* Popover system */
-    --popover: 210 15% 99%;
-    --popover-foreground: 215 20% 12%;
+    /* Elevated popovers */
+    --popover: 210 20% 100%;
+    --popover-foreground: 215 25% 8%;
 
-    /* Primary - Medical blue (trustworthy, calming) */
-    --primary: 210 88% 45%;
-    --primary-foreground: 210 15% 99%;
-    --primary-light: 210 88% 85%;
-    --primary-dark: 210 88% 35%;
+    /* Primary - Premium medical blue (trust & sophistication) */
+    --primary: 210 95% 48%;
+    --primary-foreground: 210 20% 100%;
+    --primary-light: 210 95% 88%;
+    --primary-dark: 210 95% 38%;
+    --primary-glow: 210 95% 75%;
 
-    /* Secondary - Soft purple (oncology awareness color) */
-    --secondary: 270 35% 88%;
-    --secondary-foreground: 270 15% 25%;
-    --secondary-accent: 270 45% 65%;
+    /* Secondary - Sophisticated purple (luxury oncology) */
+    --secondary: 270 45% 85%;
+    --secondary-foreground: 270 25% 15%;
+    --secondary-accent: 270 55% 68%;
 
-    /* Muted tones */
-    --muted: 210 15% 94%;
-    --muted-foreground: 215 15% 45%;
+    /* Premium neutrals */
+    --muted: 210 20% 96%;
+    --muted-foreground: 215 20% 40%;
 
-    /* Accent - Warm accent for CTAs */
-    --accent: 200 85% 92%;
-    --accent-foreground: 200 45% 25%;
+    /* Luxury accent - Sophisticated teal */
+    --accent: 185 85% 94%;
+    --accent-foreground: 185 45% 20%;
 
-    /* Status colors for medical contexts */
-    --success: 145 65% 42%;
-    --success-foreground: 145 15% 99%;
-    --warning: 45 95% 55%;
-    --warning-foreground: 45 15% 15%;
-    --destructive: 0 75% 55%;
-    --destructive-foreground: 0 15% 99%;
+    /* Premium status colors */
+    --success: 145 70% 45%;
+    --success-foreground: 145 20% 98%;
+    --warning: 40 98% 58%;
+    --warning-foreground: 40 20% 10%;
+    --destructive: 0 80% 58%;
+    --destructive-foreground: 0 20% 98%;
 
-    /* Input and borders */
-    --border: 210 25% 88%;
-    --input: 210 25% 94%;
-    --ring: 210 88% 45%;
+    /* Refined borders and inputs */
+    --border: 210 30% 90%;
+    --input: 210 30% 96%;
+    --ring: 210 95% 48%;
 
-    /* Medical gradients and effects */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-dark)));
-    --gradient-hero: linear-gradient(135deg, hsl(var(--primary-light)), hsl(var(--secondary)));
-    --gradient-card: linear-gradient(180deg, hsl(var(--card)), hsl(var(--muted)));
+    /* Premium gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-dark)) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary-light)) 0%, hsl(var(--secondary)) 50%, hsl(var(--primary-glow)) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(var(--card)) 0%, hsl(var(--muted)) 100%);
+    --gradient-luxury: linear-gradient(135deg, hsl(var(--primary-glow)) 0%, hsl(var(--secondary-accent)) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%);
     
-    /* Shadows for depth */
-    --shadow-card: 0 2px 8px hsl(var(--primary) / 0.08);
-    --shadow-elevated: 0 8px 24px hsl(var(--primary) / 0.12);
-    --shadow-medical: 0 4px 16px hsl(var(--secondary-accent) / 0.15);
+    /* Premium shadows and effects */
+    --shadow-card: 0 4px 20px hsl(var(--primary) / 0.08);
+    --shadow-elevated: 0 12px 40px hsl(var(--primary) / 0.15);
+    --shadow-luxury: 0 8px 32px hsl(var(--secondary-accent) / 0.2);
+    --shadow-glow: 0 0 40px hsl(var(--primary-glow) / 0.3);
+    --shadow-premium: 0 20px 60px hsl(var(--primary) / 0.12);
     
-    /* Border radius system */
-    --radius: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.5rem;
+    /* Sophisticated radius system */
+    --radius: 1rem;
+    --radius-lg: 1.25rem;
+    --radius-xl: 1.75rem;
+    --radius-2xl: 2rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -85,41 +91,42 @@ All colors MUST be HSL for consistency.
   }
 
   .dark {
-    /* Dark mode - medical theme with proper contrast */
-    --background: 215 25% 8%;
-    --foreground: 210 20% 95%;
+    /* Premium dark mode - sophisticated night theme */
+    --background: 215 30% 6%;
+    --foreground: 210 25% 96%;
 
-    --card: 215 25% 10%;
-    --card-foreground: 210 20% 95%;
+    --card: 215 30% 8%;
+    --card-foreground: 210 25% 96%;
 
-    --popover: 215 25% 10%;
-    --popover-foreground: 210 20% 95%;
+    --popover: 215 30% 8%;
+    --popover-foreground: 210 25% 96%;
 
-    --primary: 210 88% 65%;
-    --primary-foreground: 215 25% 8%;
-    --primary-light: 210 88% 85%;
-    --primary-dark: 210 88% 45%;
+    --primary: 210 95% 68%;
+    --primary-foreground: 215 30% 6%;
+    --primary-light: 210 95% 85%;
+    --primary-dark: 210 95% 48%;
+    --primary-glow: 210 95% 78%;
 
-    --secondary: 270 35% 25%;
-    --secondary-foreground: 270 35% 85%;
-    --secondary-accent: 270 45% 75%;
+    --secondary: 270 45% 22%;
+    --secondary-foreground: 270 45% 88%;
+    --secondary-accent: 270 55% 75%;
 
-    --success: 145 65% 52%;
-    --success-foreground: 145 15% 95%;
-    --warning: 45 95% 65%;
-    --warning-foreground: 45 15% 15%;
-    --destructive: 0 75% 65%;
-    --destructive-foreground: 0 15% 95%;
+    --success: 145 70% 55%;
+    --success-foreground: 145 20% 95%;
+    --warning: 40 98% 68%;
+    --warning-foreground: 40 20% 10%;
+    --destructive: 0 80% 68%;
+    --destructive-foreground: 0 20% 95%;
 
-    --muted: 215 25% 15%;
-    --muted-foreground: 215 15% 65%;
+    --muted: 215 30% 12%;
+    --muted-foreground: 215 20% 68%;
 
-    --accent: 200 85% 20%;
-    --accent-foreground: 200 45% 85%;
+    --accent: 185 85% 18%;
+    --accent-foreground: 185 45% 88%;
 
-    --border: 215 25% 20%;
-    --input: 215 25% 15%;
-    --ring: 210 88% 65%;
+    --border: 215 30% 18%;
+    --input: 215 30% 12%;
+    --ring: 210 95% 68%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -137,6 +144,50 @@ All colors MUST be HSL for consistency.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-medium antialiased;
+    background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)) 100%);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  .glass-effect {
+    @apply backdrop-blur-lg bg-white/10 border border-white/20;
+    background: var(--gradient-glass);
+  }
+  
+  .luxury-card {
+    @apply bg-card rounded-xl border border-border/50 shadow-[var(--shadow-card)] backdrop-blur-sm;
+    background: linear-gradient(145deg, hsl(var(--card)) 0%, hsl(var(--muted)) 100%);
+  }
+  
+  .premium-button {
+    @apply transition-all duration-300 hover:shadow-[var(--shadow-luxury)] hover:scale-[1.02];
+  }
+  
+  .medical-gradient {
+    background: var(--gradient-primary);
+  }
+  
+  .hero-gradient {
+    background: var(--gradient-hero);
+  }
+  
+  .luxury-gradient {
+    background: var(--gradient-luxury);
+  }
+}
+
+@layer utilities {
+  .text-shadow {
+    text-shadow: 0 2px 4px hsl(var(--foreground) / 0.1);
+  }
+  
+  .glow {
+    box-shadow: var(--shadow-glow);
+  }
+  
+  .premium-shadow {
+    box-shadow: var(--shadow-premium);
   }
 }
