@@ -56,8 +56,9 @@ export interface MedicationData {
 }
 
 export interface ParsedQRData {
-  type: 'clinic' | 'medication';
-  data: ClinicData | MedicationData;
+  type: 'clinic' | 'medication' | 'url';
+  data?: ClinicData | MedicationData;
+  url?: string;
 }
 
 export const useQRScanner = () => {
@@ -186,28 +187,15 @@ export const useQRScanner = () => {
         };
       }
     } catch (error) {
-      console.log('Erro no parse JSON, tentando como URL:', error);
+      console.log('Erro no parse JSON, verificando se é URL:', error);
       
-      // Se não for JSON, validar se é string antes de verificar se é URL
+      // Se não for JSON, verificar se é uma URL de medicamento
       if (typeof data === 'string' && data.startsWith('http')) {
-        try {
-          const response = await fetch(data);
-          const jsonData = await response.json();
-          
-          if (jsonData.type === 'clinic') {
-            return {
-              type: 'clinic',
-              data: jsonData as ClinicData
-            };
-          } else if (jsonData.type === 'medication') {
-            return {
-              type: 'medication',
-              data: jsonData as MedicationData
-            };
-          }
-        } catch (fetchError) {
-          console.error('Erro ao buscar dados do QR Code:', fetchError);
-        }
+        console.log('Reconhecido como URL de medicamento:', data);
+        return {
+          type: 'url',
+          url: data
+        };
       }
     }
     
@@ -358,14 +346,29 @@ export const useQRScanner = () => {
       
       if (!parsedData) {
         throw new Error(
-          `Formato de QR Code não reconhecido.\n\nDados lidos: "${data}"\n\nFormatos aceitos:\n- JSON com {"type": "clinic", "data": {...}}\n- JSON com {"type": "medication", "data": {...}}\n- URL que retorna dados no formato JSON\n- QR codes com palavras "demo", "teste" ou "example" para demonstração`
+          `Formato de QR Code não reconhecido.\n\nDados lidos: "${data}"\n\nFormatos aceitos:\n- JSON com {"type": "clinic", "data": {...}}\n- JSON com {"type": "medication", "data": {...}}\n- URLs de medicamentos (http/https)\n- QR codes com palavras "demo", "teste" ou "example" para demonstração`
         );
       }
 
-      if (parsedData.type === 'clinic') {
+      if (parsedData.type === 'clinic' && parsedData.data) {
         await saveClinicData(parsedData.data as ClinicData);
-      } else if (parsedData.type === 'medication') {
+      } else if (parsedData.type === 'medication' && parsedData.data) {
         await saveMedicationData(parsedData.data as MedicationData);
+      } else if (parsedData.type === 'url' && parsedData.url) {
+        // Para URLs de medicamentos, apenas abrir o link e registrar na timeline
+        window.open(parsedData.url, '_blank', 'noopener,noreferrer');
+        
+        // Registrar na timeline se o usuário estiver logado
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from('timeline_events').insert({
+            user_id: user.id,
+            kind: 'med_qr',
+            title: 'Link de bula acessado',
+            details: `URL: ${parsedData.url}`,
+            occurred_at: new Date().toISOString()
+          });
+        }
       }
 
       return parsedData;

@@ -43,6 +43,7 @@ export default function ScanMed() {
       setErr(null);
       
       if (code.format === 'data_matrix') {
+        // Parse GS1 DataMatrix
         const p = parseGS1(code.rawValue || '');
         const details = [
           p.gtin && `GTIN: ${p.gtin}`,
@@ -59,16 +60,36 @@ export default function ScanMed() {
           title: "Medicamento registrado",
           description: "Dados do medicamento foram salvos na timeline",
         });
-      } else {
+      } else if (code.format === 'qr_code') {
+        // Handle QR code (likely a URL)
         const url = code.rawValue || '';
-        if (url) {
+        if (url.startsWith('http')) {
+          // Open URL in new tab
           window.open(url, '_blank', 'noopener,noreferrer');
-          await addTimelineEvent('med_qr', 'Link de bula', `URL: ${url}`);
+          await addTimelineEvent('med_qr', 'Link de bula acessado', `URL: ${url}`);
           setLast({ format: code.format, url });
           
           toast({
             title: "Link de bula aberto",
             description: "O link foi registrado na timeline",
+          });
+        } else {
+          // Try to parse as GS1 if it's not a URL
+          const p = parseGS1(url);
+          const details = [
+            p.gtin && `GTIN: ${p.gtin}`,
+            p.expiry && `Validade: ${p.expiry}`,
+            p.lot && `Lote: ${p.lot}`,
+            p.serial && `Série: ${p.serial}`,
+            p.anvisa && `Registro ANVISA: ${p.anvisa}`
+          ].filter(Boolean).join('\n');
+          
+          await addTimelineEvent('med_scan', 'Medicamento escaneado (QR)', details || url);
+          setLast({ format: code.format, parsed: p });
+          
+          toast({
+            title: "Medicamento registrado",
+            description: "Dados do medicamento foram salvos na timeline",
           });
         }
       }
