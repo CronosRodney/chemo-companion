@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider } from "./contexts/AppContext";
 import Home from "./pages/Home";
 import QRScanner from "./pages/QRScanner";
+import ScanMed from "./pages/ScanMed";
 import Timeline from "./pages/Timeline";
 import Profile from "./pages/Profile";
 import EditableProfile from "./pages/EditableProfile";
@@ -27,6 +28,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/scanner" element={<QRScanner />} />
+              <Route path="/scan/med" element={<ScanMed />} />
               <Route path="/timeline" element={<Timeline />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/profile/edit" element={<EditableProfile />} />

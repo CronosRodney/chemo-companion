@@ -150,42 +150,55 @@ const Home = () => {
         </div>
 
         {/* Main Actions */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-4">
           <Button 
             variant="outline" 
             size="lg" 
-            className="h-24 flex-col gap-3 group glass-effect border-2 border-primary/40 hover:bg-primary/10"
+            className="h-20 flex-col gap-2 group glass-effect border-2 border-primary/40 hover:bg-primary/10"
             onClick={() => navigate('/scanner')}
           >
-            <QrCode className="h-8 w-8 transition-transform group-hover:scale-110 text-primary" />
-            <span className="text-base font-bold">Escanear QR</span>
+            <QrCode className="h-6 w-6 transition-transform group-hover:scale-110 text-primary" />
+            <span className="text-sm font-bold">Escanear QR</span>
           </Button>
           <Button 
             variant="outline" 
             size="lg" 
-            className="h-24 flex-col gap-3 group glass-effect border-2 border-secondary/40 hover:bg-secondary/10"
+            className="h-20 flex-col gap-2 group glass-effect border-2 border-success/40 hover:bg-success/10"
+            onClick={() => navigate('/scan/med')}
+          >
+            <Pill className="h-6 w-6 transition-transform group-hover:scale-110 text-success" />
+            <span className="text-sm font-bold">Medicamento</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            size="lg" 
+            className="h-20 flex-col gap-2 group glass-effect border-2 border-secondary/40 hover:bg-secondary/10"
             onClick={() => navigate('/events')}
           >
-            <Plus className="h-8 w-8 transition-transform group-hover:scale-110 text-secondary-accent" />
-            <span className="text-base font-bold">Registrar</span>
+            <Plus className="h-6 w-6 transition-transform group-hover:scale-110 text-secondary-accent" />
+            <span className="text-sm font-bold">Registrar</span>
           </Button>
           <Button 
             variant="outline" 
             size="lg" 
-            className="h-24 flex-col gap-3 group glass-effect border-2 border-accent/40 hover:bg-accent/10"
+            className="h-20 flex-col gap-2 group glass-effect border-2 border-accent/40 hover:bg-accent/10"
             onClick={() => navigate('/timeline')}
           >
-            <Clock className="h-8 w-8 transition-transform group-hover:scale-110 text-accent-foreground" />
-            <span className="text-base font-bold">Timeline</span>
+            <Clock className="h-6 w-6 transition-transform group-hover:scale-110 text-accent-foreground" />
+            <span className="text-sm font-bold">Timeline</span>
           </Button>
+        </div>
+        
+        {/* Secondary Actions */}
+        <div className="grid grid-cols-1 gap-4">
           <Button 
             variant="outline" 
             size="lg" 
-            className="h-24 flex-col gap-3 group glass-effect border-2 border-muted/40"
+            className="h-16 flex gap-3 group glass-effect border-2 border-muted/40"
             onClick={() => navigate('/share')}
           >
-            <Share2 className="h-8 w-8 transition-transform group-hover:scale-110" />
-            <span className="text-base font-bold">Compartilhar</span>
+            <Share2 className="h-6 w-6 transition-transform group-hover:scale-110" />
+            <span className="text-base font-bold">Compartilhar Dados</span>
           </Button>
         </div>
 

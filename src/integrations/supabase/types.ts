@@ -244,6 +244,36 @@ export type Database = {
         }
         Relationships: []
       }
+      timeline_events: {
+        Row: {
+          created_at: string
+          details: string | null
+          id: number
+          kind: string
+          occurred_at: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          id?: never
+          kind: string
+          occurred_at?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          id?: never
+          kind?: string
+          occurred_at?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_clinic_connections: {
         Row: {
           clinic_id: string
