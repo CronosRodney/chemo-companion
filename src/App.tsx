@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider } from "./contexts/AppContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import QRScanner from "./pages/QRScanner";
 import ScanMed from "./pages/ScanMed";
@@ -12,6 +13,7 @@ import Profile from "./pages/Profile";
 import EditableProfile from "./pages/EditableProfile";
 import Share from "./pages/Share";
 import Events from "./pages/Events";
+import Auth from "./pages/Auth";
 import Navigation from "./components/Navigation";
 import NotFound from "./pages/NotFound";
 
@@ -26,14 +28,47 @@ const App = () => (
         <AppProvider>
           <div className="relative">
             <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/scanner" element={<QRScanner />} />
-              <Route path="/scan/med" element={<ScanMed />} />
-              <Route path="/timeline" element={<Timeline />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/profile/edit" element={<EditableProfile />} />
-              <Route path="/share" element={<Share />} />
-              <Route path="/events" element={<Events />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              } />
+              <Route path="/scanner" element={
+                <ProtectedRoute>
+                  <QRScanner />
+                </ProtectedRoute>
+              } />
+              <Route path="/scan/med" element={
+                <ProtectedRoute>
+                  <ScanMed />
+                </ProtectedRoute>
+              } />
+              <Route path="/timeline" element={
+                <ProtectedRoute>
+                  <Timeline />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile/edit" element={
+                <ProtectedRoute>
+                  <EditableProfile />
+                </ProtectedRoute>
+              } />
+              <Route path="/share" element={
+                <ProtectedRoute>
+                  <Share />
+                </ProtectedRoute>
+              } />
+              <Route path="/events" element={
+                <ProtectedRoute>
+                  <Events />
+                </ProtectedRoute>
+              } />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Navigation />
