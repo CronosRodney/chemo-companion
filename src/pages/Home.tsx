@@ -76,7 +76,7 @@ const Home = () => {
         </div>
 
         {/* Next Reminders */}
-        <div className="luxury-card p-6 space-y-4">
+        <div className="luxury-card p-6 space-y-4 border-2 border-primary/10">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-card-foreground text-shadow flex items-center gap-3">
               <Bell className="h-6 w-6 text-primary" />
@@ -92,7 +92,7 @@ const Home = () => {
           </div>
           <div className="space-y-4">
             {reminders.map((reminder) => (
-              <div key={reminder.id} className={`glass-effect p-4 rounded-xl border relative overflow-hidden ${reminder.urgent ? 'border-primary/30' : 'border-accent/30'}`}>
+              <div key={reminder.id} className={`glass-effect p-4 rounded-xl border-2 relative overflow-hidden ${reminder.urgent ? 'border-primary/40' : 'border-accent/40'}`}>
                 {reminder.urgent && <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary-glow/5"></div>}
                 <div className="relative flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-[var(--shadow-card)] ${reminder.urgent ? 'medical-gradient' : 'bg-accent/20'}`}>
@@ -126,21 +126,21 @@ const Home = () => {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="luxury-card p-6 text-center relative overflow-hidden">
+          <div className="luxury-card p-6 text-center relative overflow-hidden border-2 border-success/20">
             <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-success/10"></div>
             <div className="relative">
               <div className="text-3xl font-bold text-success mb-1 text-shadow">{stats.adherence}%</div>
               <div className="text-xs text-muted-foreground font-medium">Adesão</div>
             </div>
           </div>
-          <div className="luxury-card p-6 text-center relative overflow-hidden">
+          <div className="luxury-card p-6 text-center relative overflow-hidden border-2 border-primary/20">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary-glow/10"></div>
             <div className="relative">
               <div className="text-lg font-bold text-primary mb-1 text-shadow">{stats.currentCycle}</div>
               <div className="text-xs text-muted-foreground font-medium">Ciclos</div>
             </div>
           </div>
-          <div className="luxury-card p-6 text-center relative overflow-hidden">
+          <div className="luxury-card p-6 text-center relative overflow-hidden border-2 border-secondary/20">
             <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-secondary-accent/10"></div>
             <div className="relative">
               <div className="text-lg font-bold text-secondary-accent mb-1 text-shadow">{stats.nextAppointment}</div>
@@ -154,7 +154,7 @@ const Home = () => {
           <Button 
             variant="outline" 
             size="lg" 
-            className="h-24 flex-col gap-3 group glass-effect border-primary/30 hover:bg-primary/10"
+            className="h-24 flex-col gap-3 group glass-effect border-2 border-primary/40 hover:bg-primary/10"
             onClick={() => navigate('/scanner')}
           >
             <QrCode className="h-8 w-8 transition-transform group-hover:scale-110 text-primary" />
@@ -163,7 +163,7 @@ const Home = () => {
           <Button 
             variant="outline" 
             size="lg" 
-            className="h-24 flex-col gap-3 group glass-effect border-secondary/30 hover:bg-secondary/10"
+            className="h-24 flex-col gap-3 group glass-effect border-2 border-secondary/40 hover:bg-secondary/10"
             onClick={() => navigate('/events')}
           >
             <Plus className="h-8 w-8 transition-transform group-hover:scale-110 text-secondary-accent" />
@@ -172,7 +172,7 @@ const Home = () => {
           <Button 
             variant="outline" 
             size="lg" 
-            className="h-24 flex-col gap-3 group glass-effect border-accent/30 hover:bg-accent/10"
+            className="h-24 flex-col gap-3 group glass-effect border-2 border-accent/40 hover:bg-accent/10"
             onClick={() => navigate('/timeline')}
           >
             <Clock className="h-8 w-8 transition-transform group-hover:scale-110 text-accent-foreground" />
@@ -181,7 +181,7 @@ const Home = () => {
           <Button 
             variant="outline" 
             size="lg" 
-            className="h-24 flex-col gap-3 group glass-effect"
+            className="h-24 flex-col gap-3 group glass-effect border-2 border-muted/40"
             onClick={() => navigate('/share')}
           >
             <Share2 className="h-8 w-8 transition-transform group-hover:scale-110" />
@@ -190,7 +190,7 @@ const Home = () => {
         </div>
 
         {/* Quick Health Check */}
-        <div className="luxury-card p-6">
+        <div className="luxury-card p-6 border-2 border-accent/20">
           <h3 className="font-bold text-card-foreground mb-6 text-xl text-shadow">Como você está hoje?</h3>
           <FeelingLogger onFeelingLogged={handleFeelingLogged} />
           <p className="text-sm text-muted-foreground text-center font-medium">
@@ -199,7 +199,7 @@ const Home = () => {
         </div>
 
         {/* Emergency Alert */}
-        <div className="luxury-card bg-destructive/5 border-2 border-destructive/20 p-6 relative overflow-hidden">
+        <div className="luxury-card bg-destructive/5 border-2 border-destructive/30 p-6 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-destructive/5 to-destructive/10"></div>
           <div className="relative flex items-start gap-4">
             <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">

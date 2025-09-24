@@ -67,14 +67,34 @@ export const useQRScanner = () => {
 
   const requestCameraPermission = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      // Check if we're in a secure context (HTTPS or localhost)
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error('Camera API not available. HTTPS required.');
+        setHasPermission(false);
+        return false;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'environment' // Try back camera first for QR scanning
+        } 
+      });
       stream.getTracks().forEach(track => track.stop()); // Stop the stream immediately
       setHasPermission(true);
       return true;
     } catch (error) {
       console.error('Camera permission denied:', error);
-      setHasPermission(false);
-      return false;
+      // Try again with any camera if back camera fails
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream.getTracks().forEach(track => track.stop());
+        setHasPermission(true);
+        return true;
+      } catch (fallbackError) {
+        console.error('Fallback camera permission denied:', fallbackError);
+        setHasPermission(false);
+        return false;
+      }
     }
   }, []);
 

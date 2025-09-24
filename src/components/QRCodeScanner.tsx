@@ -84,11 +84,17 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
           <AlertCircle className="h-12 w-12 text-destructive" />
           <div className="text-center">
             <p className="font-semibold text-destructive">Acesso à câmera negado</p>
-            <p className="text-sm text-muted-foreground">
-              Permita o acesso à câmera para escanear QR Codes
+            <p className="text-sm text-muted-foreground mb-2">
+              Para usar o scanner QR, permita acesso à câmera:
+            </p>
+            <p className="text-xs text-muted-foreground">
+              1. Clique no ícone de câmera na barra de endereços<br/>
+              2. Selecione "Permitir" para este site<br/>
+              3. Recarregue a página se necessário
             </p>
           </div>
           <Button variant="outline" onClick={requestCameraPermission}>
+            <Camera className="h-4 w-4 mr-2" />
             Tentar novamente
           </Button>
         </CardContent>
