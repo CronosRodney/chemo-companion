@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -8,7 +8,6 @@ import { Alert, AlertDescription } from '../components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { useEffect } from 'react';
 import { ArrowLeft, Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react';
 import { z } from 'zod';
 import { useToast } from '../hooks/use-toast';
@@ -28,8 +27,7 @@ export default function Auth() {
     firstName: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-  
+  const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -44,7 +42,7 @@ export default function Auth() {
   const validateForm = (isSignUp = false) => {
     try {
       const schema = isSignUp 
-        ? authSchema 
+        ? authSchema.extend({ firstName: z.string().min(1, 'Nome é obrigatório') })
         : authSchema.omit({ firstName: true });
       
       schema.parse(formData);
@@ -60,14 +58,13 @@ export default function Auth() {
         });
         setErrors(newErrors);
       }
-      }
       return false;
     }
   };
 
   const handleSignUp = async () => {
     if (!validateForm(true)) return;
-
+    
     setIsLoading(true);
     setMessage(null);
 
@@ -120,7 +117,7 @@ export default function Auth() {
 
   const handleSignIn = async () => {
     if (!validateForm()) return;
-
+    
     setIsLoading(true);
     setMessage(null);
 
@@ -172,21 +169,14 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => navigate('/')}
-            className="mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-          <h1 className="text-3xl font-bold">MedScan</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            Bem-vindo
+          </h1>
           <p className="text-muted-foreground">
-            Sua plataforma de gestão de medicamentos
+            Entre na sua conta ou crie uma nova
           </p>
         </div>
 
@@ -197,18 +187,16 @@ export default function Auth() {
             ) : (
               <CheckCircle className="h-4 w-4" />
             )}
-            <AlertDescription className={message.type === 'error' ? 'text-destructive' : 'text-green-700'}>
-              {message.text}
-            </AlertDescription>
+            <AlertDescription>{message.text}</AlertDescription>
           </Alert>
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-center">Acesse sua conta</CardTitle>
+        <Card className="shadow-lg">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl text-center">Autenticação</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Entrar</TabsTrigger>
                 <TabsTrigger value="signup">Criar Conta</TabsTrigger>
@@ -225,7 +213,8 @@ export default function Auth() {
                       placeholder="seu@email.com"
                       value={formData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
-                      className={`pl-10 ${errors.email ? 'border-destructive' : ''}`}
+                      className="pl-10"
+                      disabled={isLoading}
                     />
                   </div>
                   {errors.email && (
@@ -240,10 +229,11 @@ export default function Auth() {
                     <Input
                       id="password"
                       type="password"
-                      placeholder="••••••••"
+                      placeholder="Sua senha"
                       value={formData.password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
-                      className={`pl-10 ${errors.password ? 'border-destructive' : ''}`}
+                      className="pl-10"
+                      disabled={isLoading}
                     />
                   </div>
                   {errors.password && (
@@ -271,7 +261,8 @@ export default function Auth() {
                       placeholder="Seu nome"
                       value={formData.firstName}
                       onChange={(e) => handleInputChange('firstName', e.target.value)}
-                      className={`pl-10 ${errors.firstName ? 'border-destructive' : ''}`}
+                      className="pl-10"
+                      disabled={isLoading}
                     />
                   </div>
                   {errors.firstName && (
@@ -280,16 +271,17 @@ export default function Auth() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email-signup">Email</Label>
+                  <Label htmlFor="signup-email">Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
-                      id="email-signup"
+                      id="signup-email"
                       type="email"
                       placeholder="seu@email.com"
                       value={formData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
-                      className={`pl-10 ${errors.email ? 'border-destructive' : ''}`}
+                      className="pl-10"
+                      disabled={isLoading}
                     />
                   </div>
                   {errors.email && (
@@ -298,16 +290,17 @@ export default function Auth() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password-signup">Senha</Label>
+                  <Label htmlFor="signup-password">Senha</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
-                      id="password-signup"
+                      id="signup-password"
                       type="password"
-                      placeholder="••••••••"
+                      placeholder="Mínimo 6 caracteres"
                       value={formData.password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
-                      className={`pl-10 ${errors.password ? 'border-destructive' : ''}`}
+                      className="pl-10"
+                      disabled={isLoading}
                     />
                   </div>
                   {errors.password && (
