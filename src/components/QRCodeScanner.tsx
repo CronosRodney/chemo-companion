@@ -45,9 +45,11 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
     const startScanning = async () => {
       if (hasPermission && !scanned && !loading && !isScanning && elementRef.current && mounted && scannerMode === 'camera') {
         try {
+          console.log('Iniciando scanner QR...');
           setIsScanning(true);
           
           if (!html5QrCodeRef.current) {
+            console.log('Criando nova instância Html5Qrcode...');
             html5QrCodeRef.current = new Html5Qrcode('qr-reader');
           }
 
@@ -82,6 +84,7 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
 
           // Tentar primeiro a câmera traseira (ideal para QR codes)
           try {
+            console.log('Tentando iniciar câmera traseira...');
             await html5QrCodeRef.current.start(
               { facingMode: "environment" }, // Câmera traseira
               config,
@@ -90,8 +93,9 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
                 // Ignorar erros de scan - são normais
               }
             );
+            console.log('Câmera traseira iniciada com sucesso!');
           } catch (err) {
-            console.log('Câmera traseira não disponível, tentando qualquer câmera...');
+            console.log('Câmera traseira não disponível, tentando câmera frontal...', err);
             try {
               await html5QrCodeRef.current.start(
                 { facingMode: "user" }, // Câmera frontal como fallback
@@ -101,6 +105,7 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
                   // Ignorar erros de scan
                 }
               );
+              console.log('Câmera frontal iniciada com sucesso!');
             } catch (fallbackErr) {
               console.error('Erro ao iniciar qualquer câmera:', fallbackErr);
               if (mounted) {
@@ -112,7 +117,7 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
         } catch (error) {
           console.error('Erro ao inicializar scanner:', error);
           if (mounted) {
-            onError('Erro ao inicializar o scanner');
+            onError(`Erro ao inicializar o scanner: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
             setIsScanning(false);
           }
         }
