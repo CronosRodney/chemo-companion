@@ -14,7 +14,234 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clinic_responsible: {
+        Row: {
+          clinic_id: string
+          council: string | null
+          council_uf: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_deputy: boolean | null
+          name: string
+          phone: string | null
+          registration: string | null
+          role: string | null
+        }
+        Insert: {
+          clinic_id: string
+          council?: string | null
+          council_uf?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_deputy?: boolean | null
+          name: string
+          phone?: string | null
+          registration?: string | null
+          role?: string | null
+        }
+        Update: {
+          clinic_id?: string
+          council?: string | null
+          council_uf?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_deputy?: boolean | null
+          name?: string
+          phone?: string | null
+          registration?: string | null
+          role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_responsible_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clinics: {
+        Row: {
+          city: string | null
+          clinic_name: string
+          cnes: string | null
+          cnpj: string | null
+          created_at: string
+          district: string | null
+          email: string | null
+          hours: string | null
+          id: string
+          legal_name: string | null
+          maps_url: string | null
+          number: string | null
+          phone: string | null
+          state: string | null
+          street: string | null
+          updated_at: string
+          website: string | null
+          whatsapp: string | null
+          zip: string | null
+        }
+        Insert: {
+          city?: string | null
+          clinic_name: string
+          cnes?: string | null
+          cnpj?: string | null
+          created_at?: string
+          district?: string | null
+          email?: string | null
+          hours?: string | null
+          id?: string
+          legal_name?: string | null
+          maps_url?: string | null
+          number?: string | null
+          phone?: string | null
+          state?: string | null
+          street?: string | null
+          updated_at?: string
+          website?: string | null
+          whatsapp?: string | null
+          zip?: string | null
+        }
+        Update: {
+          city?: string | null
+          clinic_name?: string
+          cnes?: string | null
+          cnpj?: string | null
+          created_at?: string
+          district?: string | null
+          email?: string | null
+          hours?: string | null
+          id?: string
+          legal_name?: string | null
+          maps_url?: string | null
+          number?: string | null
+          phone?: string | null
+          state?: string | null
+          street?: string | null
+          updated_at?: string
+          website?: string | null
+          whatsapp?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
+      medications: {
+        Row: {
+          active_ingredient: string | null
+          batch_number: string | null
+          concentration: string | null
+          created_at: string
+          expiry_date: string | null
+          form: string | null
+          gtin: string | null
+          id: string
+          manufacturer: string | null
+          name: string
+          route: string | null
+          updated_at: string
+        }
+        Insert: {
+          active_ingredient?: string | null
+          batch_number?: string | null
+          concentration?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          form?: string | null
+          gtin?: string | null
+          id?: string
+          manufacturer?: string | null
+          name: string
+          route?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active_ingredient?: string | null
+          batch_number?: string | null
+          concentration?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          form?: string | null
+          gtin?: string | null
+          id?: string
+          manufacturer?: string | null
+          name?: string
+          route?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_clinic_connections: {
+        Row: {
+          clinic_id: string
+          connected_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          clinic_id: string
+          connected_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          clinic_id?: string
+          connected_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_clinic_connections_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_medications: {
+        Row: {
+          dose: string | null
+          frequency: string | null
+          id: string
+          instructions: string | null
+          medication_id: string
+          scanned_at: string
+          user_id: string
+        }
+        Insert: {
+          dose?: string | null
+          frequency?: string | null
+          id?: string
+          instructions?: string | null
+          medication_id: string
+          scanned_at?: string
+          user_id: string
+        }
+        Update: {
+          dose?: string | null
+          frequency?: string | null
+          id?: string
+          instructions?: string | null
+          medication_id?: string
+          scanned_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_medications_medication_id_fkey"
+            columns: ["medication_id"]
+            isOneToOne: false
+            referencedRelation: "medications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
