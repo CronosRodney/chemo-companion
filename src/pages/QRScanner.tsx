@@ -189,26 +189,43 @@ const QRScanner = () => {
           <h1 className="text-xl font-semibold">Escanear QR Code</h1>
         </div>
 
+        {/* QR Scanner Options */}
+        <div className="grid grid-cols-2 gap-4">
+          <Button
+            variant="luxury"
+            size="xxl"
+            className="h-32 flex-col gap-3 group"
+            onClick={() => setShowScanner(true)}
+          >
+            <QrCode className="h-10 w-10 transition-transform group-hover:scale-110" />
+            <div className="text-center">
+              <span className="text-base font-bold block">QR da Clínica</span>
+              <span className="text-xs opacity-80">Vincular oncologista</span>
+            </div>
+          </Button>
+          
+          <Button
+            variant="medical"
+            size="xxl"
+            className="h-32 flex-col gap-3 group"
+            onClick={() => setShowScanner(true)}
+          >
+            <Pill className="h-10 w-10 transition-transform group-hover:scale-110" />
+            <div className="text-center">
+              <span className="text-base font-bold block">QR do Medicamento</span>
+              <span className="text-xs opacity-80">Registrar dose</span>
+            </div>
+          </Button>
+        </div>
+
         {/* Camera View */}
-        {showScanner ? (
-          <QRCodeScanner
-            onScanComplete={handleScanComplete}
-            onError={handleScanError}
-          />
-        ) : (
-          <Card className="luxury-card aspect-square cursor-pointer" onClick={() => setShowScanner(true)}>
+        {showScanner && (
+          <Card className="luxury-card aspect-square">
             <CardContent className="p-0 h-full">
-              <div className="relative h-full bg-gradient-to-br from-muted to-muted/50 rounded-lg flex items-center justify-center">
-                <div className="text-center space-y-4">
-                  <div className="w-48 h-48 border-4 border-primary rounded-lg border-dashed opacity-60 animate-pulse mx-auto flex items-center justify-center">
-                    <QrCode className="h-16 w-16 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-semibold">Toque para ativar a câmera</p>
-                    <p className="text-sm text-muted-foreground">Escaneie QR Codes de clínicas e medicamentos</p>
-                  </div>
-                </div>
-              </div>
+              <QRCodeScanner
+                onScanComplete={handleScanComplete}
+                onError={handleScanError}
+              />
             </CardContent>
           </Card>
         )}

@@ -32,6 +32,8 @@ const Timeline = () => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<string>('all');
   const [events, setEvents] = useState<TimelineEvent[]>([]);
+  const [showDateFilter, setShowDateFilter] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
   const loadUserTimeline = async () => {
@@ -180,6 +182,8 @@ const Timeline = () => {
 
   const filteredEvents = filter === 'all' 
     ? events 
+    : filter === 'date'
+    ? events.filter(event => event.date === selectedDate)
     : events.filter(event => event.type === filter);
 
   return (
@@ -195,28 +199,41 @@ const Timeline = () => {
             <Button 
               variant="outline" 
               size="icon"
-              onClick={() => {
-                // Toggle between showing all and filtering current month
-                const currentMonth = new Date().getMonth();
-                const currentYear = new Date().getFullYear();
-                const isCurrentlyFiltered = filter.includes('month');
-                
-                if (isCurrentlyFiltered) {
-                  setFilter('all');
-                } else {
-                  // Filter events from current month
-                  const filteredEvents = events.filter(event => {
-                    const eventDate = new Date(event.date);
-                    return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear;
-                  });
-                  setFilter('month');
-                }
-              }}
+              onClick={() => setShowDateFilter(!showDateFilter)}
             >
               <Filter className="h-4 w-4" />
             </Button>
           </div>
         </div>
+
+        {/* Date Filter */}
+        {showDateFilter && (
+          <Card className="p-4">
+            <div className="space-y-3">
+              <label className="text-sm font-medium">Filtrar por data:</label>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full p-2 border rounded-md bg-background"
+              />
+              <div className="flex gap-2">
+                <Button size="sm" onClick={() => {
+                  setFilter('date');
+                  setShowDateFilter(false);
+                }}>
+                  Aplicar
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => {
+                  setFilter('all');
+                  setShowDateFilter(false);
+                }}>
+                  Limpar
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Filter Pills */}
         <div className="flex gap-2 overflow-x-auto pb-2">

@@ -3,18 +3,61 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bell, QrCode, Plus, Share2, Pill, Calendar, AlertTriangle, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { ReminderManager } from "@/components/ReminderManager";
+import { FeelingLogger } from "@/components/FeelingLogger";
 
 const Home = () => {
   const navigate = useNavigate();
-  const nextReminders = [
-    { id: 1, medication: "Oxaliplatina", time: "14:00", type: "IV", cycle: "Ciclo 3 - FOLFOX", urgent: true },
-    { id: 2, medication: "5-Fluoruracil", time: "21:30", type: "Oral", cycle: "Ciclo 3 - FOLFOX", urgent: false },
-  ];
+  const [userProfile, setUserProfile] = useState({ name: 'Maria' });
+  const [showReminderManager, setShowReminderManager] = useState(false);
+  const [nextReminders, setNextReminders] = useState([
+    { id: '1', medication: "Oxaliplatina", time: "14:00", type: "IV", cycle: "Ciclo 3 - FOLFOX", urgent: true },
+    { id: '2', medication: "5-Fluoruracil", time: "21:30", type: "Oral", cycle: "Ciclo 3 - FOLFOX", urgent: false },
+  ]);
 
-  const quickStats = {
+  const [quickStats, setQuickStats] = useState({
     adherence: 95,
     nextAppointment: "2025-01-15",
     currentCycle: "3 de 12",
+  });
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // For now, we'll use a default name. Later this should come from a profiles table
+        setUserProfile({ name: user.email?.split('@')[0] || 'Usuário' });
+        
+        // Calculate real adherence based on user events
+        const { data: events } = await supabase
+          .from('user_events')
+          .select('*')
+          .gte('event_date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+        
+        if (events) {
+          // Simple adherence calculation - can be improved
+          const totalDays = 30;
+          const recordedDays = new Set(events.map(e => e.event_date)).size;
+          const adherence = Math.round((recordedDays / totalDays) * 100);
+          setQuickStats(prev => ({ ...prev, adherence }));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  };
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Bom dia';
+    if (hour < 18) return 'Boa tarde';
+    return 'Boa noite';
   };
 
   return (
@@ -27,20 +70,33 @@ const Home = () => {
               <Pill className="h-8 w-8 text-white" />
             </div>
             <h1 className="text-3xl font-bold text-foreground mb-2 text-shadow">
-              Boa tarde, Maria
+              {getGreeting()}, {userProfile.name}
             </h1>
-            <p className="text-muted-foreground text-lg">
-              Como você está se sentindo hoje?
-            </p>
           </div>
         </div>
 
         {/* Next Reminders */}
         <div className="luxury-card p-6 space-y-4">
-          <h2 className="text-xl font-bold text-card-foreground mb-4 text-shadow flex items-center gap-3">
-            <Bell className="h-6 w-6 text-primary" />
-            Próximos Lembretes
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-card-foreground mb-4 text-shadow flex items-center gap-3">
+              <Bell className="h-6 w-6 text-primary" />
+              Próximos Lembretes
+            </h2>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowReminderManager(!showReminderManager)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {showReminderManager ? (
+            <ReminderManager 
+              reminders={nextReminders} 
+              onUpdate={setNextReminders}
+            />
+          ) : (
           <div className="space-y-4">
             {nextReminders.map((reminder) => (
               <div key={reminder.id} className={`glass-effect p-4 rounded-xl border relative overflow-hidden ${reminder.urgent ? 'border-primary/30' : 'border-accent/30'}`}>
@@ -63,6 +119,7 @@ const Home = () => {
               </div>
             ))}
           </div>
+          )}
         </div>
 
         {/* Quick Stats */}
@@ -152,20 +209,7 @@ const Home = () => {
         {/* Quick Health Check */}
         <div className="luxury-card p-6">
           <h3 className="font-bold text-card-foreground mb-6 text-xl text-shadow">Como você está hoje?</h3>
-          <div className="flex gap-3 mb-4">
-            {[1, 2, 3, 4, 5].map((rating) => (
-              <button
-                key={rating}
-                className="flex-1 aspect-square rounded-xl glass-effect border-2 border-muted-foreground/20 hover:border-primary hover:shadow-[var(--shadow-card)] transition-all duration-300 hover:scale-105 flex items-center justify-center text-3xl premium-button"
-              >
-                {rating === 1 && "😷"}
-                {rating === 2 && "😔"}
-                {rating === 3 && "😐"}
-                {rating === 4 && "🙂"}
-                {rating === 5 && "😊"}
-              </button>
-            ))}
-          </div>
+          <FeelingLogger onFeelingLogged={loadUserData} />
           <p className="text-sm text-muted-foreground text-center font-medium">
             1 = Muito mal | 5 = Excelente
           </p>
