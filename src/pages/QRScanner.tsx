@@ -213,7 +213,7 @@ const QRScanner = () => {
             <Pill className="h-10 w-10 transition-transform group-hover:scale-110" />
             <div className="text-center">
               <span className="text-base font-bold block">QR do Medicamento</span>
-              <span className="text-xs opacity-80">Registrar dose</span>
+              <span className="text-xs opacity-80">Registrar medicamento</span>
             </div>
           </Button>
         </div>

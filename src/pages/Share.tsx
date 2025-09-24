@@ -11,32 +11,76 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Share = () => {
   const navigate = useNavigate();
   const [selectedPDFType, setSelectedPDFType] = useState<'card' | 'complete' | null>(null);
   const { toast } = useToast();
 
-  const exportPDF = async (type: 'card' | 'complete') => {
+  const generatePDF = async () => {
+    if (!selectedPDFType) {
+      toast({
+        title: "Erro",
+        description: "Selecione um tipo de relatório",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       toast({
         title: "Gerando PDF...",
-        description: `Preparando ${type === 'card' ? 'carteira de tratamento' : 'relatório completo'}`
+        description: `Preparando ${selectedPDFType === 'card' ? 'carteira de tratamento' : 'relatório completo'}`
       });
+
+      // Fetch user data from database
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      const { data: events } = await supabase
+        .from('user_events')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('event_date', { ascending: false });
+
+      const { data: medications } = await supabase
+        .from('user_medications')
+        .select('*, medications(*)')
+        .eq('user_id', user.id);
+
+      // Generate PDF content
+      const pdfContent = selectedPDFType === 'card' 
+        ? generateTreatmentCard(profile, medications)
+        : generateCompleteReport(profile, events, medications);
 
       // Simulate PDF generation
       setTimeout(() => {
-        const fileName = type === 'card' ? 'carteira-tratamento.pdf' : 'relatorio-completo.pdf';
+        const fileName = selectedPDFType === 'card' ? 'carteira-tratamento.pdf' : 'relatorio-completo.pdf';
+        
+        // Create blob with PDF content
+        const blob = new Blob([pdfContent], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        
+        // Download PDF
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
         toast({
           title: "PDF gerado com sucesso",
           description: `Download iniciado: ${fileName}`
         });
-        
-        // Create a mock download link
-        const link = document.createElement('a');
-        link.href = '#';
-        link.download = fileName;
-        link.click();
       }, 2000);
     } catch (error) {
       toast({
@@ -45,6 +89,63 @@ const Share = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const generateTreatmentCard = (profile: any, medications: any[]) => {
+    return `CARTEIRA DE TRATAMENTO
+    
+Nome: ${profile?.first_name} ${profile?.last_name || ''}
+CPF: ${profile?.cpf || 'Não informado'}
+RG: ${profile?.rg || 'Não informado'}
+Data de Nascimento: ${profile?.birth_date || 'Não informado'}
+
+Medicamentos em uso:
+${medications?.map(m => `- ${m.medications?.name} - ${m.dose} - ${m.frequency}`).join('\n') || 'Nenhum medicamento registrado'}
+
+Contato de Emergência:
+Nome: ${profile?.emergency_contact_name || 'Não informado'}
+Telefone: ${profile?.emergency_contact_phone || 'Não informado'}
+
+Alergias: ${profile?.allergies || 'Nenhuma alergia registrada'}
+Histórico Médico: ${profile?.medical_history || 'Nenhum histórico registrado'}`;
+  };
+
+  const generateCompleteReport = (profile: any, events: any[], medications: any[]) => {
+    return `RELATÓRIO COMPLETO DE TRATAMENTO
+    
+=== DADOS PESSOAIS ===
+Nome: ${profile?.first_name} ${profile?.last_name || ''}
+Email: ${profile?.email || 'Não informado'}
+Telefone: ${profile?.phone || 'Não informado'}
+CPF: ${profile?.cpf || 'Não informado'}
+RG: ${profile?.rg || 'Não informado'}
+Data de Nascimento: ${profile?.birth_date || 'Não informado'}
+Endereço: ${profile?.address || 'Não informado'}
+
+=== MEDICAMENTOS ===
+${medications?.map(m => `- ${m.medications?.name}
+  Dosagem: ${m.dose}
+  Frequência: ${m.frequency}
+  Instruções: ${m.instructions || 'Não informado'}
+  Data de Registro: ${new Date(m.scanned_at).toLocaleDateString('pt-BR')}
+`).join('\n') || 'Nenhum medicamento registrado'}
+
+=== HISTÓRICO DE EVENTOS ===
+${events?.map(e => `${new Date(e.event_date).toLocaleDateString('pt-BR')} - ${e.title}
+  Tipo: ${e.event_type}
+  Severidade: ${e.severity}/10
+  Descrição: ${e.description || 'Sem descrição'}
+  Horário: ${e.event_time}
+`).join('\n') || 'Nenhum evento registrado'}
+
+=== INFORMAÇÕES MÉDICAS ===
+Histórico Médico: ${profile?.medical_history || 'Nenhum histórico registrado'}
+Alergias: ${profile?.allergies || 'Nenhuma alergia registrada'}
+Medicamentos Atuais: ${profile?.current_medications || 'Não informado'}
+
+=== CONTATO DE EMERGÊNCIA ===
+Nome: ${profile?.emergency_contact_name || 'Não informado'}
+Telefone: ${profile?.emergency_contact_phone || 'Não informado'}`;
   };
 
   return (
@@ -75,9 +176,9 @@ const Share = () => {
               
               <div className="space-y-3">
                 <Button 
-                  variant="outline" 
+                  variant={selectedPDFType === 'card' ? 'default' : 'outline'}
                   className="w-full h-auto p-4 justify-start"
-                  onClick={() => exportPDF('card')}
+                  onClick={() => setSelectedPDFType('card')}
                 >
                   <div className="text-left">
                     <div className="flex items-center justify-between w-full">
@@ -91,9 +192,9 @@ const Share = () => {
                 </Button>
                 
                 <Button 
-                  variant="outline" 
+                  variant={selectedPDFType === 'complete' ? 'default' : 'outline'}
                   className="w-full h-auto p-4 justify-start"
-                  onClick={() => exportPDF('complete')}
+                  onClick={() => setSelectedPDFType('complete')}
                 >
                   <div className="text-left">
                     <div className="flex items-center justify-between w-full">
@@ -106,18 +207,27 @@ const Share = () => {
                   </div>
                 </Button>
               </div>
+              
+              <Button 
+                onClick={generatePDF}
+                className="w-full"
+                disabled={!selectedPDFType}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Gerar PDF
+              </Button>
             </CardContent>
           </Card>
 
-          {/* Security Notice */}
-          <Card className="shadow-md border-0 bg-success/10 border-success/30">
+          {/* Info Notice */}
+          <Card className="shadow-md border-0 bg-primary/10 border-primary/30">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-success mt-0.5" />
+                <FileText className="h-5 w-5 text-primary mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-success">Totalmente Privado</p>
+                  <p className="text-sm font-medium text-primary">Dados Personalizados</p>
                   <p className="text-xs text-muted-foreground">
-                    PDFs são gerados localmente e não ficam armazenados em servidores
+                    PDFs são gerados com suas informações reais do banco de dados
                   </p>
                 </div>
               </div>
