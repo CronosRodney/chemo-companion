@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { QrCode, ArrowLeft, CheckCircle, Building2, Pill } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { QRCodeScanner } from "@/components/QRCodeScanner";
+import { SimpleQRScanner } from "@/components/SimpleQRScanner";
 import { useToast } from "@/hooks/use-toast";
 import { ParsedQRData, ClinicData, MedicationData } from "@/hooks/useQRScanner";
 
@@ -180,7 +180,7 @@ const QRScanner = () => {
         {showScanner && (
           <Card className="luxury-card aspect-square">
             <CardContent className="p-0 h-full">
-              <QRCodeScanner
+              <SimpleQRScanner
                 onScanComplete={handleScanComplete}
                 onError={handleScanError}
               />
