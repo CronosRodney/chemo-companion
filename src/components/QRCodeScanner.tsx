@@ -19,7 +19,6 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
   const [scannerMode, setScannerMode] = useState<'camera' | 'text' | 'file'>('camera');
   const [manualInput, setManualInput] = useState('');
   const [isScanning, setIsScanning] = useState(false);
-  const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const elementRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,97 +40,132 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
 
   useEffect(() => {
     let mounted = true;
+    let scanner: Html5Qrcode | null = null;
     
-    const startScanning = async () => {
-      if (hasPermission && !scanned && !loading && !isScanning && elementRef.current && mounted && scannerMode === 'camera') {
-        try {
-          console.log('Iniciando scanner QR...');
-          setIsScanning(true);
+    const initializeScanner = async () => {
+      if (!hasPermission || scanned || loading || isScanning || !elementRef.current || !mounted || scannerMode !== 'camera') {
+        return;
+      }
+
+      try {
+        console.log('Inicializando scanner...');
+        setIsScanning(true);
+        
+        // Aguardar um pouco para garantir que o elemento DOM está pronto
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        if (!mounted) return;
+        
+        scanner = new Html5Qrcode('qr-reader');
+        
+        const qrCodeSuccessCallback = async (decodedText: string) => {
+          if (!mounted) return;
           
-          if (!html5QrCodeRef.current) {
-            console.log('Criando nova instância Html5Qrcode...');
-            html5QrCodeRef.current = new Html5Qrcode('qr-reader');
-          }
-
-          // Configuração para mobile - prioriza câmera traseira
-          const qrCodeSuccessCallback = async (decodedText: string) => {
-            if (!mounted) return;
-            
-            try {
-              if (html5QrCodeRef.current?.isScanning) {
-                await html5QrCodeRef.current.stop();
-              }
-              
-              const result = await handleBarCodeScanned({ data: decodedText });
-              if (mounted) {
-                onScanComplete(result);
-                setIsScanning(false);
-              }
-            } catch (error: any) {
-              if (mounted) {
-                onError(error.message || 'Erro ao processar QR Code');
-                resetScanner();
-                setIsScanning(false);
-              }
-            }
-          };
-
-          const config = {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
-            aspectRatio: 1.0,
-          };
-
-          // Tentar primeiro a câmera traseira (ideal para QR codes)
+          console.log('QR Code detectado:', decodedText);
+          
           try {
-            console.log('Tentando iniciar câmera traseira...');
-            await html5QrCodeRef.current.start(
-              { facingMode: "environment" }, // Câmera traseira
+            if (scanner?.isScanning) {
+              await scanner.stop();
+            }
+            
+            const result = await handleBarCodeScanned({ data: decodedText });
+            if (mounted) {
+              onScanComplete(result);
+              setIsScanning(false);
+            }
+          } catch (error: any) {
+            console.error('Erro ao processar QR Code:', error);
+            if (mounted) {
+              onError(error.message || 'Erro ao processar QR Code');
+              resetScanner();
+              setIsScanning(false);
+            }
+          }
+        };
+
+        const config = {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0,
+        };
+
+        // Tentar obter lista de câmeras disponíveis
+        try {
+          const cameras = await Html5Qrcode.getCameras();
+          console.log('Câmeras disponíveis:', cameras);
+          
+          if (cameras && cameras.length > 0) {
+            // Procurar por câmera traseira primeiro
+            const backCamera = cameras.find(camera => 
+              camera.label.toLowerCase().includes('back') || 
+              camera.label.toLowerCase().includes('rear') ||
+              camera.label.toLowerCase().includes('environment')
+            );
+            
+            const cameraId = backCamera ? backCamera.id : cameras[0].id;
+            console.log('Usando câmera:', cameraId);
+            
+            await scanner.start(
+              cameraId,
               config,
               qrCodeSuccessCallback,
               (errorMessage) => {
-                // Ignorar erros de scan - são normais
+                // Ignorar erros de scan normais
               }
             );
-            console.log('Câmera traseira iniciada com sucesso!');
-          } catch (err) {
-            console.log('Câmera traseira não disponível, tentando câmera frontal...', err);
-            try {
-              await html5QrCodeRef.current.start(
-                { facingMode: "user" }, // Câmera frontal como fallback
-                config,
-                qrCodeSuccessCallback,
-                (errorMessage) => {
-                  // Ignorar erros de scan
-                }
-              );
-              console.log('Câmera frontal iniciada com sucesso!');
-            } catch (fallbackErr) {
-              console.error('Erro ao iniciar qualquer câmera:', fallbackErr);
-              if (mounted) {
-                onError('Não foi possível acessar a câmera');
-                setIsScanning(false);
+          } else {
+            // Fallback para constraints de facingMode
+            console.log('Usando facingMode como fallback...');
+            await scanner.start(
+              { facingMode: "environment" },
+              config,
+              qrCodeSuccessCallback,
+              (errorMessage) => {
+                // Ignorar erros de scan normais
               }
+            );
+          }
+          
+          console.log('Scanner iniciado com sucesso!');
+          
+        } catch (cameraError) {
+          console.error('Erro ao iniciar com câmera específica:', cameraError);
+          
+          // Último fallback - tentar qualquer câmera
+          try {
+            await scanner.start(
+              { facingMode: "user" },
+              config,
+              qrCodeSuccessCallback,
+              (errorMessage) => {
+                // Ignorar erros de scan normais
+              }
+            );
+            console.log('Scanner iniciado com câmera frontal!');
+          } catch (finalError) {
+            console.error('Erro final ao iniciar scanner:', finalError);
+            if (mounted) {
+              onError('Não foi possível acessar nenhuma câmera');
+              setIsScanning(false);
             }
           }
-        } catch (error) {
-          console.error('Erro ao inicializar scanner:', error);
-          if (mounted) {
-            onError(`Erro ao inicializar o scanner: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-            setIsScanning(false);
-          }
+        }
+        
+      } catch (error: any) {
+        console.error('Erro ao inicializar scanner:', error);
+        if (mounted) {
+          onError(`Erro: ${error.message || 'Falha ao inicializar câmera'}`);
+          setIsScanning(false);
         }
       }
     };
 
-    startScanning();
+    initializeScanner();
 
     return () => {
       mounted = false;
-      if (html5QrCodeRef.current?.isScanning) {
-        html5QrCodeRef.current.stop().catch(() => {
-          // Ignorar erros de cleanup
-        });
+      if (scanner?.isScanning) {
+        scanner.stop().catch(console.error);
       }
       setIsScanning(false);
     };
