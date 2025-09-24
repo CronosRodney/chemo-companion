@@ -77,7 +77,7 @@ const Home = () => {
         {/* Header */}
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">
-            {getGreeting()}, {profile?.first_name || 'Usuário'}!
+            {getGreeting()}, {profile?.first_name || 'Maria'}!
           </h1>
         </div>
 

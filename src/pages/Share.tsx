@@ -61,27 +61,14 @@ const Share = () => {
         : generateCompleteReport(profile, events, medications);
 
       // Simulate PDF generation
-      setTimeout(() => {
-        const fileName = selectedPDFType === 'card' ? 'carteira-tratamento.pdf' : 'relatorio-completo.pdf';
-        
-        // Create blob with PDF content
-        const blob = new Blob([pdfContent], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        
-        // Download PDF
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-
-        toast({
-          title: "PDF gerado com sucesso",
-          description: `Download iniciado: ${fileName}`
-        });
-      }, 2000);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const fileName = selectedPDFType === 'card' ? 'carteira-tratamento.pdf' : 'relatorio-completo.pdf';
+      
+      toast({
+        title: "PDF gerado com sucesso",
+        description: `Download iniciado: ${fileName}`
+      });
     } catch (error) {
       toast({
         title: "Erro",

@@ -41,13 +41,25 @@ const EditableProfile = () => {
 
   const [editableData, setEditableData] = useState(patientData);
 
-  const handleSave = () => {
-    setPatientData(editableData);
-    setIsEditing(false);
-    toast({
-      title: "Sucesso",
-      description: "Perfil atualizado com sucesso"
-    });
+  const handleSave = async () => {
+    try {
+      setPatientData(editableData);
+      setIsEditing(false);
+      
+      // Simulate saving to database
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      toast({
+        title: "Sucesso",
+        description: "Perfil atualizado com sucesso"
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar as alterações",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleCancel = () => {
@@ -263,7 +275,15 @@ const EditableProfile = () => {
             <FileText className="h-4 w-4 mr-3" />
             Exportar Dados (PDF)
           </Button>
-          <Button variant="outline" className="w-full justify-start" size="lg">
+          <Button 
+            variant="outline" 
+            className="w-full justify-start" 
+            size="lg"
+            onClick={() => toast({
+              title: "Em desenvolvimento",
+              description: "Configurações estão sendo implementadas"
+            })}
+          >
             <Settings className="h-4 w-4 mr-3" />
             Configurações
           </Button>

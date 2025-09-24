@@ -15,7 +15,7 @@ export const FeelingLogger = ({ onFeelingLogged }: FeelingLoggerProps) => {
       if (!user) {
         toast({
           title: "Erro",
-          description: "Usuário não autenticado",
+          description: "Usuário não encontrado",
           variant: "destructive"
         });
         return;
