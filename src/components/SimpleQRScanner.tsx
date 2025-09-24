@@ -22,9 +22,28 @@ export const SimpleQRScanner: React.FC<SimpleQRScannerProps> = ({
 
   const handleScan = async (result: any) => {
     try {
-      console.log('QR Code detectado:', result);
-      const processedResult = await handleBarCodeScanned({ data: result });
-      onScanComplete(processedResult);
+      console.log('QR Code detectado (raw):', result);
+      console.log('Tipo:', typeof result);
+      
+      // Se result é um array, pegar o primeiro item
+      let data = result;
+      if (Array.isArray(result) && result.length > 0) {
+        data = result[0].rawValue || result[0].data || result[0];
+      }
+      
+      // Se result é um objeto, tentar pegar rawValue ou data
+      if (typeof result === 'object' && result !== null && !Array.isArray(result)) {
+        data = result.rawValue || result.data || JSON.stringify(result);
+      }
+      
+      console.log('Dados extraídos:', data);
+      
+      if (data && typeof data === 'string') {
+        const processedResult = await handleBarCodeScanned({ data });
+        onScanComplete(processedResult);
+      } else {
+        onError('QR Code sem dados válidos: ' + typeof data);
+      }
     } catch (error: any) {
       console.error('Erro ao processar QR Code:', error);
       onError(error.message || 'Erro ao processar QR Code');
