@@ -1,139 +1,110 @@
 import { useMemo, useState } from 'react';
-import { Scanner, IDetectedBarcode } from '@yudiel/react-qr-scanner';
-import { parseGS1 } from '../lib/gs1';
-import { supabase } from '../integrations/supabase/client';
+import { Scanner } from '@yudiel/react-qr-scanner';
 import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
-import { useToast } from '../hooks/use-toast';
-
-async function addTimelineEvent(kind: string, title: string, details: string) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Usuário não está logado');
-  const { error } = await supabase.from('timeline_events').insert({
-    user_id: user.id, 
-    kind, 
-    title, 
-    details, 
-    occurred_at: new Date().toISOString()
-  });
-  if (error) throw error;
-}
+import { ArrowLeft, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import { useAutoScanner } from '../hooks/useAutoScanner';
 
 export default function ScanMed() {
-  const [paused, setPaused] = useState(false);
-  const [last, setLast] = useState<any>(null);
-  const [err, setErr] = useState<string | null>(null);
   const [manualInput, setManualInput] = useState('');
   const formats = useMemo(() => (['data_matrix', 'qr_code'] as const), []);
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { handleScan, processManualCode, isProcessing, lastScan } = useAutoScanner();
 
-  async function onScan(res: IDetectedBarcode[]) {
-    if (!res?.length || paused) return;
-    setPaused(true); 
-    setTimeout(() => setPaused(false), 1500);
-
-    const code = res[0];
-    console.log('Código escaneado:', code);
+  const renderScanResult = () => {
+    if (!lastScan) return null;
     
-    try {
-      setErr(null);
-      
-      if (code.format === 'data_matrix') {
-        // Parse GS1 DataMatrix
-        const p = parseGS1(code.rawValue || '');
-        const details = [
-          p.gtin && `GTIN: ${p.gtin}`,
-          p.expiry && `Validade: ${p.expiry}`,
-          p.lot && `Lote: ${p.lot}`,
-          p.serial && `Série: ${p.serial}`,
-          p.anvisa && `Registro ANVISA: ${p.anvisa}`
-        ].filter(Boolean).join('\n');
-        
-        await addTimelineEvent('med_scan', 'Medicamento escaneado', details || (p.raw ?? ''));
-        setLast({ format: code.format, parsed: p });
-        
-        toast({
-          title: "Medicamento registrado",
-          description: "Dados do medicamento foram salvos na timeline",
-        });
-      } else if (code.format === 'qr_code') {
-        // Handle QR code (likely a URL)
-        const url = code.rawValue || '';
-        if (url.startsWith('http')) {
-          // Open URL in new tab
-          window.open(url, '_blank', 'noopener,noreferrer');
-          await addTimelineEvent('med_qr', 'Link de bula acessado', `URL: ${url}`);
-          setLast({ format: code.format, url });
-          
-          toast({
-            title: "Link de bula aberto",
-            description: "O link foi registrado na timeline",
-          });
-        } else {
-          // Try to parse as GS1 if it's not a URL
-          const p = parseGS1(url);
-          const details = [
-            p.gtin && `GTIN: ${p.gtin}`,
-            p.expiry && `Validade: ${p.expiry}`,
-            p.lot && `Lote: ${p.lot}`,
-            p.serial && `Série: ${p.serial}`,
-            p.anvisa && `Registro ANVISA: ${p.anvisa}`
-          ].filter(Boolean).join('\n');
-          
-          await addTimelineEvent('med_scan', 'Medicamento escaneado (QR)', details || url);
-          setLast({ format: code.format, parsed: p });
-          
-          toast({
-            title: "Medicamento registrado",
-            description: "Dados do medicamento foram salvos na timeline",
-          });
-        }
-      }
-    } catch (e: any) {
-      const errorMsg = e?.message || String(e);
-      setErr(errorMsg);
-      toast({
-        title: "Erro ao processar código",
-        description: errorMsg,
-        variant: "destructive",
-      });
+    if (lastScan.type === 'url') {
+      return (
+        <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2 text-blue-700 dark:text-blue-300">
+              <ExternalLink className="h-5 w-5" />
+              Link Processado Automaticamente
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm">
+              <p><strong>URL:</strong> {lastScan.data.url}</p>
+              {lastScan.data.extracted?.name && (
+                <p><strong>Nome:</strong> {lastScan.data.extracted.name}</p>
+              )}
+              {lastScan.data.extracted?.activeIngredient && (
+                <p><strong>Princípio Ativo:</strong> {lastScan.data.extracted.activeIngredient}</p>
+              )}
+              {lastScan.data.extracted?.manufacturer && (
+                <p><strong>Fabricante:</strong> {lastScan.data.extracted.manufacturer}</p>
+              )}
+              {lastScan.data.extractionError && (
+                <p className="text-amber-600 dark:text-amber-400">
+                  <strong>Aviso:</strong> Link aberto, mas houve erro na extração automática de dados
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      );
     }
-  }
+    
+    if (lastScan.type === 'gs1') {
+      return (
+        <Card className="border-green-200 bg-green-50 dark:bg-green-950/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2 text-green-700 dark:text-green-300">
+              <CheckCircle className="h-5 w-5" />
+              Medicamento Registrado Automaticamente
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm">
+              {lastScan.data.parsed.gtin && (
+                <p><strong>GTIN:</strong> {lastScan.data.parsed.gtin}</p>
+              )}
+              {lastScan.data.parsed.expiry && (
+                <p><strong>Validade:</strong> {lastScan.data.parsed.expiry}</p>
+              )}
+              {lastScan.data.parsed.lot && (
+                <p><strong>Lote:</strong> {lastScan.data.parsed.lot}</p>
+              )}
+              {lastScan.data.parsed.serial && (
+                <p><strong>Série:</strong> {lastScan.data.parsed.serial}</p>
+              )}
+              {lastScan.data.parsed.anvisa && (
+                <p><strong>Registro ANVISA:</strong> {lastScan.data.parsed.anvisa}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+    
+    if (lastScan.type === 'error') {
+      return (
+        <Card className="border-red-200 bg-red-50 dark:bg-red-950/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2 text-red-700 dark:text-red-300">
+              <AlertCircle className="h-5 w-5" />
+              Erro no Processamento
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-red-600 dark:text-red-400">{lastScan.error}</p>
+          </CardContent>
+        </Card>
+      );
+    }
+    
+    return null;
+  };
 
   const handleManualScan = async () => {
     if (!manualInput.trim()) return;
     
-    try {
-      setErr(null);
-      const p = parseGS1(manualInput.trim());
-      const details = [
-        p.gtin && `GTIN: ${p.gtin}`,
-        p.expiry && `Validade: ${p.expiry}`,
-        p.lot && `Lote: ${p.lot}`,
-        p.serial && `Série: ${p.serial}`,
-        p.anvisa && `Registro ANVISA: ${p.anvisa}`
-      ].filter(Boolean).join('\n');
-      
-      await addTimelineEvent('med_scan', 'Medicamento escaneado (manual)', details || manualInput.trim());
-      setLast({ format: 'data_matrix', parsed: p });
+    const result = await processManualCode(manualInput.trim());
+    if (result && result.type !== 'error') {
       setManualInput('');
-      
-      toast({
-        title: "Medicamento registrado",
-        description: "Dados do medicamento foram salvos na timeline",
-      });
-    } catch (e: any) {
-      const errorMsg = e?.message || String(e);
-      setErr(errorMsg);
-      toast({
-        title: "Erro ao processar código",
-        description: errorMsg,
-        variant: "destructive",
-      });
     }
   };
 
@@ -152,45 +123,31 @@ export default function ScanMed() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Scanner de Códigos</CardTitle>
+          <CardTitle>Scanner Automático de Códigos</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Aponte a câmera para o código. O processamento será automático e silencioso.
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="relative">
             <Scanner
-              onScan={onScan}
-              onError={(e) => setErr(String(e))}
+              onScan={handleScan}
+              onError={(e) => console.error('Scanner error:', e)}
               formats={['data_matrix', 'qr_code']}
-              paused={paused}
+              paused={isProcessing}
               constraints={{ facingMode: 'environment' }}
               components={{ torch: true, zoom: true, finder: true }}
-              scanDelay={150}
+              scanDelay={100}
               allowMultiple={false}
             />
-            {paused && (
+            {isProcessing && (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
-                <div className="text-white text-lg">Processando...</div>
+                <div className="text-white text-lg">Processando automaticamente...</div>
               </div>
             )}
           </div>
 
-          {err && (
-            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-              <p className="text-destructive font-medium">Erro: {err}</p>
-            </div>
-          )}
-
-          {last && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Último Código Escaneado</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <pre className="bg-muted p-3 rounded-lg text-sm whitespace-pre-wrap overflow-auto">
-                  {JSON.stringify(last, null, 2)}
-                </pre>
-              </CardContent>
-            </Card>
-          )}
+          {renderScanResult()}
         </CardContent>
       </Card>
 
