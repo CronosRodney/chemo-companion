@@ -129,6 +129,12 @@ export const useQRScanner = () => {
 
   const parseQRData = async (data: string): Promise<ParsedQRData | null> => {
     try {
+      // Validar se data é uma string válida
+      if (!data || typeof data !== 'string') {
+        console.log('Dados do QR Code inválidos:', data);
+        return null;
+      }
+      
       // Tentar fazer parse como JSON
       const parsed = JSON.parse(data);
       
@@ -144,8 +150,8 @@ export const useQRScanner = () => {
         };
       }
     } catch (error) {
-      // Se não for JSON, tentar como URL
-      if (data.startsWith('http')) {
+      // Se não for JSON, validar se é string antes de verificar se é URL
+      if (typeof data === 'string' && data.startsWith('http')) {
         try {
           const response = await fetch(data);
           const jsonData = await response.json();
@@ -304,6 +310,11 @@ export const useQRScanner = () => {
     setLoading(true);
 
     try {
+      // Validar se data é válido
+      if (!data || typeof data !== 'string') {
+        throw new Error('Dados do QR Code inválidos');
+      }
+      
       const parsedData = await parseQRData(data);
       
       if (!parsedData) {
