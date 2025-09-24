@@ -105,7 +105,7 @@ const Home = () => {
             variant="hero" 
             size="xxl" 
             className="h-24 flex-col gap-3 group"
-            onClick={() => navigate('/scanner')}
+            onClick={() => navigate('/events')}
           >
             <Plus className="h-8 w-8 transition-transform group-hover:scale-110" />
             <span className="text-base font-bold">Registrar</span>

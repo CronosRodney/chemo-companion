@@ -14,8 +14,10 @@ import {
   Eye
 } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Share = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'pdf' | 'link'>('pdf');
   const [shareLinks] = useState([
     {
@@ -49,7 +51,7 @@ const Share = () => {
       <div className="mx-auto max-w-md space-y-6 pt-8">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-semibold">Compartilhar</h1>

@@ -7,7 +7,9 @@ import Home from "./pages/Home";
 import QRScanner from "./pages/QRScanner";
 import Timeline from "./pages/Timeline";
 import Profile from "./pages/Profile";
+import EditableProfile from "./pages/EditableProfile";
 import Share from "./pages/Share";
+import Events from "./pages/Events";
 import Navigation from "./components/Navigation";
 import NotFound from "./pages/NotFound";
 
@@ -24,8 +26,9 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/scanner" element={<QRScanner />} />
             <Route path="/timeline" element={<Timeline />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile" element={<EditableProfile />} />
             <Route path="/share" element={<Share />} />
+            <Route path="/events" element={<Events />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

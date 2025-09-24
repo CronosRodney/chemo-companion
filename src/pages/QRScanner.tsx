@@ -1,12 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { QrCode, ArrowLeft, CheckCircle, Building2, Pill, AlertTriangle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { QRCodeScanner } from "@/components/QRCodeScanner";
 import { useToast } from "@/hooks/use-toast";
 import { ParsedQRData, ClinicData, MedicationData } from "@/hooks/useQRScanner";
 
 const QRScanner = () => {
+  const navigate = useNavigate();
   const [scanResult, setScanResult] = useState<ParsedQRData | null>(null);
   const [showScanner, setShowScanner] = useState(false);
   const { toast } = useToast();
@@ -181,7 +183,7 @@ const QRScanner = () => {
     <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 p-4">
       <div className="mx-auto max-w-md space-y-6 pt-8">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-semibold">Escanear QR Code</h1>

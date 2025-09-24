@@ -34,7 +34,7 @@ const Timeline = () => {
   const [events, setEvents] = useState<TimelineEvent[]>([]);
 
   useEffect(() => {
-    const loadUserTimeline = async () => {
+  const loadUserTimeline = async () => {
       try {
         // Load user medications with clinic info
         const { data: userMedications } = await supabase
@@ -52,6 +52,13 @@ const Timeline = () => {
             clinics (clinic_name, city, state)
           `);
 
+        // Load user events
+        const { data: userEvents } = await supabase
+          .from('user_events')
+          .select('*')
+          .order('event_date', { ascending: false })
+          .order('event_time', { ascending: false });
+
         const medicationEvents: TimelineEvent[] = (userMedications || []).map(med => {
           // Find associated clinic connection (assuming first one for now)
           const clinicConnection = clinicConnections?.[0];
@@ -68,6 +75,17 @@ const Timeline = () => {
             medication: med.medications
           };
         });
+
+        // Convert user events to timeline events
+        const patientEvents: TimelineEvent[] = (userEvents || []).map(event => ({
+          id: event.id,
+          type: event.event_type === 'adverse_event' ? 'adverse_event' as const : 'adverse_event' as const,
+          date: event.event_date,
+          time: event.event_time,
+          title: event.title,
+          details: event.description || '',
+          severity: event.severity
+        }));
 
         // Add some sample events for now
         const sampleEvents: TimelineEvent[] = [
@@ -100,7 +118,7 @@ const Timeline = () => {
           }
         ];
 
-        const allEvents = [...medicationEvents, ...sampleEvents];
+        const allEvents = [...medicationEvents, ...patientEvents, ...sampleEvents];
         allEvents.sort((a, b) => new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime());
         setEvents(allEvents);
       } catch (error) {
@@ -174,7 +192,27 @@ const Timeline = () => {
           </Button>
           <h1 className="text-xl font-semibold">Linha do Tempo</h1>
           <div className="ml-auto">
-            <Button variant="outline" size="icon">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => {
+                // Toggle between showing all and filtering current month
+                const currentMonth = new Date().getMonth();
+                const currentYear = new Date().getFullYear();
+                const isCurrentlyFiltered = filter.includes('month');
+                
+                if (isCurrentlyFiltered) {
+                  setFilter('all');
+                } else {
+                  // Filter events from current month
+                  const filteredEvents = events.filter(event => {
+                    const eventDate = new Date(event.date);
+                    return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear;
+                  });
+                  setFilter('month');
+                }
+              }}
+            >
               <Filter className="h-4 w-4" />
             </Button>
           </div>
@@ -320,6 +358,7 @@ const Timeline = () => {
           variant="medical"
           size="icon"
           className="fixed bottom-20 right-4 w-14 h-14 rounded-full shadow-lg"
+          onClick={() => navigate('/events')}
         >
           <Calendar className="h-6 w-6" />
         </Button>
