@@ -168,7 +168,7 @@ const QRScanner = () => {
               )}
               
               <div className="pt-4">
-                <Button variant="medical" className="w-full" size="lg">
+                <Button className="w-full bg-success text-success-foreground hover:bg-success/90" size="lg">
                   Confirmar e Salvar
                 </Button>
               </div>
@@ -192,9 +192,9 @@ const QRScanner = () => {
         {/* QR Scanner Options */}
         <div className="grid grid-cols-2 gap-4">
           <Button
-            variant="luxury"
-            size="xxl"
-            className="h-32 flex-col gap-3 group"
+            variant="default"
+            size="lg"
+            className="h-32 flex-col gap-3 group bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={() => setShowScanner(true)}
           >
             <QrCode className="h-10 w-10 transition-transform group-hover:scale-110" />
@@ -205,9 +205,9 @@ const QRScanner = () => {
           </Button>
           
           <Button
-            variant="medical"
-            size="xxl"
-            className="h-32 flex-col gap-3 group"
+            variant="outline"
+            size="lg"
+            className="h-32 flex-col gap-3 group border-secondary-accent text-secondary-accent hover:bg-secondary-accent/10"
             onClick={() => setShowScanner(true)}
           >
             <Pill className="h-10 w-10 transition-transform group-hover:scale-110" />
@@ -266,7 +266,7 @@ const QRScanner = () => {
 
         {/* Demo & Actions */}
         <div className="space-y-3">
-          <div className="luxury-card bg-warning/10 border-warning/20">
+          <Card className="bg-warning/10 border-warning/20">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <AlertTriangle className="h-5 w-5 text-warning" />
@@ -276,7 +276,7 @@ const QRScanner = () => {
                 </div>
               </div>
             </CardContent>
-          </div>
+          </Card>
           
           <Button 
             variant="outline" 
