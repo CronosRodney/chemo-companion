@@ -134,6 +134,42 @@ export const useQRScanner = () => {
         console.log('Dados do QR Code inválidos:', data);
         return null;
       }
+
+      console.log('Tentando fazer parse dos dados:', data);
+      
+      // Verificar se é um QR code de demonstração
+      if (data.includes('demo') || data.includes('teste') || data.includes('example')) {
+        return {
+          type: 'clinic',
+          data: {
+            clinic_name: 'Clínica de Demonstração',
+            legal_name: 'Clínica Demo LTDA',
+            cnpj: '12.345.678/0001-90',
+            cnes: '1234567',
+            address: {
+              street: 'Rua Demo',
+              number: '123',
+              district: 'Centro',
+              city: 'São Paulo',
+              state: 'SP',
+              zip: '01234-567'
+            },
+            contacts: {
+              phone: '(11) 1234-5678',
+              whatsapp: '(11) 91234-5678',
+              email: 'contato@clinicademo.com.br'
+            },
+            hours: 'Segunda a Sexta: 8h às 18h',
+            responsible: {
+              name: 'Dr. João Demo',
+              role: 'Médico Responsável',
+              council: 'CRM',
+              council_uf: 'SP',
+              registration: '123456'
+            }
+          } as ClinicData
+        };
+      }
       
       // Tentar fazer parse como JSON
       const parsed = JSON.parse(data);
@@ -150,6 +186,8 @@ export const useQRScanner = () => {
         };
       }
     } catch (error) {
+      console.log('Erro no parse JSON, tentando como URL:', error);
+      
       // Se não for JSON, validar se é string antes de verificar se é URL
       if (typeof data === 'string' && data.startsWith('http')) {
         try {
@@ -173,6 +211,7 @@ export const useQRScanner = () => {
       }
     }
     
+    console.log('Formato não reconhecido. Dados recebidos:', data);
     return null;
   };
 
@@ -318,7 +357,9 @@ export const useQRScanner = () => {
       const parsedData = await parseQRData(data);
       
       if (!parsedData) {
-        throw new Error('Formato de QR Code não reconhecido');
+        throw new Error(
+          `Formato de QR Code não reconhecido.\n\nDados lidos: "${data}"\n\nFormatos aceitos:\n- JSON com {"type": "clinic", "data": {...}}\n- JSON com {"type": "medication", "data": {...}}\n- URL que retorna dados no formato JSON\n- QR codes com palavras "demo", "teste" ou "example" para demonstração`
+        );
       }
 
       if (parsedData.type === 'clinic') {
