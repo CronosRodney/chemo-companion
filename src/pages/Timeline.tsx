@@ -1,8 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Pill, Calendar, FileText, AlertTriangle, Filter } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Pill, Calendar, FileText, AlertTriangle, Filter, MapPin } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TimelineEvent {
   id: string;
@@ -13,58 +15,113 @@ interface TimelineEvent {
   details: string;
   status?: 'completed' | 'missed' | 'scheduled';
   severity?: number;
+  clinic?: {
+    clinic_name: string;
+    city: string;
+    state: string;
+  };
+  medication?: {
+    name: string;
+    batch_number: string;
+    expiry_date: string;
+    manufacturer: string;
+  };
 }
 
 const Timeline = () => {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState<string>('all');
+  const [events, setEvents] = useState<TimelineEvent[]>([]);
 
-  const events: TimelineEvent[] = [
-    {
-      id: '1',
-      type: 'medication',
-      date: '2025-01-19',
-      time: '20:00',
-      title: 'Oxaliplatina 85mg/m²',
-      details: 'Ciclo 3 - FOLFOX | Lote: L2025-09-A',
-      status: 'completed'
-    },
-    {
-      id: '2',
-      type: 'adverse_event',
-      date: '2025-01-19',
-      time: '14:30',
-      title: 'Náusea leve',
-      details: 'Grau 1 - Controlada com Ondansetrona',
-      severity: 1
-    },
-    {
-      id: '3',
-      type: 'consultation',
-      date: '2025-01-15',
-      time: '10:00',
-      title: 'Consulta Oncológica',
-      details: 'Dr. Maria Santos - Avaliação do Ciclo 2',
-      status: 'completed'
-    },
-    {
-      id: '4',
-      type: 'exam',
-      date: '2025-01-10',
-      time: '08:00',
-      title: 'Hemograma Completo',
-      details: 'Lab Excelência - Resultados normais',
-      status: 'completed'
-    },
-    {
-      id: '5',
-      type: 'medication',
-      date: '2025-01-05',
-      time: '20:00',
-      title: '5-Fluoruracil 400mg/m²',
-      details: 'Ciclo 2 - FOLFOX | Via oral',
-      status: 'missed'
-    }
-  ];
+  useEffect(() => {
+    const loadUserTimeline = async () => {
+      try {
+        // Load user medications with clinic info
+        const { data: userMedications } = await supabase
+          .from('user_medications')
+          .select(`
+            *,
+            medications (name, batch_number, expiry_date, manufacturer)
+          `);
+
+        // Load user clinic connections
+        const { data: clinicConnections } = await supabase
+          .from('user_clinic_connections')
+          .select(`
+            *,
+            clinics (clinic_name, city, state)
+          `);
+
+        const medicationEvents: TimelineEvent[] = (userMedications || []).map(med => {
+          // Find associated clinic connection (assuming first one for now)
+          const clinicConnection = clinicConnections?.[0];
+          
+          return {
+            id: med.id,
+            type: 'medication' as const,
+            date: new Date(med.scanned_at).toISOString().split('T')[0],
+            time: new Date(med.scanned_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            title: med.medications?.name || 'Medicamento',
+            details: `${med.dose || ''} | ${med.frequency || ''} | Lote: ${med.medications?.batch_number || 'N/A'}`,
+            status: 'completed' as const,
+            clinic: clinicConnection?.clinics,
+            medication: med.medications
+          };
+        });
+
+        // Add some sample events for now
+        const sampleEvents: TimelineEvent[] = [
+          {
+            id: 'sample1',
+            type: 'adverse_event',
+            date: '2025-01-19',
+            time: '14:30',
+            title: 'Náusea leve',
+            details: 'Grau 1 - Controlada com Ondansetrona',
+            severity: 1
+          },
+          {
+            id: 'sample2',
+            type: 'consultation',
+            date: '2025-01-15',
+            time: '10:00',
+            title: 'Consulta Oncológica',
+            details: 'Dr. Maria Santos - Avaliação do Ciclo 2',
+            status: 'completed'
+          },
+          {
+            id: 'sample3',
+            type: 'exam',
+            date: '2025-01-10',
+            time: '08:00',
+            title: 'Hemograma Completo',
+            details: 'Lab Excelência - Resultados normais',
+            status: 'completed'
+          }
+        ];
+
+        const allEvents = [...medicationEvents, ...sampleEvents];
+        allEvents.sort((a, b) => new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime());
+        setEvents(allEvents);
+      } catch (error) {
+        console.error('Error loading timeline:', error);
+        // Fallback to sample data
+        setEvents([
+          {
+            id: 'sample1',
+            type: 'medication',
+            date: '2025-01-19',
+            time: '20:00',
+            title: 'Oxaliplatina 85mg/m²',
+            details: 'Ciclo 3 - FOLFOX | Lote: L2025-09-A',
+            status: 'completed'
+          }
+        ]);
+      }
+    };
+
+    loadUserTimeline();
+  }, []);
 
   const getEventIcon = (type: string) => {
     switch (type) {
@@ -112,7 +169,7 @@ const Timeline = () => {
       <div className="mx-auto max-w-md space-y-6 pt-8">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-semibold">Linha do Tempo</h1>
@@ -190,6 +247,24 @@ const Timeline = () => {
                         <div>
                           <h3 className="font-semibold text-sm">{event.title}</h3>
                           <p className="text-xs text-muted-foreground">{event.details}</p>
+                          {event.clinic && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <MapPin className="h-3 w-3 text-muted-foreground" />
+                              <p className="text-xs text-muted-foreground">
+                                {event.clinic.clinic_name} - {event.clinic.city}, {event.clinic.state}
+                              </p>
+                            </div>
+                          )}
+                          {event.medication && (
+                            <div className="mt-1 space-y-1">
+                              <p className="text-xs text-muted-foreground">
+                                Fabricante: {event.medication.manufacturer}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Validade: {new Date(event.medication.expiry_date).toLocaleDateString('pt-BR')}
+                              </p>
+                            </div>
+                          )}
                         </div>
                         <div className="text-right text-xs text-muted-foreground">
                           <p>{formatDate(event.date)}</p>

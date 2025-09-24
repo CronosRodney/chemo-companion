@@ -2,8 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bell, QrCode, Plus, Share2, Pill, Calendar, AlertTriangle, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
+  const navigate = useNavigate();
   const nextReminders = [
     { id: 1, medication: "Oxaliplatina", time: "14:00", type: "IV", cycle: "Ciclo 3 - FOLFOX", urgent: true },
     { id: 2, medication: "5-Fluoruracil", time: "21:30", type: "Oral", cycle: "Ciclo 3 - FOLFOX", urgent: false },
@@ -90,19 +92,39 @@ const Home = () => {
 
         {/* Main Actions */}
         <div className="grid grid-cols-2 gap-6">
-          <Button variant="luxury" size="xxl" className="h-24 flex-col gap-3 group">
+          <Button 
+            variant="luxury" 
+            size="xxl" 
+            className="h-24 flex-col gap-3 group"
+            onClick={() => navigate('/scanner')}
+          >
             <QrCode className="h-8 w-8 transition-transform group-hover:scale-110" />
             <span className="text-base font-bold">Escanear QR</span>
           </Button>
-          <Button variant="hero" size="xxl" className="h-24 flex-col gap-3 group">
+          <Button 
+            variant="hero" 
+            size="xxl" 
+            className="h-24 flex-col gap-3 group"
+            onClick={() => navigate('/scanner')}
+          >
             <Plus className="h-8 w-8 transition-transform group-hover:scale-110" />
             <span className="text-base font-bold">Registrar</span>
           </Button>
-          <Button variant="medical" size="xxl" className="h-24 flex-col gap-3 group">
+          <Button 
+            variant="medical" 
+            size="xxl" 
+            className="h-24 flex-col gap-3 group"
+            onClick={() => navigate('/timeline')}
+          >
             <Clock className="h-8 w-8 transition-transform group-hover:scale-110" />
             <span className="text-base font-bold">Timeline</span>
           </Button>
-          <Button variant="outline" size="xxl" className="h-24 flex-col gap-3 group glass-effect">
+          <Button 
+            variant="outline" 
+            size="xxl" 
+            className="h-24 flex-col gap-3 group glass-effect"
+            onClick={() => navigate('/share')}
+          >
             <Share2 className="h-8 w-8 transition-transform group-hover:scale-110" />
             <span className="text-base font-bold">Compartilhar</span>
           </Button>
