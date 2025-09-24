@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AppProvider } from "./contexts/AppContext";
 import Home from "./pages/Home";
 import QRScanner from "./pages/QRScanner";
 import Timeline from "./pages/Timeline";
@@ -21,19 +22,21 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <div className="relative">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/scanner" element={<QRScanner />} />
-            <Route path="/timeline" element={<Timeline />} />
-            <Route path="/profile" element={<EditableProfile />} />
-            <Route path="/share" element={<Share />} />
-            <Route path="/events" element={<Events />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Navigation />
-        </div>
+        <AppProvider>
+          <div className="relative">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/scanner" element={<QRScanner />} />
+              <Route path="/timeline" element={<Timeline />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/edit" element={<EditableProfile />} />
+              <Route path="/share" element={<Share />} />
+              <Route path="/events" element={<Events />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Navigation />
+          </div>
+        </AppProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

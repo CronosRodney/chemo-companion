@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface FeelingLoggerProps {
-  onFeelingLogged?: () => void;
+  onFeelingLogged?: (rating: number) => void;
 }
 
 export const FeelingLogger = ({ onFeelingLogged }: FeelingLoggerProps) => {
@@ -48,7 +48,7 @@ export const FeelingLogger = ({ onFeelingLogged }: FeelingLoggerProps) => {
         description: `Registrado como "${feelingLabels[rating as keyof typeof feelingLabels]}" na timeline`
       });
 
-      onFeelingLogged?.();
+      onFeelingLogged?.(rating);
     } catch (error) {
       console.error('Error logging feeling:', error);
       toast({

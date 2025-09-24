@@ -4,54 +4,24 @@ import { Badge } from "@/components/ui/badge";
 import { Bell, QrCode, Plus, Share2, Pill, Calendar, AlertTriangle, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { ReminderManager } from "@/components/ReminderManager";
 import { FeelingLogger } from "@/components/FeelingLogger";
-import { useAuth } from "@/hooks/useAuth";
+import { useAppContext } from "@/contexts/AppContext";
+import { useToast } from "@/hooks/use-toast";
 
 const Home = () => {
   const navigate = useNavigate();
-  const { user, profile, loading } = useAuth();
+  const { toast } = useToast();
+  const { 
+    profile, 
+    loading, 
+    reminders, 
+    stats, 
+    updateReminders,
+    logFeeling: contextLogFeeling 
+  } = useAppContext();
+  
   const [showReminderManager, setShowReminderManager] = useState(false);
-  const [nextReminders, setNextReminders] = useState([
-    { id: '1', medication: "Oxaliplatina", time: "14:00", type: "IV", cycle: "Ciclo 3 - FOLFOX", urgent: true },
-    { id: '2', medication: "5-Fluoruracil", time: "21:30", type: "Oral", cycle: "Ciclo 3 - FOLFOX", urgent: false },
-  ]);
-
-  const [quickStats, setQuickStats] = useState({
-    adherence: 95,
-    nextAppointment: "2025-01-15",
-    currentCycle: "3 de 12",
-  });
-
-  useEffect(() => {
-    if (user) {
-      loadUserData();
-    }
-  }, [user]);
-
-  const loadUserData = async () => {
-    try {
-      if (!user) return;
-      
-      // Calculate real adherence based on user events
-      const { data: events } = await supabase
-        .from('user_events')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('event_type', 'medication')
-        .gte('event_date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
-
-      const adherenceRate = events && events.length > 0 ? Math.round((events.length / 30) * 100) : 95;
-      
-      setQuickStats(prev => ({
-        ...prev,
-        adherence: adherenceRate
-      }));
-    } catch (error) {
-      console.error('Error loading user data:', error);
-    }
-  };
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -60,9 +30,25 @@ const Home = () => {
     return "Boa noite";
   };
 
+  const handleFeelingLogged = async (rating: number) => {
+    try {
+      await contextLogFeeling(rating);
+      toast({
+        title: "Humor registrado",
+        description: "Registrado com sucesso na timeline"
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível registrar o humor",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p>Carregando...</p>
@@ -105,7 +91,7 @@ const Home = () => {
             </Button>
           </div>
           <div className="space-y-4">
-            {nextReminders.map((reminder) => (
+            {reminders.map((reminder) => (
               <div key={reminder.id} className={`glass-effect p-4 rounded-xl border relative overflow-hidden ${reminder.urgent ? 'border-primary/30' : 'border-accent/30'}`}>
                 {reminder.urgent && <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary-glow/5"></div>}
                 <div className="relative flex items-center gap-4">
@@ -130,10 +116,8 @@ const Home = () => {
             {showReminderManager && (
               <div className="pt-4 border-t border-accent/30">
                 <ReminderManager 
-                  reminders={nextReminders}
-                  onUpdate={(updatedReminders) => {
-                    setNextReminders(updatedReminders);
-                  }}
+                  reminders={reminders}
+                  onUpdate={updateReminders}
                 />
               </div>
             )}
@@ -145,21 +129,21 @@ const Home = () => {
           <div className="luxury-card p-6 text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-success/10"></div>
             <div className="relative">
-              <div className="text-3xl font-bold text-success mb-1 text-shadow">{quickStats.adherence}%</div>
+              <div className="text-3xl font-bold text-success mb-1 text-shadow">{stats.adherence}%</div>
               <div className="text-xs text-muted-foreground font-medium">Adesão</div>
             </div>
           </div>
           <div className="luxury-card p-6 text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary-glow/10"></div>
             <div className="relative">
-              <div className="text-lg font-bold text-primary mb-1 text-shadow">{quickStats.currentCycle}</div>
+              <div className="text-lg font-bold text-primary mb-1 text-shadow">{stats.currentCycle}</div>
               <div className="text-xs text-muted-foreground font-medium">Ciclos</div>
             </div>
           </div>
           <div className="luxury-card p-6 text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-secondary-accent/10"></div>
             <div className="relative">
-              <div className="text-lg font-bold text-secondary-accent mb-1 text-shadow">15 Jan</div>
+              <div className="text-lg font-bold text-secondary-accent mb-1 text-shadow">{stats.nextAppointment}</div>
               <div className="text-xs text-muted-foreground font-medium">Consulta</div>
             </div>
           </div>
@@ -208,7 +192,7 @@ const Home = () => {
         {/* Quick Health Check */}
         <div className="luxury-card p-6">
           <h3 className="font-bold text-card-foreground mb-6 text-xl text-shadow">Como você está hoje?</h3>
-          <FeelingLogger />
+          <FeelingLogger onFeelingLogged={handleFeelingLogged} />
           <p className="text-sm text-muted-foreground text-center font-medium">
             1 = Muito mal | 5 = Excelente
           </p>

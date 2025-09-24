@@ -2,9 +2,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Pill, Calendar, FileText, AlertTriangle, Filter, MapPin } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useAppContext } from "@/contexts/AppContext";
 
 interface TimelineEvent {
   id: string;
@@ -30,143 +30,32 @@ interface TimelineEvent {
 
 const Timeline = () => {
   const navigate = useNavigate();
+  const { events, loading } = useAppContext();
   const [filter, setFilter] = useState<string>('all');
-  const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [showDateFilter, setShowDateFilter] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-
-  useEffect(() => {
-  const loadUserTimeline = async () => {
-      try {
-        // Load user medications with clinic info
-        const { data: userMedications } = await supabase
-          .from('user_medications')
-          .select(`
-            *,
-            medications (name, batch_number, expiry_date, manufacturer)
-          `);
-
-        // Load user clinic connections
-        const { data: clinicConnections } = await supabase
-          .from('user_clinic_connections')
-          .select(`
-            *,
-            clinics (clinic_name, city, state)
-          `);
-
-        // Load user events
-        const { data: userEvents } = await supabase
-          .from('user_events')
-          .select('*')
-          .order('event_date', { ascending: false })
-          .order('event_time', { ascending: false });
-
-        const medicationEvents: TimelineEvent[] = (userMedications || []).map(med => {
-          // Find associated clinic connection (assuming first one for now)
-          const clinicConnection = clinicConnections?.[0];
-          
-          return {
-            id: med.id,
-            type: 'medication' as const,
-            date: new Date(med.scanned_at).toISOString().split('T')[0],
-            time: new Date(med.scanned_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-            title: med.medications?.name || 'Medicamento',
-            details: `${med.dose || ''} | ${med.frequency || ''} | Lote: ${med.medications?.batch_number || 'N/A'}`,
-            status: 'completed' as const,
-            clinic: clinicConnection?.clinics,
-            medication: med.medications
-          };
-        });
-
-        // Convert user events to timeline events
-        const patientEvents: TimelineEvent[] = (userEvents || []).map(event => ({
-          id: event.id,
-          type: event.event_type === 'adverse_event' ? 'adverse_event' as const : 'adverse_event' as const,
-          date: event.event_date,
-          time: event.event_time,
-          title: event.title,
-          details: event.description || '',
-          severity: event.severity
-        }));
-
-        // Add some sample events for now
-        const sampleEvents: TimelineEvent[] = [
-          {
-            id: 'sample1',
-            type: 'adverse_event',
-            date: '2025-01-19',
-            time: '14:30',
-            title: 'Náusea leve',
-            details: 'Grau 1 - Controlada com Ondansetrona',
-            severity: 1
-          },
-          {
-            id: 'sample2',
-            type: 'consultation',
-            date: '2025-01-15',
-            time: '10:00',
-            title: 'Consulta Oncológica',
-            details: 'Dr. Maria Santos - Avaliação do Ciclo 2',
-            status: 'completed'
-          },
-          {
-            id: 'sample3',
-            type: 'exam',
-            date: '2025-01-10',
-            time: '08:00',
-            title: 'Hemograma Completo',
-            details: 'Lab Excelência - Resultados normais',
-            status: 'completed'
-          }
-        ];
-
-        const allEvents = [...medicationEvents, ...patientEvents, ...sampleEvents];
-        allEvents.sort((a, b) => new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime());
-        setEvents(allEvents);
-      } catch (error) {
-        console.error('Error loading timeline:', error);
-        // Fallback to sample data
-        setEvents([
-          {
-            id: 'sample1',
-            type: 'medication',
-            date: '2025-01-19',
-            time: '20:00',
-            title: 'Oxaliplatina 85mg/m²',
-            details: 'Ciclo 3 - FOLFOX | Lote: L2025-09-A',
-            status: 'completed'
-          }
-        ]);
-      }
-    };
-
-    loadUserTimeline();
-  }, []);
 
   const getEventIcon = (type: string) => {
     switch (type) {
       case 'medication': return <Pill className="h-4 w-4" />;
-      case 'consultation': return <Calendar className="h-4 w-4" />;
-      case 'exam': return <FileText className="h-4 w-4" />;
-      case 'adverse_event': return <AlertTriangle className="h-4 w-4" />;
+      case 'appointment': return <Calendar className="h-4 w-4" />;
+      case 'mood': return <FileText className="h-4 w-4" />;
+      case 'adverse': return <AlertTriangle className="h-4 w-4" />;
       default: return <Calendar className="h-4 w-4" />;
     }
   };
 
-  const getEventColor = (type: string, status?: string, severity?: number) => {
-    if (type === 'adverse_event') {
+  const getEventColor = (type: string, severity?: number) => {
+    if (type === 'adverse') {
       if (severity && severity >= 3) return 'text-destructive bg-destructive/10';
       if (severity && severity >= 2) return 'text-warning bg-warning/10';
       return 'text-orange-600 bg-orange-100';
     }
     
-    if (status === 'missed') return 'text-destructive bg-destructive/10';
-    if (status === 'completed') return 'text-success bg-success/10';
-    
     switch (type) {
       case 'medication': return 'text-primary bg-primary/10';
-      case 'consultation': return 'text-secondary-accent bg-secondary/20';
-      case 'exam': return 'text-purple-600 bg-purple-100';
+      case 'appointment': return 'text-secondary-accent bg-secondary/20';
+      case 'mood': return 'text-success bg-success/10';
       default: return 'text-muted-foreground bg-muted/50';
     }
   };
@@ -180,14 +69,35 @@ const Timeline = () => {
     });
   };
 
+  const getEventTypeLabel = (type: string) => {
+    switch (type) {
+      case 'medication': return 'Medicamento';
+      case 'appointment': return 'Consulta';
+      case 'mood': return 'Humor';
+      case 'adverse': return 'Efeito Adverso';
+      default: return 'Evento';
+    }
+  };
+
   const filteredEvents = filter === 'all' 
     ? events 
     : filter === 'date'
-    ? events.filter(event => event.date === selectedDate)
-    : events.filter(event => event.type === filter);
+    ? events.filter(event => event.event_date === selectedDate)
+    : events.filter(event => event.event_type === filter);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Carregando timeline...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 p-4 pb-20">
       <div className="mx-auto max-w-md space-y-6 pt-8">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -288,12 +198,12 @@ const Timeline = () => {
                 <div className="absolute left-6 top-12 w-0.5 h-8 bg-border"></div>
               )}
               
-              <Card className="shadow-md border-0 ml-0">
+              <Card className="luxury-card">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
                     {/* Event icon */}
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${getEventColor(event.type, event.status, event.severity)}`}>
-                      {getEventIcon(event.type)}
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${getEventColor(event.event_type, event.severity)}`}>
+                      {getEventIcon(event.event_type)}
                     </div>
 
                     {/* Event content */}
@@ -301,51 +211,29 @@ const Timeline = () => {
                       <div className="flex items-start justify-between">
                         <div>
                           <h3 className="font-semibold text-sm">{event.title}</h3>
-                          <p className="text-xs text-muted-foreground">{event.details}</p>
-                          {event.clinic && (
-                            <div className="flex items-center gap-1 mt-1">
-                              <MapPin className="h-3 w-3 text-muted-foreground" />
-                              <p className="text-xs text-muted-foreground">
-                                {event.clinic.clinic_name} - {event.clinic.city}, {event.clinic.state}
-                              </p>
-                            </div>
-                          )}
-                          {event.medication && (
-                            <div className="mt-1 space-y-1">
-                              <p className="text-xs text-muted-foreground">
-                                Fabricante: {event.medication.manufacturer}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Validade: {new Date(event.medication.expiry_date).toLocaleDateString('pt-BR')}
-                              </p>
-                            </div>
-                          )}
+                          <p className="text-xs text-muted-foreground">{event.description}</p>
                         </div>
                         <div className="text-right text-xs text-muted-foreground">
-                          <p>{formatDate(event.date)}</p>
-                          <p>{event.time}</p>
+                          <p>{formatDate(event.event_date)}</p>
+                          <p>{event.event_time}</p>
                         </div>
                       </div>
 
                       {/* Status badges */}
                       <div className="flex gap-2">
-                        {event.status && (
-                          <Badge
-                            variant={event.status === 'completed' ? 'default' : 
-                                   event.status === 'missed' ? 'destructive' : 'secondary'}
-                            className="text-xs"
-                          >
-                            {event.status === 'completed' ? 'Realizado' :
-                             event.status === 'missed' ? 'Perdido' : 'Agendado'}
-                          </Badge>
-                        )}
+                        <Badge variant="outline" className="text-xs">
+                          {getEventTypeLabel(event.event_type)}
+                        </Badge>
                         {event.severity && (
                           <Badge
-                            variant={event.severity >= 3 ? 'destructive' : 
-                                   event.severity >= 2 ? 'secondary' : 'outline'}
+                            variant={event.severity >= 4 ? 'default' : 
+                                   event.severity <= 2 ? 'destructive' : 'secondary'}
                             className="text-xs"
                           >
-                            Grau {event.severity}
+                            {event.event_type === 'mood' 
+                              ? `${event.severity}/5`
+                              : `Nível ${event.severity}`
+                            }
                           </Badge>
                         )}
                       </div>
@@ -359,7 +247,7 @@ const Timeline = () => {
 
         {/* Empty state */}
         {filteredEvents.length === 0 && (
-          <Card className="shadow-md border-0">
+          <Card className="luxury-card">
             <CardContent className="p-8 text-center">
               <Calendar className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
               <p className="text-muted-foreground">Nenhum evento encontrado</p>
@@ -370,15 +258,19 @@ const Timeline = () => {
           </Card>
         )}
 
-        {/* Floating Add Button */}
-        <Button
-          variant="medical"
-          size="icon"
-          className="fixed bottom-20 right-4 w-14 h-14 rounded-full shadow-lg"
-          onClick={() => navigate('/events')}
-        >
-          <Calendar className="h-6 w-6" />
-        </Button>
+        {/* Add Event Button */}
+        <Card className="luxury-card">
+          <CardContent className="p-4">
+            <Button 
+              onClick={() => navigate('/events')} 
+              className="w-full"
+              size="lg"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Adicionar Novo Evento
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
