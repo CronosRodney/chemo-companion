@@ -1,17 +1,127 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Alert, AlertDescription } from '../components/ui/alert';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import { 
+  ArrowLeft, 
+  CheckCircle, 
+  AlertCircle, 
+  ExternalLink, 
+  Camera, 
+  Settings,
+  Smartphone
+} from 'lucide-react';
 import { useAutoScanner } from '../hooks/useAutoScanner';
 
 export default function ScanMed() {
   const [manualInput, setManualInput] = useState('');
-  const formats = useMemo(() => (['data_matrix', 'qr_code'] as const), []);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { handleScan, processManualCode, isProcessing, lastScan } = useAutoScanner();
+
+  const handleCameraError = (error: any) => {
+    console.error('Scanner error:', error);
+    
+    if (error?.name === 'NotAllowedError' || error?.message?.includes('Permission denied')) {
+      setCameraError('permission');
+    } else if (error?.name === 'NotFoundError' || error?.message?.includes('No camera found')) {
+      setCameraError('notfound');
+    } else {
+      setCameraError('generic');
+    }
+  };
+
+  const renderCameraError = () => {
+    if (!cameraError) return null;
+
+    const errorMessages = {
+      permission: {
+        title: "Permissão da câmera negada",
+        description: "Para usar o scanner, você precisa permitir o acesso à câmera.",
+        instructions: [
+          "Clique no ícone de câmera na barra de endereço do navegador",
+          "Selecione 'Sempre permitir' para este site",
+          "Recarregue a página e tente novamente"
+        ]
+      },
+      notfound: {
+        title: "Câmera não encontrada",
+        description: "Não foi possível detectar uma câmera no seu dispositivo.",
+        instructions: [
+          "Verifique se sua câmera está conectada",
+          "Tente usar outro dispositivo com câmera",
+          "Use a entrada manual como alternativa"
+        ]
+      },
+      generic: {
+        title: "Erro na câmera",
+        description: "Ocorreu um problema ao acessar a câmera.",
+        instructions: [
+          "Feche outros aplicativos que podem estar usando a câmera",
+          "Recarregue a página",
+          "Use a entrada manual como alternativa"
+        ]
+      }
+    };
+
+    const error = errorMessages[cameraError as keyof typeof errorMessages];
+
+    return (
+      <Alert className="mb-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          <div className="space-y-3">
+            <div>
+              <p className="font-medium">{error.title}</p>
+              <p className="text-sm text-muted-foreground">{error.description}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium mb-2">Como resolver:</p>
+              <ol className="list-decimal list-inside space-y-1 text-sm">
+                {error.instructions.map((instruction, index) => (
+                  <li key={index}>{instruction}</li>
+                ))}
+              </ol>
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  setCameraError(null);
+                  window.location.reload();
+                }}
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                Tentar Novamente
+              </Button>
+              {cameraError === 'permission' && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    // Open browser settings (works in some browsers)
+                    if (navigator.permissions) {
+                      navigator.permissions.query({name: 'camera' as PermissionName})
+                        .then(() => {
+                          alert('Vá para as configurações do navegador e permita o acesso à câmera');
+                        });
+                    }
+                  }}
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Configurações
+                </Button>
+              )}
+            </div>
+          </div>
+        </AlertDescription>
+      </Alert>
+    );
+  };
 
   const renderScanResult = () => {
     if (!lastScan) return null;
@@ -121,31 +231,38 @@ export default function ScanMed() {
         <h1 className="text-2xl font-semibold">Escanear Medicamento</h1>
       </div>
 
+      {renderCameraError()}
+
       <Card>
         <CardHeader>
-          <CardTitle>Scanner Automático de Códigos</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Smartphone className="h-5 w-5" />
+            Scanner Automático de Códigos
+          </CardTitle>
           <p className="text-sm text-muted-foreground">
             Aponte a câmera para o código. O processamento será automático e silencioso.
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="relative">
-            <Scanner
-              onScan={handleScan}
-              onError={(e) => console.error('Scanner error:', e)}
-              formats={['data_matrix', 'qr_code']}
-              paused={isProcessing}
-              constraints={{ facingMode: 'environment' }}
-              components={{ torch: true, zoom: true, finder: true }}
-              scanDelay={100}
-              allowMultiple={false}
-            />
-            {isProcessing && (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
-                <div className="text-white text-lg">Processando automaticamente...</div>
-              </div>
-            )}
-          </div>
+          {!cameraError && (
+            <div className="relative">
+              <Scanner
+                onScan={handleScan}
+                onError={handleCameraError}
+                formats={['data_matrix', 'qr_code']}
+                paused={isProcessing}
+                constraints={{ facingMode: 'environment' }}
+                components={{ torch: true, zoom: true, finder: true }}
+                scanDelay={100}
+                allowMultiple={false}
+              />
+              {isProcessing && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
+                  <div className="text-white text-lg">Processando automaticamente...</div>
+                </div>
+              )}
+            </div>
+          )}
 
           {renderScanResult()}
         </CardContent>
@@ -154,17 +271,20 @@ export default function ScanMed() {
       <Card>
         <CardHeader>
           <CardTitle>Entrada Manual</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Use esta opção se a câmera não funcionar ou para códigos copiados
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <Textarea
-            placeholder="Cole aqui um código GS1 (ex.: (01)07898987654321(17)251231(10)L123(21)ABC)"
+            placeholder="Cole aqui um código GS1 (ex.: (01)07898987654321(17)251231(10)L123(21)ABC) ou uma URL"
             value={manualInput}
             onChange={(e) => setManualInput(e.target.value)}
             className="min-h-[100px]"
           />
           <Button 
             onClick={handleManualScan} 
-            disabled={!manualInput.trim()}
+            disabled={!manualInput.trim() || isProcessing}
             className="w-full"
           >
             Processar Código Manual
