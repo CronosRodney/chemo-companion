@@ -67,34 +67,63 @@ export const useQRScanner = () => {
 
   const requestCameraPermission = useCallback(async () => {
     try {
-      // Check if we're in a secure context (HTTPS or localhost)
+      // Check if camera API is available
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         console.error('Camera API not available. HTTPS required.');
         setHasPermission(false);
         return false;
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: 'environment' // Try back camera first for QR scanning
-        } 
-      });
-      stream.getTracks().forEach(track => track.stop()); // Stop the stream immediately
+      // Check if permission was already granted by querying permissions API
+      if (navigator.permissions) {
+        try {
+          const permissionStatus = await navigator.permissions.query({ name: 'camera' as PermissionName });
+          if (permissionStatus.state === 'granted') {
+            setHasPermission(true);
+            return true;
+          }
+          if (permissionStatus.state === 'denied') {
+            setHasPermission(false);
+            return false;
+          }
+        } catch (permError) {
+          console.log('Permissions API not available, proceeding with getUserMedia');
+        }
+      }
+
+      // Request camera access
+      const constraints = {
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      // Stop all tracks immediately after getting permission
+      stream.getTracks().forEach(track => track.stop());
+      
       setHasPermission(true);
       return true;
-    } catch (error) {
-      console.error('Camera permission denied:', error);
-      // Try again with any camera if back camera fails
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        stream.getTracks().forEach(track => track.stop());
-        setHasPermission(true);
-        return true;
-      } catch (fallbackError) {
-        console.error('Fallback camera permission denied:', fallbackError);
-        setHasPermission(false);
-        return false;
+    } catch (error: any) {
+      console.error('Camera permission error:', error);
+      
+      // If back camera fails, try any available camera
+      if (error.name === 'OverconstrainedError' || error.name === 'NotFoundError') {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          stream.getTracks().forEach(track => track.stop());
+          setHasPermission(true);
+          return true;
+        } catch (fallbackError) {
+          console.error('Fallback camera access failed:', fallbackError);
+        }
       }
+      
+      setHasPermission(false);
+      return false;
     }
   }, []);
 

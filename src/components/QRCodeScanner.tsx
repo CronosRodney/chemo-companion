@@ -19,50 +19,91 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
   const elementRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (hasPermission === null) {
-      requestCameraPermission();
-    }
+    let isMounted = true;
+    
+    const initCamera = async () => {
+      if (hasPermission === null && isMounted) {
+        await requestCameraPermission();
+      }
+    };
+    
+    initCamera();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [hasPermission, requestCameraPermission]);
 
   useEffect(() => {
-    if (hasPermission && !scanned && !loading && elementRef.current) {
-      const config = {
-        fps: 10,
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.0,
-      };
-
-      scannerRef.current = new Html5QrcodeScanner(
-        elementRef.current.id,
-        config,
-        false
-      );
-
-      const onScanSuccess = async (decodedText: string) => {
-        if (scannerRef.current) {
-          scannerRef.current.clear();
-        }
-        
+    let mounted = true;
+    
+    const initScanner = async () => {
+      if (hasPermission && !scanned && !loading && elementRef.current && mounted) {
         try {
-          const result = await handleBarCodeScanned({ data: decodedText });
-          onScanComplete(result);
-        } catch (error: any) {
-          onError(error.message || 'Erro ao processar QR Code');
-          resetScanner();
+          const config = {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0,
+            rememberLastUsedCamera: true,
+            supportedScanTypes: [0], // Only QR codes
+          };
+
+          // Wait a bit to ensure the element is ready
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          if (!mounted || !elementRef.current) return;
+
+          scannerRef.current = new Html5QrcodeScanner(
+            'qr-reader',
+            config,
+            false
+          );
+
+          const onScanSuccess = async (decodedText: string) => {
+            if (!mounted) return;
+            
+            try {
+              if (scannerRef.current) {
+                await scannerRef.current.clear();
+              }
+              
+              const result = await handleBarCodeScanned({ data: decodedText });
+              if (mounted) {
+                onScanComplete(result);
+              }
+            } catch (error: any) {
+              if (mounted) {
+                onError(error.message || 'Erro ao processar QR Code');
+                resetScanner();
+              }
+            }
+          };
+
+          const onScanFailure = (error: string) => {
+            // Silently handle scan failures to avoid console spam
+            if (error && !error.includes('No QR code found')) {
+              console.log(`QR scan info: ${error}`);
+            }
+          };
+
+          scannerRef.current.render(onScanSuccess, onScanFailure);
+        } catch (error) {
+          console.error('Erro ao inicializar scanner:', error);
+          if (mounted) {
+            onError('Erro ao inicializar o scanner');
+          }
         }
-      };
+      }
+    };
 
-      const onScanFailure = (error: string) => {
-        // Handle scan failure, usually ignore
-        console.log(`QR Code scan error: ${error}`);
-      };
-
-      scannerRef.current.render(onScanSuccess, onScanFailure);
-    }
+    initScanner();
 
     return () => {
+      mounted = false;
       if (scannerRef.current) {
-        scannerRef.current.clear().catch(console.error);
+        scannerRef.current.clear().catch(() => {
+          // Ignore cleanup errors
+        });
       }
     };
   }, [hasPermission, scanned, loading, handleBarCodeScanned, onScanComplete, onError, resetScanner]);
@@ -82,17 +123,18 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
       <Card className="luxury-card border-destructive/20">
         <CardContent className="flex flex-col items-center justify-center h-48 space-y-4">
           <AlertCircle className="h-12 w-12 text-destructive" />
-          <div className="text-center">
-            <p className="font-semibold text-destructive">Acesso à câmera negado</p>
-            <p className="text-sm text-muted-foreground mb-2">
-              Para usar o scanner QR, permita acesso à câmera:
-            </p>
-            <p className="text-xs text-muted-foreground">
-              1. Clique no ícone de câmera na barra de endereços<br/>
-              2. Selecione "Permitir" para este site<br/>
-              3. Recarregue a página se necessário
-            </p>
-          </div>
+            <div className="text-center">
+              <p className="font-semibold text-destructive">Acesso à câmera negado</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Para usar o scanner QR, permita acesso à câmera:
+              </p>
+               <div className="text-xs text-muted-foreground space-y-1 mb-4">
+                <p>• Clique no ícone de câmera na barra de endereços</p>
+                <p>• Selecione "Permitir" ou "Allow" para câmera</p>
+                <p>• Ou vá em Configurações do navegador {'>'} Site {'>'} Câmera</p>
+                <p>• Recarregue a página após permitir</p>
+              </div>
+            </div>
           <Button variant="outline" onClick={requestCameraPermission}>
             <Camera className="h-4 w-4 mr-2" />
             Tentar novamente
