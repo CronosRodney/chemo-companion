@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { QrCode, ArrowLeft, CheckCircle, Building2, Pill, AlertTriangle } from "lucide-react";
+import { QrCode, ArrowLeft, CheckCircle, Building2, Pill } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { QRCodeScanner } from "@/components/QRCodeScanner";
@@ -31,48 +31,6 @@ const QRScanner = () => {
     setShowScanner(false);
   };
 
-  const handleDemo = () => {
-    // Simular dados de uma clínica para demonstração
-    const demoClinicData: ParsedQRData = {
-      type: 'clinic',
-      data: {
-        clinic_name: 'Hospital São José',
-        legal_name: 'Hospital São José Ltda',
-        cnpj: '12.345.678/0001-90',
-        cnes: '123456',
-        address: {
-          street: 'Rua das Flores',
-          number: '123',
-          district: 'Centro',
-          city: 'São Paulo',
-          state: 'SP',
-          zip: '01234-567'
-        },
-        contacts: {
-          phone: '(11) 1234-5678',
-          whatsapp: '(11) 99999-9999',
-          email: 'contato@hospitalsaojose.com.br',
-          website: 'https://hospitalsaojose.com.br'
-        },
-        hours: 'Seg–Sex 07:00–19:00',
-        responsible: {
-          name: 'Dr. Maria Santos',
-          role: 'Diretor Clínico',
-          council: 'CRM',
-          council_uf: 'SP',
-          registration: '123456',
-          email: 'dra.maria@hospitalsaojose.com.br',
-          phone: '(11) 1234-5678'
-        }
-      } as ClinicData
-    };
-    
-    setScanResult(demoClinicData);
-    toast({
-      title: "Demo ativado",
-      description: "Dados de demonstração carregados com sucesso.",
-    });
-  };
 
   if (scanResult) {
     return (
@@ -264,29 +222,6 @@ const QRScanner = () => {
           </Card>
         </div>
 
-        {/* Demo & Actions */}
-        <div className="space-y-3">
-          <Card className="bg-warning/10 border-warning/20">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="h-5 w-5 text-warning" />
-                <div>
-                  <p className="font-medium text-sm text-warning">Modo de Demonstração</p>
-                  <p className="text-xs text-muted-foreground">Teste o aplicativo com dados simulados</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Button 
-            variant="outline" 
-            className="w-full" 
-            onClick={handleDemo}
-          >
-            <QrCode className="h-4 w-4 mr-2" />
-            Simular Scan de Clínica (Demo)
-          </Button>
-        </div>
       </div>
     </div>
   );
