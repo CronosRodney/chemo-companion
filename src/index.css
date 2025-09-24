@@ -208,4 +208,29 @@ Sophisticated color palette for class A patients.
   .clinical-glow {
     box-shadow: 0 0 24px hsl(var(--primary) / 0.2);
   }
+
+  /* Esconder controles desnecessários do QR scanner */
+  #qr-reader__dashboard_section_csr,
+  #qr-reader__dashboard_section_swaplink,
+  #qr-reader__dashboard_section_fsr {
+    display: none !important;
+  }
+
+  /* Melhorar aparência do scanner */
+  #qr-reader {
+    border: none !important;
+  }
+
+  #qr-reader__scan_region {
+    border-radius: 0.75rem !important;
+  }
+
+  #qr-reader__camera_selection {
+    display: none !important;
+  }
+
+  /* Esconder botão de stop scanning */
+  #qr-reader__dashboard_section_stop {
+    display: none !important;
+  }
 }
