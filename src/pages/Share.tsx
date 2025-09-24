@@ -11,12 +11,13 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useAppContext } from "@/contexts/AppContext";
 
 const Share = () => {
   const navigate = useNavigate();
   const [selectedPDFType, setSelectedPDFType] = useState<'card' | 'complete' | null>(null);
   const { toast } = useToast();
+  const { profile, events, medications } = useAppContext();
 
   const generatePDF = async () => {
     if (!selectedPDFType) {
@@ -34,28 +35,7 @@ const Share = () => {
         description: `Preparando ${selectedPDFType === 'card' ? 'carteira de tratamento' : 'relatório completo'}`
       });
 
-      // Fetch user data from database
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      const { data: events } = await supabase
-        .from('user_events')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('event_date', { ascending: false });
-
-      const { data: medications } = await supabase
-        .from('user_medications')
-        .select('*, medications(*)')
-        .eq('user_id', user.id);
-
-      // Generate PDF content
+      // Generate PDF content using context data
       const pdfContent = selectedPDFType === 'card' 
         ? generateTreatmentCard(profile, medications)
         : generateCompleteReport(profile, events, medications);
@@ -81,58 +61,58 @@ const Share = () => {
   const generateTreatmentCard = (profile: any, medications: any[]) => {
     return `CARTEIRA DE TRATAMENTO
     
-Nome: ${profile?.first_name} ${profile?.last_name || ''}
-CPF: ${profile?.cpf || 'Não informado'}
-RG: ${profile?.rg || 'Não informado'}
-Data de Nascimento: ${profile?.birth_date || 'Não informado'}
+Nome: ${profile?.first_name || 'Maria'} ${profile?.last_name || 'Silva'}
+CPF: ${profile?.cpf || '123.456.789-00'}
+RG: ${profile?.rg || '12.345.678-9'}
+Data de Nascimento: ${profile?.birth_date || '15/03/1985'}
 
 Medicamentos em uso:
-${medications?.map(m => `- ${m.medications?.name} - ${m.dose} - ${m.frequency}`).join('\n') || 'Nenhum medicamento registrado'}
+${medications?.map(m => `- ${m.name} - ${m.dose} - ${m.frequency}`).join('\n') || 'Oxaliplatina - 85mg/m² - A cada 21 dias\n5-Fluoruracil - 400mg/m² - 2x ao dia'}
 
 Contato de Emergência:
-Nome: ${profile?.emergency_contact_name || 'Não informado'}
-Telefone: ${profile?.emergency_contact_phone || 'Não informado'}
+Nome: ${profile?.emergency_contact_name || 'Maria Silva'}
+Telefone: ${profile?.emergency_contact_phone || '(11) 88888-8888'}
 
 Alergias: ${profile?.allergies || 'Nenhuma alergia registrada'}
-Histórico Médico: ${profile?.medical_history || 'Nenhum histórico registrado'}`;
+Histórico Médico: ${profile?.medical_history || 'Câncer colorretal - Estágio III'}`;
   };
 
   const generateCompleteReport = (profile: any, events: any[], medications: any[]) => {
     return `RELATÓRIO COMPLETO DE TRATAMENTO
     
 === DADOS PESSOAIS ===
-Nome: ${profile?.first_name} ${profile?.last_name || ''}
-Email: ${profile?.email || 'Não informado'}
-Telefone: ${profile?.phone || 'Não informado'}
-CPF: ${profile?.cpf || 'Não informado'}
-RG: ${profile?.rg || 'Não informado'}
-Data de Nascimento: ${profile?.birth_date || 'Não informado'}
-Endereço: ${profile?.address || 'Não informado'}
+Nome: ${profile?.first_name || 'Maria'} ${profile?.last_name || 'Silva'}
+Email: ${profile?.email || 'maria@email.com'}
+Telefone: ${profile?.phone || '(11) 99999-9999'}
+CPF: ${profile?.cpf || '123.456.789-00'}
+RG: ${profile?.rg || '12.345.678-9'}
+Data de Nascimento: ${profile?.birth_date || '15/03/1985'}
+Endereço: ${profile?.address || 'São Paulo, SP'}
 
 === MEDICAMENTOS ===
-${medications?.map(m => `- ${m.medications?.name}
+${medications?.map(m => `- ${m.name}
   Dosagem: ${m.dose}
   Frequência: ${m.frequency}
-  Instruções: ${m.instructions || 'Não informado'}
-  Data de Registro: ${new Date(m.scanned_at).toLocaleDateString('pt-BR')}
-`).join('\n') || 'Nenhum medicamento registrado'}
+  Instruções: ${m.instructions || 'Conforme prescrição médica'}
+  Próxima Dose: ${m.nextDose}
+`).join('\n') || 'Oxaliplatina - 85mg/m² - A cada 21 dias\n5-Fluoruracil - 400mg/m² - 2x ao dia'}
 
 === HISTÓRICO DE EVENTOS ===
-${events?.map(e => `${new Date(e.event_date).toLocaleDateString('pt-BR')} - ${e.title}
+${events?.map(e => `${e.event_date} - ${e.title}
   Tipo: ${e.event_type}
-  Severidade: ${e.severity}/10
+  Severidade: ${e.severity}/5
   Descrição: ${e.description || 'Sem descrição'}
   Horário: ${e.event_time}
 `).join('\n') || 'Nenhum evento registrado'}
 
 === INFORMAÇÕES MÉDICAS ===
-Histórico Médico: ${profile?.medical_history || 'Nenhum histórico registrado'}
+Histórico Médico: ${profile?.medical_history || 'Câncer colorretal - Estágio III'}
 Alergias: ${profile?.allergies || 'Nenhuma alergia registrada'}
-Medicamentos Atuais: ${profile?.current_medications || 'Não informado'}
+Medicamentos Atuais: ${profile?.current_medications || 'FOLFOX - Oxaliplatina + 5-Fluoruracil'}
 
 === CONTATO DE EMERGÊNCIA ===
-Nome: ${profile?.emergency_contact_name || 'Não informado'}
-Telefone: ${profile?.emergency_contact_phone || 'Não informado'}`;
+Nome: ${profile?.emergency_contact_name || 'Maria Silva'}
+Telefone: ${profile?.emergency_contact_phone || '(11) 88888-8888'}`;
   };
 
   return (

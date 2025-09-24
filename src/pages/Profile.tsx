@@ -13,22 +13,22 @@ import {
   Calendar
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAppContext } from "@/contexts/AppContext";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const patientData = {
-    name: "João Silva",
-    email: "joao.silva@email.com",
-    phone: "(11) 99999-9999",
-    birthDate: "15/03/1965",
-    diagnosis: "Câncer Colorretal",
-    stage: "III",
-    clinic: "Hospital São José",
-    oncologist: "Dra. Maria Santos",
-    emergencyContact: "Maria Silva - (11) 88888-8888",
-    adherence: 95,
-    nextAppointment: "15/01/2025"
-  };
+  const { profile, stats, loading } = useAppContext();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 p-4 pb-20">
@@ -47,14 +47,14 @@ const Profile = () => {
             <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <User className="h-10 w-10 text-primary" />
             </div>
-            <h2 className="text-xl font-semibold">{patientData.name}</h2>
-            <p className="text-sm text-muted-foreground">{patientData.email}</p>
+            <h2 className="text-xl font-semibold">{profile?.first_name || 'Maria'} {profile?.last_name || 'Silva'}</h2>
+            <p className="text-sm text-muted-foreground">{profile?.email || 'maria@email.com'}</p>
             <div className="flex justify-center gap-2 mt-3">
               <Badge className="bg-success/20 text-success border-success/30">
-                Adesão {patientData.adherence}%
+                Adesão {stats.adherence}%
               </Badge>
               <Badge variant="outline">
-                Estágio {patientData.stage}
+                Estágio III
               </Badge>
             </div>
           </CardContent>
@@ -72,11 +72,11 @@ const Profile = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="p-3 bg-muted/50 rounded-lg">
                 <p className="text-xs text-muted-foreground">Diagnóstico</p>
-                <p className="font-medium text-sm">{patientData.diagnosis}</p>
+                <p className="font-medium text-sm">{profile?.medical_history || 'Câncer Colorretal'}</p>
               </div>
               <div className="p-3 bg-muted/50 rounded-lg">
                 <p className="text-xs text-muted-foreground">Data Nascimento</p>
-                <p className="font-medium text-sm">{patientData.birthDate}</p>
+                <p className="font-medium text-sm">{profile?.birth_date || '15/03/1965'}</p>
               </div>
             </div>
             <div className="p-3 bg-primary/10 rounded-lg">
@@ -84,8 +84,8 @@ const Profile = () => {
                 <Building2 className="h-4 w-4 text-primary" />
                 <p className="text-xs text-muted-foreground">Clínica Atual</p>
               </div>
-              <p className="font-medium text-sm">{patientData.clinic}</p>
-              <p className="text-xs text-muted-foreground">{patientData.oncologist}</p>
+              <p className="font-medium text-sm">Hospital São José</p>
+              <p className="text-xs text-muted-foreground">Dra. Maria Santos</p>
             </div>
           </CardContent>
         </Card>
@@ -101,14 +101,14 @@ const Profile = () => {
           <CardContent className="space-y-3">
             <div className="p-3 bg-muted/50 rounded-lg">
               <p className="text-xs text-muted-foreground">Telefone Principal</p>
-              <p className="font-medium text-sm">{patientData.phone}</p>
+              <p className="font-medium text-sm">{profile?.phone || '(11) 99999-9999'}</p>
             </div>
             <div className="p-3 bg-warning/10 rounded-lg border border-warning/30">
               <div className="flex items-center gap-2 mb-1">
                 <AlertCircle className="h-4 w-4 text-warning" />
                 <p className="text-xs text-warning font-medium">Contato de Emergência</p>
               </div>
-              <p className="text-sm">{patientData.emergencyContact}</p>
+              <p className="text-sm">{profile?.emergency_contact_name || 'Maria Silva'} - {profile?.emergency_contact_phone || '(11) 88888-8888'}</p>
             </div>
           </CardContent>
         </Card>
@@ -118,7 +118,7 @@ const Profile = () => {
           <Card className="shadow-md border-0 text-center p-4">
             <Calendar className="h-6 w-6 mx-auto text-primary mb-2" />
             <p className="text-xs text-muted-foreground">Próxima Consulta</p>
-            <p className="font-semibold text-sm">{patientData.nextAppointment}</p>
+            <p className="font-semibold text-sm">{stats.nextAppointment}</p>
           </Card>
           <Card className="shadow-md border-0 text-center p-4">
             <Shield className="h-6 w-6 mx-auto text-success mb-2" />
