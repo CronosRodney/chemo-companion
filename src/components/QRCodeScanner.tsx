@@ -1,5 +1,5 @@
-import React from 'react';
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import React, { useEffect, useRef } from 'react';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Camera, AlertCircle } from 'lucide-react';
@@ -14,7 +14,58 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
   onScanComplete,
   onError,
 }) => {
-  const { hasPermission, scanned, loading, handleBarCodeScanned, resetScanner } = useQRScanner();
+  const { hasPermission, scanned, loading, handleBarCodeScanned, resetScanner, requestCameraPermission } = useQRScanner();
+  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const elementRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (hasPermission === null) {
+      requestCameraPermission();
+    }
+  }, [hasPermission, requestCameraPermission]);
+
+  useEffect(() => {
+    if (hasPermission && !scanned && !loading && elementRef.current) {
+      const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0,
+      };
+
+      scannerRef.current = new Html5QrcodeScanner(
+        elementRef.current.id,
+        config,
+        false
+      );
+
+      const onScanSuccess = async (decodedText: string) => {
+        if (scannerRef.current) {
+          scannerRef.current.clear();
+        }
+        
+        try {
+          const result = await handleBarCodeScanned({ data: decodedText });
+          onScanComplete(result);
+        } catch (error: any) {
+          onError(error.message || 'Erro ao processar QR Code');
+          resetScanner();
+        }
+      };
+
+      const onScanFailure = (error: string) => {
+        // Handle scan failure, usually ignore
+        console.log(`QR Code scan error: ${error}`);
+      };
+
+      scannerRef.current.render(onScanSuccess, onScanFailure);
+    }
+
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch(console.error);
+      }
+    };
+  }, [hasPermission, scanned, loading, handleBarCodeScanned, onScanComplete, onError, resetScanner]);
 
   if (hasPermission === null) {
     return (
@@ -37,28 +88,19 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
               Permita o acesso à câmera para escanear QR Codes
             </p>
           </div>
+          <Button variant="outline" onClick={requestCameraPermission}>
+            Tentar novamente
+          </Button>
         </CardContent>
       </Card>
     );
   }
 
-  const handleScan = async ({ data }: { data: string }) => {
-    if (scanned || loading) return;
-
-    try {
-      const result = await handleBarCodeScanned({ data });
-      onScanComplete(result);
-    } catch (error: any) {
-      onError(error.message || 'Erro ao processar QR Code');
-      resetScanner();
-    }
-  };
-
   return (
-    <Card className="luxury-card overflow-hidden aspect-square">
+    <Card className="luxury-card overflow-hidden">
       <CardContent className="p-0 h-full relative">
         {scanned || loading ? (
-          <div className="flex items-center justify-center h-full bg-gradient-to-br from-muted to-muted/50">
+          <div className="flex items-center justify-center h-96 bg-gradient-to-br from-muted to-muted/50">
             <div className="text-center space-y-4">
               <Camera className="h-16 w-16 text-muted-foreground mx-auto" />
               <p className="font-medium">
@@ -72,25 +114,9 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
             </div>
           </div>
         ) : (
-          <>
-            <BarCodeScanner
-              onBarCodeScanned={handleScan}
-              style={{ flex: 1 }}
-            />
-            
-            {/* Overlay de focagem */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-48 h-48 border-4 border-primary rounded-lg border-dashed opacity-80 animate-pulse">
-                <div className="absolute -top-2 -left-2 w-6 h-6 border-l-4 border-t-4 border-primary rounded-tl-lg"></div>
-                <div className="absolute -top-2 -right-2 w-6 h-6 border-r-4 border-t-4 border-primary rounded-tr-lg"></div>
-                <div className="absolute -bottom-2 -left-2 w-6 h-6 border-l-4 border-b-4 border-primary rounded-bl-lg"></div>
-                <div className="absolute -bottom-2 -right-2 w-6 h-6 border-r-4 border-b-4 border-primary rounded-br-lg"></div>
-              </div>
-            </div>
-
-            {/* Gradiente de fundo para melhor legibilidade */}
-            <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
-          </>
+          <div className="relative">
+            <div id="qr-reader" ref={elementRef} className="w-full" />
+          </div>
         )}
       </CardContent>
     </Card>

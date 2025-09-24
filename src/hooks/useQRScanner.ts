@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface ClinicData {
@@ -66,13 +65,17 @@ export const useQRScanner = () => {
   const [scanned, setScanned] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const getBarCodeScannerPermissions = async () => {
-      const { status } = await BarCodeScanner.requestPermissionsAsync();
-      setHasPermission(status === 'granted');
-    };
-
-    getBarCodeScannerPermissions();
+  const requestCameraPermission = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      stream.getTracks().forEach(track => track.stop()); // Stop the stream immediately
+      setHasPermission(true);
+      return true;
+    } catch (error) {
+      console.error('Camera permission denied:', error);
+      setHasPermission(false);
+      return false;
+    }
   }, []);
 
   const parseQRData = async (data: string): Promise<ParsedQRData | null> => {
@@ -285,6 +288,7 @@ export const useQRScanner = () => {
     resetScanner,
     parseQRData,
     saveClinicData,
-    saveMedicationData
+    saveMedicationData,
+    requestCameraPermission
   };
 };
