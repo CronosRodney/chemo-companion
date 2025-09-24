@@ -1,8 +1,9 @@
-import React, { useEffect, useRef } from 'react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import React, { useEffect, useRef, useState } from 'react';
+import { Html5QrcodeScanner, Html5Qrcode } from 'html5-qrcode';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Camera, AlertCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Camera, AlertCircle, Type, Upload } from 'lucide-react';
 import { useQRScanner } from '@/hooks/useQRScanner';
 
 interface QRCodeScannerProps {
@@ -15,14 +16,17 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
   onError,
 }) => {
   const { hasPermission, scanned, loading, handleBarCodeScanned, resetScanner, requestCameraPermission } = useQRScanner();
+  const [scannerMode, setScannerMode] = useState<'camera' | 'text' | 'file'>('camera');
+  const [manualInput, setManualInput] = useState('');
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
   const elementRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let isMounted = true;
     
     const initCamera = async () => {
-      if (hasPermission === null && isMounted) {
+      if (hasPermission === null && isMounted && scannerMode === 'camera') {
         await requestCameraPermission();
       }
     };
@@ -32,13 +36,13 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [hasPermission, requestCameraPermission]);
+  }, [hasPermission, requestCameraPermission, scannerMode]);
 
   useEffect(() => {
     let mounted = true;
     
     const initScanner = async () => {
-      if (hasPermission && !scanned && !loading && elementRef.current && mounted) {
+      if (hasPermission && !scanned && !loading && elementRef.current && mounted && scannerMode === 'camera') {
         try {
           const config = {
             fps: 10,
@@ -106,9 +110,38 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
         });
       }
     };
-  }, [hasPermission, scanned, loading, handleBarCodeScanned, onScanComplete, onError, resetScanner]);
+  }, [hasPermission, scanned, loading, handleBarCodeScanned, onScanComplete, onError, resetScanner, scannerMode]);
 
-  if (hasPermission === null) {
+  const handleManualInput = async () => {
+    if (!manualInput.trim()) {
+      onError('Digite o conteúdo do QR Code');
+      return;
+    }
+
+    try {
+      const result = await handleBarCodeScanned({ data: manualInput });
+      onScanComplete(result);
+    } catch (error: any) {
+      onError(error.message || 'Erro ao processar dados');
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const html5QrCode = new Html5Qrcode('temp-scanner');
+      const result = await html5QrCode.scanFile(file, true);
+      
+      const processedResult = await handleBarCodeScanned({ data: result });
+      onScanComplete(processedResult);
+    } catch (error: any) {
+      onError('Não foi possível ler o QR Code da imagem');
+    }
+  };
+
+  if (hasPermission === null && scannerMode === 'camera') {
     return (
       <Card className="luxury-card">
         <CardContent className="flex items-center justify-center h-48">
@@ -118,32 +151,115 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
     );
   }
 
-  if (hasPermission === false) {
+  if (hasPermission === false && scannerMode === 'camera') {
     return (
       <Card className="luxury-card border-destructive/20">
         <CardContent className="flex flex-col items-center justify-center h-48 space-y-4">
           <AlertCircle className="h-12 w-12 text-destructive" />
-            <div className="text-center">
-              <p className="font-semibold text-destructive">Acesso à câmera negado</p>
-              <p className="text-sm text-muted-foreground mb-4">
-                Para usar o scanner QR, permita acesso à câmera:
-              </p>
-               <div className="text-xs text-muted-foreground space-y-1 mb-4">
-                <p>• Clique no ícone de câmera na barra de endereços</p>
-                <p>• Selecione "Permitir" ou "Allow" para câmera</p>
-                <p>• Ou vá em Configurações do navegador {'>'} Site {'>'} Câmera</p>
-                <p>• Recarregue a página após permitir</p>
-              </div>
-            </div>
-          <Button variant="outline" onClick={requestCameraPermission}>
-            <Camera className="h-4 w-4 mr-2" />
-            Tentar novamente
-          </Button>
+          <div className="text-center">
+            <p className="font-semibold text-destructive">Câmera não disponível</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Tente uma das opções alternativas abaixo:
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 w-full">
+            <Button variant="outline" size="sm" onClick={() => setScannerMode('text')}>
+              <Type className="h-4 w-4 mr-2" />
+              Digitar
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setScannerMode('file')}>
+              <Upload className="h-4 w-4 mr-2" />
+              Imagem
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
+  // Modo de entrada manual de texto
+  if (scannerMode === 'text') {
+    return (
+      <Card className="luxury-card">
+        <CardContent className="p-6 space-y-4">
+          <div className="text-center space-y-2">
+            <Type className="h-12 w-12 text-primary mx-auto" />
+            <h3 className="font-semibold">Entrada Manual</h3>
+            <p className="text-sm text-muted-foreground">
+              Cole ou digite o conteúdo do QR Code
+            </p>
+          </div>
+          
+          <div className="space-y-3">
+            <Input
+              placeholder="Cole aqui o conteúdo do QR Code..."
+              value={manualInput}
+              onChange={(e) => setManualInput(e.target.value)}
+              className="min-h-[80px] resize-none"
+            />
+            
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" onClick={() => setScannerMode('camera')}>
+                <Camera className="h-4 w-4 mr-2" />
+                Câmera
+              </Button>
+              <Button onClick={handleManualInput} disabled={!manualInput.trim()}>
+                Processar
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Modo de upload de arquivo
+  if (scannerMode === 'file') {
+    return (
+      <Card className="luxury-card">
+        <CardContent className="p-6 space-y-4">
+          <div className="text-center space-y-2">
+            <Upload className="h-12 w-12 text-primary mx-auto" />
+            <h3 className="font-semibold">Upload de Imagem</h3>
+            <p className="text-sm text-muted-foreground">
+              Selecione uma imagem com QR Code
+            </p>
+          </div>
+          
+          <div className="space-y-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Selecionar Imagem
+            </Button>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" onClick={() => setScannerMode('camera')}>
+                <Camera className="h-4 w-4 mr-2" />
+                Câmera
+              </Button>
+              <Button variant="outline" onClick={() => setScannerMode('text')}>
+                <Type className="h-4 w-4 mr-2" />
+                Digitar
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  // Modo câmera - scanner padrão
   return (
     <Card className="luxury-card overflow-hidden">
       <CardContent className="p-0 h-full relative">
@@ -155,15 +271,35 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
                 {loading ? 'Processando...' : 'QR Code escaneado!'}
               </p>
               {!loading && (
-                <Button variant="outline" onClick={resetScanner}>
-                  Escanear novamente
-                </Button>
+                <div className="space-y-2">
+                  <Button variant="outline" onClick={resetScanner}>
+                    Escanear novamente
+                  </Button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setScannerMode('text')}>
+                      <Type className="h-4 w-4 mr-1" />
+                      Digitar
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setScannerMode('file')}>
+                      <Upload className="h-4 w-4 mr-1" />
+                      Imagem
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
           </div>
         ) : (
           <div className="relative">
             <div id="qr-reader" ref={elementRef} className="w-full" />
+            <div className="absolute top-2 right-2 space-x-1">
+              <Button variant="ghost" size="sm" onClick={() => setScannerMode('text')}>
+                <Type className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setScannerMode('file')}>
+                <Upload className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>
