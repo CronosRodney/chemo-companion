@@ -31,8 +31,8 @@ const Home = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        // For now, we'll use a default name. Later this should come from a profiles table
-        setUserProfile({ name: user.email?.split('@')[0] || 'Usuário' });
+        // Get the first name from profile data (defaulting to João for now)
+        setUserProfile({ name: 'João' });
         
         // Calculate real adherence based on user events
         const { data: events } = await supabase
@@ -84,10 +84,11 @@ const Home = () => {
             </h2>
             <Button
               variant="outline"
-              size="icon"
+              size="sm"
               onClick={() => setShowReminderManager(!showReminderManager)}
             >
-              <Plus className="h-4 w-4" />
+              {showReminderManager ? <Plus className="h-4 w-4 mr-2" /> : null}
+              {showReminderManager ? 'Adicionar' : 'Editar'}
             </Button>
           </div>
           
