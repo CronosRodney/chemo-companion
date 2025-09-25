@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserClinics, ConnectedClinic } from '@/hooks/useUserClinics';
 
 interface AppData {
   // User data
@@ -11,6 +12,8 @@ interface AppData {
   medications: any[];
   events: any[];
   reminders: any[];
+  clinics: ConnectedClinic[];
+  clinicsLoading: boolean;
   stats: {
     adherence: number;
     nextAppointment: string;
@@ -23,12 +26,14 @@ interface AppData {
   addMedication: (medication: any) => void;
   updateReminders: (reminders: any[]) => void;
   logFeeling: (rating: number) => Promise<void>;
+  refetchClinics: () => void;
 }
 
 const AppContext = createContext<AppData | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, profile, loading, updateProfile: updateUserProfile } = useAuth();
+  const { clinics, loading: clinicsLoading, refetch: refetchClinics } = useUserClinics();
   
   const [medications, setMedications] = useState([
     {
@@ -150,12 +155,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     medications,
     events,
     reminders,
+    clinics,
+    clinicsLoading,
     stats,
     updateProfile,
     addEvent,
     addMedication,
     updateReminders,
-    logFeeling
+    logFeeling,
+    refetchClinics
   };
 
   return (

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, QrCode, Plus, Share2, Pill, Calendar, AlertTriangle, Clock } from "lucide-react";
+import { Bell, QrCode, Plus, Share2, Pill, Calendar, AlertTriangle, Clock, Building2, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ReminderManager } from "@/components/ReminderManager";
@@ -17,6 +17,8 @@ const Home = () => {
     loading, 
     reminders, 
     stats, 
+    clinics,
+    clinicsLoading,
     updateReminders,
     logFeeling: contextLogFeeling 
   } = useAppContext();
@@ -123,6 +125,53 @@ const Home = () => {
             )}
           </div>
         </div>
+
+        {/* Connected Clinics */}
+        {!clinicsLoading && clinics.length > 0 && (
+          <div className="luxury-card p-6 space-y-4 border-2 border-secondary/20">
+            <h2 className="text-xl font-bold text-card-foreground text-shadow flex items-center gap-3">
+              <Building2 className="h-6 w-6 text-secondary-accent" />
+              Clínica Conectada
+            </h2>
+            <div className="space-y-3">
+              {clinics.slice(0, 1).map((clinic) => (
+                <div key={clinic.id} className="glass-effect p-4 rounded-xl border-2 border-secondary/30 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-secondary/5 to-secondary-accent/10"></div>
+                  <div className="relative">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center">
+                        <Building2 className="h-6 w-6 text-secondary-accent" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-bold text-base text-card-foreground">{clinic.clinic_name}</p>
+                        {clinic.city && clinic.state && (
+                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {clinic.city}, {clinic.state}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {clinic.clinic_responsible && clinic.clinic_responsible.length > 0 && (
+                      <div className="bg-background/50 p-3 rounded-lg">
+                        <p className="text-xs text-muted-foreground mb-1">Responsável</p>
+                        <p className="text-sm font-medium">{clinic.clinic_responsible[0].name}</p>
+                        {clinic.clinic_responsible[0].role && (
+                          <p className="text-xs text-muted-foreground">{clinic.clinic_responsible[0].role}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {clinics.length > 1 && (
+                <p className="text-center text-sm text-muted-foreground">
+                  +{clinics.length - 1} clínica{clinics.length > 2 ? 's' : ''} conectada{clinics.length > 2 ? 's' : ''}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-4">

@@ -8,6 +8,7 @@ import { useState } from "react";
 import { SimpleQRScanner } from "@/components/SimpleQRScanner";
 import { useToast } from "@/hooks/use-toast";
 import { ParsedQRData, ClinicData, MedicationData, useQRScanner } from "@/hooks/useQRScanner";
+import { useAppContext } from "@/contexts/AppContext";
 
 const QRScanner = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ const QRScanner = () => {
   const [editableData, setEditableData] = useState<ClinicData | MedicationData | null>(null);
   const { toast } = useToast();
   const { saveClinicData, saveMedicationData, loading } = useQRScanner();
+  const { refetchClinics } = useAppContext();
 
   const handleScanComplete = (result: ParsedQRData) => {
     setScanResult(result);
@@ -43,6 +45,8 @@ const QRScanner = () => {
     try {
       if (scanResult.type === 'clinic') {
         await saveClinicData(editableData as ClinicData);
+        // Refresh clinics data
+        refetchClinics();
         toast({
           title: "Clínica salva com sucesso!",
           description: "Os dados da clínica foram registrados.",

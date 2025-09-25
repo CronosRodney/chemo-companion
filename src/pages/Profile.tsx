@@ -17,7 +17,7 @@ import { useAppContext } from "@/contexts/AppContext";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { profile, stats, loading } = useAppContext();
+  const { profile, stats, loading, clinics, clinicsLoading } = useAppContext();
 
   if (loading) {
     return (
@@ -84,8 +84,19 @@ const Profile = () => {
                 <Building2 className="h-4 w-4 text-primary" />
                 <p className="text-xs text-muted-foreground">Clínica Atual</p>
               </div>
-              <p className="font-medium text-sm">Hospital São José</p>
-              <p className="text-xs text-muted-foreground">Dra. Maria Santos</p>
+              {!clinicsLoading && clinics.length > 0 ? (
+                <>
+                  <p className="font-medium text-sm">{clinics[0].clinic_name}</p>
+                  {clinics[0].clinic_responsible && clinics[0].clinic_responsible.length > 0 && (
+                    <p className="text-xs text-muted-foreground">{clinics[0].clinic_responsible[0].name}</p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="font-medium text-sm">Nenhuma clínica conectada</p>
+                  <p className="text-xs text-muted-foreground">Escaneie um QR code para conectar</p>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
