@@ -172,22 +172,29 @@ export const useQRScanner = () => {
         };
       }
       
-      // Tentar fazer parse como JSON
-      const parsed = JSON.parse(data);
-      
-      if (parsed.type === 'clinic') {
-        return {
-          type: 'clinic',
-          data: parsed as ClinicData
-        };
-      } else if (parsed.type === 'medication') {
-        return {
-          type: 'medication',
-          data: parsed as MedicationData
-        };
+      // Tentar fazer parse como JSON primeiro
+      try {
+        const parsed = JSON.parse(data);
+        
+        if (parsed.type === 'clinic') {
+          return {
+            type: 'clinic',
+            data: parsed.data as ClinicData
+          };
+        } else if (parsed.type === 'medication') {
+          return {
+            type: 'medication',
+            data: parsed.data as MedicationData
+          };
+        }
+      } catch (jsonError) {
+        console.log('Não é JSON válido, tentando parse de texto:', jsonError);
       }
-    } catch (error) {
-      console.log('Erro no parse JSON, verificando se é URL:', error);
+      
+      // Se não for JSON, tentar fazer parse como texto de clínica
+      if (data.includes('Hospital') || data.includes('Clínica') || data.includes('Diretor')) {
+        return parseClinicText(data);
+      }
       
       // Se não for JSON, verificar se é uma URL de medicamento
       if (typeof data === 'string' && data.startsWith('http')) {
@@ -197,10 +204,71 @@ export const useQRScanner = () => {
           url: data
         };
       }
+    } catch (error) {
+      console.log('Erro geral no parse:', error);
     }
     
     console.log('Formato não reconhecido. Dados recebidos:', data);
     return null;
+  };
+
+  const parseClinicText = (text: string): ParsedQRData | null => {
+    try {
+      // Extrair nome da clínica/hospital
+      const nameMatch = text.match(/(Hospital|Clínica)\s+([^-]+)/);
+      const clinicName = nameMatch ? nameMatch[0].trim() : 'Clínica não identificada';
+      
+      // Extrair diretor/responsável
+      const directorMatch = text.match(/Diretor\s+Clínico\s+([^E]+)/);
+      const directorName = directorMatch ? directorMatch[1].trim() : '';
+      
+      // Extrair endereço
+      const addressMatch = text.match(/Endereço\s+([^C]+)/);
+      const addressText = addressMatch ? addressMatch[1].trim() : '';
+      
+      // Extrair telefone
+      const phoneMatch = text.match(/Telefone:\s*([^\s]+)/);
+      const phone = phoneMatch ? phoneMatch[1].trim() : '';
+      
+      // Extrair email
+      const emailMatch = text.match(/Email:\s*([^\s"]+)/);
+      const email = emailMatch ? emailMatch[1].trim() : '';
+      
+      // Parse do endereço
+      let address = {};
+      if (addressText) {
+        const parts = addressText.split(',').map(p => p.trim());
+        if (parts.length >= 3) {
+          address = {
+            street: parts[0],
+            district: parts[1],
+            city: parts[2].split(' - ')[0],
+            state: parts[2].split(' - ')[1] || ''
+          };
+        }
+      }
+      
+      const clinicData: ClinicData = {
+        clinic_name: clinicName,
+        address,
+        contacts: {
+          phone: phone,
+          email: email
+        },
+        responsible: directorName ? {
+          name: directorName,
+          role: 'Diretor Clínico'
+        } : undefined
+      };
+      
+      return {
+        type: 'clinic',
+        data: clinicData
+      };
+    } catch (error) {
+      console.error('Erro ao fazer parse do texto da clínica:', error);
+      return null;
+    }
   };
 
   const saveClinicData = async (clinicData: ClinicData) => {
