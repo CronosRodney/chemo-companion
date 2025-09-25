@@ -13,6 +13,10 @@ export interface ExtractedData {
   registrationNumber?: string;
   storageInstructions?: string;
   packageQuantity?: string;
+  indication?: string;
+  contraindications?: string;
+  dosage?: string;
+  sideEffects?: string;
   screenshot?: string; // Base64 screenshot as fallback
 }
 
@@ -178,6 +182,11 @@ export class URLExtractorService {
     // Create a temporary DOM parser
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
+    
+    // Sara.com.br specific extraction
+    if (html.includes('sara.com.br')) {
+      return this.extractFromSaraHTML(html, doc);
+    }
     
     // Try to extract from common selectors and patterns for Brazilian pharmacy sites
     
@@ -355,6 +364,112 @@ export class URLExtractorService {
       }
     }
     
+    return data;
+  }
+
+  private static extractFromSaraHTML(html: string, doc: Document): ExtractedData {
+    const data: ExtractedData = {};
+    
+    console.log('Extracting from Sara.com.br HTML');
+    
+    // Extract product name from h1 with specific text pattern
+    const h1Element = doc.querySelector('h1#product-title, h1');
+    if (h1Element && h1Element.textContent) {
+      data.name = this.cleanText(h1Element.textContent);
+      console.log('Found Sara product name:', data.name);
+    }
+    
+    // Extract active ingredient using text content parsing
+    const activeIngredientMatch = html.match(/Princípio\s+[Aa]tivo[:\s]*([^<\n]+)/i);
+    if (activeIngredientMatch && activeIngredientMatch[1]) {
+      data.activeIngredient = this.cleanText(activeIngredientMatch[1]);
+      console.log('Found Sara active ingredient:', data.activeIngredient);
+    }
+    
+    // Extract manufacturer using LABORATÓRIO pattern
+    const manufacturerMatch = html.match(/LABORATÓRIO[:\s]*([^<\n]+)/i);
+    if (manufacturerMatch && manufacturerMatch[1]) {
+      data.manufacturer = this.cleanText(manufacturerMatch[1]);
+      console.log('Found Sara manufacturer:', data.manufacturer);
+    }
+    
+    // Extract concentration from product name or description
+    const concentrationMatch = data.name?.match(/([\d,\.]+)\s*(mg|mcg|μg|g|ml|mL|%|UI|ui)/i);
+    if (concentrationMatch) {
+      data.concentration = `${concentrationMatch[1]}${concentrationMatch[2]}`;
+      console.log('Found Sara concentration:', data.concentration);
+    }
+    
+    // Extract form from product name and description
+    let form = '';
+    const formMatches = [
+      data.name?.match(/(comprimidos?\s*sublinguais?|comprimidos?\s*revestidos?|comprimidos?|cápsulas?\s*duras?|cápsulas?\s*gelatinosas?|cápsulas?|solução\s*oral|solução\s*injetável|solução|xarope|pomada|gel|creme|gotas|suspensão|elixir|spray|aerossol|drágeas?|pastilhas?)/i),
+      html.match(/Forma\s+farmacêutica[:\s]*([^<\n]+)/i),
+      html.match(/(Comprimido\s*Sublingual|Solução\s*Injetável)/i)
+    ];
+    
+    for (const match of formMatches) {
+      if (match && match[1]) {
+        form = this.cleanText(match[1]);
+        break;
+      }
+    }
+    
+    if (form) {
+      data.form = form;
+      console.log('Found Sara form:', data.form);
+    }
+    
+    // Extract route based on form
+    if (form.toLowerCase().includes('sublingual')) {
+      data.route = 'Sublingual';
+    } else if (form.toLowerCase().includes('injetável')) {
+      data.route = 'Injetável';
+    } else if (form.toLowerCase().includes('oral') || form.toLowerCase().includes('comprimido') || form.toLowerCase().includes('cápsula')) {
+      data.route = 'Oral';
+    } else if (form.toLowerCase().includes('pomada') || form.toLowerCase().includes('gel') || form.toLowerCase().includes('creme')) {
+      data.route = 'Tópica';
+    }
+    
+    // Extract package quantity
+    const quantityMatches = [
+      data.name?.match(/com\s+(\d+)\s*(comprimidos?|cápsulas?|ml|mL|unidades?)/i),
+      html.match(/Quantidade\s+na\s+embalagem[:\s]*([^<\n]+)/i),
+      html.match(/(\d+)\s*(comprimidos?\s*sublinguais?|comprimidos?|cápsulas?|ml|mL)/i)
+    ];
+    
+    for (const match of quantityMatches) {
+      if (match) {
+        if (match[2]) {
+          data.packageQuantity = `${match[1]} ${match[2]}`;
+        } else {
+          data.packageQuantity = this.cleanText(match[1]);
+        }
+        console.log('Found Sara package quantity:', data.packageQuantity);
+        break;
+      }
+    }
+    
+    // Extract description/indication
+    const descriptionMatch = html.match(/Descrição\s+do\s+Produto[^<]*<[^>]*>([^<]+)/i);
+    if (descriptionMatch && descriptionMatch[1]) {
+      data.indication = this.cleanText(descriptionMatch[1]).substring(0, 200) + '...';
+      console.log('Found Sara indication:', data.indication);
+    }
+    
+    // Set default prescription requirement for most medications
+    data.prescriptionRequired = true;
+    
+    // Extract category based on description
+    if (html.toLowerCase().includes('anti-inflamatório')) {
+      data.category = 'Anti-inflamatório';
+    } else if (html.toLowerCase().includes('analgésico')) {
+      data.category = 'Analgésico';
+    } else if (html.toLowerCase().includes('antibiótico')) {
+      data.category = 'Antibiótico';
+    }
+    
+    console.log('Sara extraction completed:', data);
     return data;
   }
 

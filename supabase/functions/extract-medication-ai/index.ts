@@ -98,23 +98,30 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `Você é um especialista em análise de medicamentos. Analise o conteúdo da página fornecida e extraia as seguintes informações sobre o medicamento:
+            content: `Você é um especialista em análise de medicamentos brasileiros. Analise o conteúdo da página fornecida e extraia as seguintes informações sobre o medicamento:
 
-1. Nome do medicamento
-2. Princípio ativo (active ingredient)
-3. Fabricante/laboratório
-4. Concentração/dosagem
-5. Forma farmacêutica (comprimido, cápsula, solução, etc.)
-6. Via de administração (oral, intravenosa, etc.)
-7. Categoria terapêutica
-8. Se requer prescrição médica
+1. Nome do medicamento (nome comercial completo)
+2. Princípio ativo (substância ativa/DCB)
+3. Fabricante/laboratório (EMS, Medley, etc.)
+4. Concentração/dosagem (ex: 10mg, 500mg/mL)
+5. Forma farmacêutica (comprimido sublingual, solução injetável, etc.)
+6. Via de administração (oral, sublingual, injetável, tópica, etc.)
+7. Categoria terapêutica (anti-inflamatório, analgésico, etc.)
+8. Se requer prescrição médica (true/false)
 9. Número de registro na ANVISA
 10. Instruções de armazenamento
-11. Quantidade por embalagem
-12. Indicações
+11. Quantidade por embalagem (20 comprimidos, 10mL, etc.)
+12. Indicações principais
 13. Contraindicações
 14. Posologia/dosagem recomendada
 15. Efeitos colaterais
+
+INSTRUÇÕES ESPECIAIS:
+- Para sites da Sara.com.br, procure por "Princípio Ativo:", "LABORATÓRIO:", "Forma farmacêutica:", etc.
+- Extraia concentração do nome do produto (ex: "Toragesic 10mg" → concentration: "10mg")
+- Para quantidade, procure por "com X comprimidos" no nome do produto
+- Se encontrar "Comprimido Sublingual", a via é "Sublingual"
+- Para medicamentos como anti-inflamatórios, prescrição é geralmente obrigatória (true)
 
 Retorne apenas um JSON válido com essas informações. Use null para informações não encontradas. Seja preciso e extraia apenas informações que estão claramente disponíveis no texto.
 
