@@ -1,4 +1,5 @@
 // Service to extract medication data from URLs
+import { AIMedicationExtractor } from './aiMedicationExtractor';
 export interface ExtractedData {
   name?: string;
   activeIngredient?: string;
@@ -19,39 +20,75 @@ export class URLExtractorService {
     try {
       console.log('Extracting data from URL:', url);
 
-      // First try to fetch and parse the page content
+      // Step 1: Try to fetch and parse page content
+      let htmlContent: string | null = null;
       try {
         const scrapedData = await this.fetchPageContent(url);
         if (scrapedData && scrapedData.name) {
+          console.log('Successfully extracted data from HTML parsing');
           return scrapedData;
         }
+        
+        // Get HTML content for AI analysis
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        const response = await fetch(proxyUrl);
+        if (response.ok) {
+          htmlContent = await response.text();
+        }
       } catch (fetchError) {
-        console.warn('Failed to fetch page content, trying pattern extraction:', fetchError);
+        console.warn('Failed to fetch page content:', fetchError);
       }
 
-      // Fallback to pattern extraction from URL
+      // Step 2: Try AI analysis of text content
+      if (htmlContent) {
+        try {
+          console.log('Trying AI text analysis...');
+          const aiResult = await AIMedicationExtractor.analyzeText(htmlContent);
+          if (aiResult.success && aiResult.data) {
+            console.log('AI text analysis successful');
+            return aiResult.data;
+          }
+        } catch (aiError) {
+          console.warn('AI text analysis failed:', aiError);
+        }
+      }
+
+      // Step 3: Try screenshot + AI analysis
+      try {
+        console.log('Trying screenshot + AI analysis...');
+        const screenshot = await this.captureScreenshot(url);
+        const aiResult = await AIMedicationExtractor.analyzeScreenshot(screenshot);
+        
+        if (aiResult.success && aiResult.data) {
+          console.log('AI screenshot analysis successful');
+          return {
+            ...aiResult.data,
+            screenshot: screenshot
+          };
+        } else {
+          // Return screenshot for manual review
+          return {
+            name: 'Medicamento (revisar imagem)',
+            screenshot: screenshot
+          };
+        }
+      } catch (screenshotError) {
+        console.warn('Screenshot + AI analysis failed:', screenshotError);
+      }
+
+      // Step 4: Fallback to URL pattern extraction
+      console.log('Falling back to URL pattern extraction...');
       const data: ExtractedData = {};
       
-      // Sara.com.br specific patterns from URL
       if (url.includes('sara.com.br')) {
-        const saraData = this.extractFromSaraURL(url);
-        // Try to enhance with screenshot
-        try {
-          const screenshot = await this.captureScreenshot(url);
-          saraData.screenshot = screenshot;
-        } catch (screenshotError) {
-          console.warn('Screenshot capture failed:', screenshotError);
-        }
-        return saraData;
+        return this.extractFromSaraURL(url);
       }
       
-      // Try to extract basic info from URL path for other sites
+      // Try to extract basic info from URL path
       const urlParts = url.split('/');
       const lastPart = urlParts[urlParts.length - 1];
       
-      // Try to extract medication name from URL
       if (lastPart && lastPart.length > 3) {
-        // Clean up URL slugs to medication names
         const cleanName = lastPart
           .replace(/-/g, ' ')
           .replace(/_/g, ' ')
@@ -65,17 +102,8 @@ export class URLExtractorService {
         }
       }
       
-      // If no useful data extracted, try screenshot as last resort
-      if (!data.name) {
-        try {
-          const screenshot = await this.captureScreenshot(url);
-          return {
-            name: 'Medicamento (ver imagem)',
-            screenshot: screenshot
-          };
-        } catch (screenshotError) {
-          throw new Error('Não foi possível extrair informações do medicamento da URL. Tente inserir os dados manualmente.');
-        }
+      if (Object.keys(data).length === 0) {
+        throw new Error('Não foi possível extrair informações do medicamento. Tente inserir os dados manualmente.');
       }
       
       return data;
