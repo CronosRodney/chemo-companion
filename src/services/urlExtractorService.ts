@@ -52,22 +52,52 @@ export class URLExtractorService {
         data.name = this.cleanText(titleMatch[1]);
       }
       
+      // Sara.com.br specific patterns
+      if (url.includes('sara.com.br')) {
+        // Extract name from breadcrumb or title
+        const breadcrumbMatch = html.match(/Toragesic[^<]*(?:mg|mcg|g)[^<]*/i);
+        if (breadcrumbMatch && !data.name) {
+          data.name = this.cleanText(breadcrumbMatch[0]);
+        }
+        
+        // Extract concentration from name
+        const concentrationMatch = data.name?.match(/([\d,\.]+)\s*(mg|mcg|g|ml)/i);
+        if (concentrationMatch) {
+          data.concentration = `${concentrationMatch[1]}${concentrationMatch[2]}`;
+        }
+        
+        // Extract form/presentation
+        const formMatch = data.name?.match(/(comprimidos?|cápsulas?|solução|xarope|pomada|gel|creme|sublinguais?|gotas)/i);
+        if (formMatch) {
+          data.form = formMatch[1];
+        }
+        
+        // Extract manufacturer from name (often after drug name)
+        const manufacturerMatch = data.name?.match(/\b(EMS|MEDLEY|EUROFARMA|TEUTO|GERMED|SANDOZ|NOVARTIS|BAYER|ABBOTT|PFIZER|ROCHE)\b/i);
+        if (manufacturerMatch) {
+          data.manufacturer = manufacturerMatch[1];
+        }
+      }
+      
       // Common medication info patterns
       const patterns = {
         activeIngredient: [
           /princípio\s+ativo[:\s]*([^<\n]+)/i,
           /substância\s+ativa[:\s]*([^<\n]+)/i,
           /active\s+ingredient[:\s]*([^<\n]+)/i,
+          /composição[:\s]*([^<\n]+)/i,
         ],
         manufacturer: [
           /fabricante[:\s]*([^<\n]+)/i,
           /laboratório[:\s]*([^<\n]+)/i,
           /manufacturer[:\s]*([^<\n]+)/i,
+          /indústria farmacêutica[:\s]*([^<\n]+)/i,
         ],
         concentration: [
           /concentração[:\s]*([^<\n]+)/i,
           /dosagem[:\s]*([^<\n]+)/i,
           /strength[:\s]*([^<\n]+)/i,
+          /teor[:\s]*([^<\n]+)/i,
         ],
         form: [
           /forma\s+farmacêutica[:\s]*([^<\n]+)/i,

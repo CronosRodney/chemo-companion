@@ -28,44 +28,15 @@ export function useAutoScanner() {
         try {
           // Extract data from URL in parallel
           const extractedData = await URLExtractorService.extractFromURL(rawValue);
-          const medicationData = MedicationService.fromExtractedData(extractedData);
-          
-          // Save medication if we got useful data
-          if (medicationData.name && medicationData.name !== 'Medicamento via URL') {
-            const savedMed = await MedicationService.saveMedication(medicationData);
-            await MedicationService.linkToUser(savedMed.id);
-          }
-          
-          // Add timeline event
-          const details = [
-            `URL: ${rawValue}`,
-            extractedData.name && `Nome: ${extractedData.name}`,
-            extractedData.activeIngredient && `Princípio Ativo: ${extractedData.activeIngredient}`,
-            extractedData.manufacturer && `Fabricante: ${extractedData.manufacturer}`,
-            extractedData.concentration && `Concentração: ${extractedData.concentration}`
-          ].filter(Boolean).join('\n');
-          
-          await MedicationService.addTimelineEvent(
-            'med_qr',
-            'Link de bula acessado',
-            details
-          );
           
           return {
             type: 'url',
-            data: { url: rawValue, extracted: extractedData }
+            data: { url: rawValue, extracted: extractedData, needsConfirmation: true }
           };
         } catch (error) {
-          // Even if extraction fails, we still opened the URL
-          await MedicationService.addTimelineEvent(
-            'med_qr',
-            'Link de bula acessado (erro na extração)',
-            `URL: ${rawValue}\nErro: ${error}`
-          );
-          
           return {
             type: 'url',
-            data: { url: rawValue, extractionError: error }
+            data: { url: rawValue, extractionError: error, needsConfirmation: false }
           };
         }
       } else {
@@ -129,10 +100,18 @@ export function useAutoScanner() {
       
       // Show appropriate toast
       if (result.type === 'url') {
-        toast({
-          title: "Link processado",
-          description: "URL aberta e dados extraídos automaticamente",
-        });
+        if (result.data.extracted?.name) {
+          toast({
+            title: "Dados extraídos",
+            description: "Revise as informações e salve o medicamento",
+          });
+        } else {
+          toast({
+            title: "Link processado",
+            description: "Dados não puderam ser extraídos automaticamente",
+            variant: "destructive",
+          });
+        }
       } else if (result.type === 'gs1') {
         toast({
           title: "Medicamento registrado",

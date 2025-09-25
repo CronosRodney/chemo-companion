@@ -12,7 +12,8 @@ import {
   ExternalLink, 
   Camera, 
   Settings,
-  Smartphone
+  Smartphone,
+  Edit
 } from 'lucide-react';
 import { useAutoScanner } from '../hooks/useAutoScanner';
 
@@ -132,25 +133,48 @@ export default function ScanMed() {
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2 text-blue-700 dark:text-blue-300">
               <ExternalLink className="h-5 w-5" />
-              Link Processado Automaticamente
+              Dados Extraídos do Link
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 text-sm">
-              <p><strong>URL:</strong> {lastScan.data.url}</p>
+            <div className="space-y-3">
+              <div className="space-y-2 text-sm">
+                <p><strong>URL:</strong> <span className="text-xs break-all">{lastScan.data.url}</span></p>
+                {lastScan.data.extracted?.name && (
+                  <p><strong>Nome:</strong> {lastScan.data.extracted.name}</p>
+                )}
+                {lastScan.data.extracted?.activeIngredient && (
+                  <p><strong>Princípio Ativo:</strong> {lastScan.data.extracted.activeIngredient}</p>
+                )}
+                {lastScan.data.extracted?.manufacturer && (
+                  <p><strong>Fabricante:</strong> {lastScan.data.extracted.manufacturer}</p>
+                )}
+                {lastScan.data.extracted?.concentration && (
+                  <p><strong>Concentração:</strong> {lastScan.data.extracted.concentration}</p>
+                )}
+                {lastScan.data.extracted?.form && (
+                  <p><strong>Forma:</strong> {lastScan.data.extracted.form}</p>
+                )}
+                {lastScan.data.extractionError && (
+                  <p className="text-amber-600 dark:text-amber-400">
+                    <strong>Aviso:</strong> Link processado, mas houve erro na extração de dados
+                  </p>
+                )}
+              </div>
+              
               {lastScan.data.extracted?.name && (
-                <p><strong>Nome:</strong> {lastScan.data.extracted.name}</p>
-              )}
-              {lastScan.data.extracted?.activeIngredient && (
-                <p><strong>Princípio Ativo:</strong> {lastScan.data.extracted.activeIngredient}</p>
-              )}
-              {lastScan.data.extracted?.manufacturer && (
-                <p><strong>Fabricante:</strong> {lastScan.data.extracted.manufacturer}</p>
-              )}
-              {lastScan.data.extractionError && (
-                <p className="text-amber-600 dark:text-amber-400">
-                  <strong>Aviso:</strong> Link aberto, mas houve erro na extração automática de dados
-                </p>
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    size="sm"
+                    onClick={() => navigate('/medication-details', { 
+                      state: { extractedData: lastScan.data.extracted } 
+                    })}
+                    className="flex-1"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Revisar e Salvar
+                  </Button>
+                </div>
               )}
             </div>
           </CardContent>
