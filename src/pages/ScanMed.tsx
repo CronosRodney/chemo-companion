@@ -16,10 +16,12 @@ import {
   Edit
 } from 'lucide-react';
 import { useAutoScanner } from '../hooks/useAutoScanner';
+import { MedicationDataDisplay } from '../components/MedicationDataDisplay';
 
 export default function ScanMed() {
   const [manualInput, setManualInput] = useState('');
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [showDataDisplay, setShowDataDisplay] = useState(false);
   const navigate = useNavigate();
   const { handleScan, processManualCode, isProcessing, lastScan } = useAutoScanner();
 
@@ -128,54 +130,60 @@ export default function ScanMed() {
     if (!lastScan) return null;
     
     if (lastScan.type === 'url') {
-      return (
-        <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2 text-blue-700 dark:text-blue-300">
-              <ExternalLink className="h-5 w-5" />
-              Dados Extraídos do Link
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="space-y-2 text-sm">
-                <p><strong>URL:</strong> <span className="text-xs break-all">{lastScan.data.url}</span></p>
-                {lastScan.data.extracted?.name && (
-                  <p><strong>Nome:</strong> {lastScan.data.extracted.name}</p>
-                )}
-                {lastScan.data.extracted?.activeIngredient && (
-                  <p><strong>Princípio Ativo:</strong> {lastScan.data.extracted.activeIngredient}</p>
-                )}
-                {lastScan.data.extracted?.manufacturer && (
-                  <p><strong>Fabricante:</strong> {lastScan.data.extracted.manufacturer}</p>
-                )}
-                {lastScan.data.extracted?.concentration && (
-                  <p><strong>Concentração:</strong> {lastScan.data.extracted.concentration}</p>
-                )}
-                {lastScan.data.extracted?.form && (
-                  <p><strong>Forma:</strong> {lastScan.data.extracted.form}</p>
-                )}
-                {lastScan.data.extractionError && (
-                  <p className="text-amber-600 dark:text-amber-400">
-                    <strong>Aviso:</strong> Link processado, mas houve erro na extração de dados
-                  </p>
-                )}
-              </div>
-              
-              {lastScan.data.extracted?.name && (
-                <div className="flex gap-2 pt-2">
+      // Show MedicationDataDisplay for extracted data or screenshots
+      if (lastScan.data.extracted && (lastScan.data.extracted.name || lastScan.data.extracted.screenshot)) {
+        return (
+          <div className="space-y-4">
+            <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                  <ExternalLink className="h-5 w-5" />
+                  Dados Extraídos do Link
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-2">
                   <Button
                     size="sm"
-                    onClick={() => navigate('/medication-details', { 
-                      state: { extractedData: lastScan.data.extracted } 
-                    })}
+                    onClick={() => setShowDataDisplay(true)}
                     className="flex-1"
                   >
                     <Edit className="h-4 w-4 mr-2" />
-                    Revisar e Salvar
+                    Revisar e Salvar Dados
                   </Button>
                 </div>
-              )}
+              </CardContent>
+            </Card>
+            
+            {showDataDisplay && (
+              <MedicationDataDisplay 
+                extractedData={lastScan.data.extracted}
+                sourceUrl={lastScan.data.url}
+                onClose={() => setShowDataDisplay(false)}
+              />
+            )}
+          </div>
+        );
+      }
+      
+      // Fallback for URLs without extracted data
+      return (
+        <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2 text-amber-700 dark:text-amber-300">
+              <ExternalLink className="h-5 w-5" />
+              Link Processado
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm">
+              <p><strong>URL:</strong> <span className="text-xs break-all">{lastScan.data.url}</span></p>
+              <p className="text-amber-600 dark:text-amber-400">
+                Não foi possível extrair dados automaticamente desta página.
+              </p>
+              <p className="text-muted-foreground">
+                A página foi aberta em uma nova aba. Você pode copiar as informações manualmente.
+              </p>
             </div>
           </CardContent>
         </Card>

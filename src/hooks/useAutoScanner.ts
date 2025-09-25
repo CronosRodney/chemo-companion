@@ -100,7 +100,7 @@ export function useAutoScanner() {
       
       // Show appropriate toast
       if (result.type === 'url') {
-        if (result.data.extracted?.name) {
+        if (result.data.extracted?.name || result.data.extracted?.screenshot) {
           toast({
             title: "Dados extraídos",
             description: "Revise as informações e salve o medicamento",
@@ -108,7 +108,7 @@ export function useAutoScanner() {
         } else {
           toast({
             title: "Link processado",
-            description: "Dados não puderam ser extraídos automaticamente",
+            description: "Não foi possível extrair dados automaticamente",
             variant: "destructive",
           });
         }
