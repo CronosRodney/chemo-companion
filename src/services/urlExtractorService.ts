@@ -106,77 +106,130 @@ export class URLExtractorService {
   private static parseHTMLContent(html: string): ExtractedData {
     const data: ExtractedData = {};
     
+    console.log('Parsing HTML content, length:', html.length);
+    
     // Create a temporary DOM parser
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
     
-    // Try to extract from common selectors and patterns
+    // Try to extract from common selectors and patterns for Brazilian pharmacy sites
     
-    // Product name
+    // Product name - expanded selectors for Brazilian sites
     const nameSelectors = [
       'h1',
+      'h2',
       '.product-name',
       '.medication-name',
+      '.medicine-name',
+      '.drug-name',
+      '.produto-nome',
+      '.nome-produto',
+      '.title',
+      '.product-title',
+      '.main-title',
       '[data-testid="product-name"]',
-      '.title'
+      '.breadcrumb-item:last-child',
+      'title'
     ];
     
     for (const selector of nameSelectors) {
       const element = doc.querySelector(selector);
       if (element && element.textContent?.trim()) {
-        data.name = this.cleanText(element.textContent);
-        break;
+        const text = this.cleanText(element.textContent);
+        if (text.length > 3 && !text.toLowerCase().includes('página') && !text.toLowerCase().includes('site')) {
+          data.name = text;
+          console.log('Found name via selector:', selector, '=', text);
+          break;
+        }
       }
     }
     
-    // Active ingredient
+    // Active ingredient - more comprehensive patterns
     const activeIngredientPatterns = [
-      /princípio\s+ativo[:\s]+([^.\n]+)/i,
-      /active\s+ingredient[:\s]+([^.\n]+)/i,
-      /substância\s+ativa[:\s]+([^.\n]+)/i
+      /princípio\s+ativo[:\s]*([^.\n<>]+)/i,
+      /active\s+ingredient[:\s]*([^.\n<>]+)/i,
+      /substância\s+ativa[:\s]*([^.\n<>]+)/i,
+      /composição[:\s]*([^.\n<>]+)/i,
+      /ingrediente\s+ativo[:\s]*([^.\n<>]+)/i,
+      /fórmula[:\s]*([^.\n<>]+)/i,
+      /DCB[:\s]*([^.\n<>]+)/i,
+      /DCI[:\s]*([^.\n<>]+)/i
     ];
     
     for (const pattern of activeIngredientPatterns) {
       const match = html.match(pattern);
-      if (match) {
-        data.activeIngredient = this.cleanText(match[1]);
-        break;
+      if (match && match[1]) {
+        const ingredient = this.cleanText(match[1]);
+        if (ingredient.length > 2) {
+          data.activeIngredient = ingredient;
+          console.log('Found active ingredient:', ingredient);
+          break;
+        }
       }
     }
     
-    // Manufacturer
+    // Manufacturer - enhanced patterns for Brazilian labs
     const manufacturerPatterns = [
-      /marca\s+do\s+produto[:\s]+([^.\n]+)/i,
-      /laboratório[:\s]+([^.\n]+)/i,
-      /fabricante[:\s]+([^.\n]+)/i,
-      /manufacturer[:\s]+([^.\n]+)/i
+      /marca\s+do\s+produto[:\s]*([^.\n<>]+)/i,
+      /laboratório[:\s]*([^.\n<>]+)/i,
+      /fabricante[:\s]*([^.\n<>]+)/i,
+      /manufacturer[:\s]*([^.\n<>]+)/i,
+      /indústria\s+farmacêutica[:\s]*([^.\n<>]+)/i,
+      /lab\.[:\s]*([^.\n<>]+)/i,
+      /marca[:\s]*([^.\n<>]+)/i,
+      /empresa[:\s]*([^.\n<>]+)/i,
+      /(EMS|MEDLEY|EUROFARMA|TEUTO|GERMED|SANDOZ|NOVARTIS|BAYER|ABBOTT|PFIZER|ROCHE|ACHÉ|BIOLAB|CRISTÁLIA|HYPERA|TAKEDA|MULTILAB|UNIÃO QUÍMICA|APSEN)/i
     ];
     
     for (const pattern of manufacturerPatterns) {
       const match = html.match(pattern);
+      if (match && match[1]) {
+        const manufacturer = this.cleanText(match[1]);
+        if (manufacturer.length > 1) {
+          data.manufacturer = manufacturer;
+          console.log('Found manufacturer:', manufacturer);
+          break;
+        }
+      }
+    }
+    
+    // Concentration/dosage - more comprehensive patterns
+    const concentrationPatterns = [
+      /([\d,\.]+)\s*(mg|mcg|μg|g|ml|mL|%|UI|ui|DH|ch)/i,
+      /concentração[:\s]*([\d,\.]+)\s*(mg|mcg|μg|g|ml|mL|%)/i,
+      /dose[:\s]*([\d,\.]+)\s*(mg|mcg|μg|g|ml|mL|%)/i,
+      /dosagem[:\s]*([\d,\.]+)\s*(mg|mcg|μg|g|ml|mL|%)/i,
+      /([\d,\.]+)\s*mg\/\w+/i,
+      /([\d,\.]+)\s*mcg\/\w+/i
+    ];
+    
+    for (const pattern of concentrationPatterns) {
+      const match = html.match(pattern);
       if (match) {
-        data.manufacturer = this.cleanText(match[1]);
+        data.concentration = match[2] ? `${match[1]}${match[2]}` : match[0];
+        console.log('Found concentration:', data.concentration);
         break;
       }
     }
     
-    // Concentration/dosage
-    const concentrationMatch = html.match(/([\d,\.]+)\s*(mg|mcg|g|ml|%)/i);
-    if (concentrationMatch) {
-      data.concentration = `${concentrationMatch[1]}${concentrationMatch[2]}`;
-    }
-    
-    // Form
+    // Form - comprehensive pharmaceutical forms
     const formPatterns = [
-      /forma\s+farmacêutica[:\s]+([^.\n]+)/i,
-      /(comprimidos?|cápsulas?|solução|xarope|pomada|gel|creme|sublinguais?|gotas|injetável)/i
+      /forma\s+farmacêutica[:\s]*([^.\n<>]+)/i,
+      /apresentação[:\s]*([^.\n<>]+)/i,
+      /(comprimidos?\s*revestidos?|comprimidos?\s*sublinguais?|comprimidos?|cápsulas?\s*duras?|cápsulas?\s*gelatinosas?|cápsulas?|solução\s*oral|solução\s*injetável|solução|xarope|pomada|gel|creme|sublinguais?|gotas|injetável|suspensão|elixir|spray|aerossol|sachê|drágeas?|pastilhas?|adesivos?)/i,
+      /via\s+de\s+administração[:\s]*([^.\n<>]+)/i,
+      /tipo[:\s]*([^.\n<>]+)/i
     ];
     
     for (const pattern of formPatterns) {
       const match = html.match(pattern);
-      if (match) {
-        data.form = this.cleanText(match[1]);
-        break;
+      if (match && match[1]) {
+        const form = this.cleanText(match[1]);
+        if (form.length > 2) {
+          data.form = form;
+          console.log('Found form:', form);
+          break;
+        }
       }
     }
     
@@ -212,10 +265,27 @@ export class URLExtractorService {
       data.storageInstructions = this.cleanText(storageMatch[1]);
     }
     
-    // Package quantity
-    const quantityMatch = html.match(/(\d+)\s+(comprimidos?|cápsulas?|ml)/i);
-    if (quantityMatch) {
-      data.packageQuantity = `${quantityMatch[1]} ${quantityMatch[2]}`;
+    // Package quantity - comprehensive patterns
+    const quantityPatterns = [
+      /embalagem\s+com[:\s]*(\d+)\s*(comprimidos?|cápsulas?|ml|mL|unidades?|frascos?)/i,
+      /caixa\s+com[:\s]*(\d+)\s*(comprimidos?|cápsulas?|ml|mL|unidades?|frascos?)/i,
+      /contém[:\s]*(\d+)\s*(comprimidos?|cápsulas?|ml|mL|unidades?|frascos?)/i,
+      /(\d+)\s+(comprimidos?|cápsulas?|ml|mL|unidades?|frascos?)/i,
+      /quantidade[:\s]*(\d+)\s*(comprimidos?|cápsulas?|ml|mL|unidades?)/i,
+      /(\d+)\s*x\s*(\d+)\s*(mg|ml|mL)/i
+    ];
+    
+    for (const pattern of quantityPatterns) {
+      const match = html.match(pattern);
+      if (match) {
+        if (match[3]) {
+          data.packageQuantity = `${match[1]}x${match[2]}${match[3]}`;
+        } else {
+          data.packageQuantity = `${match[1]} ${match[2]}`;
+        }
+        console.log('Found package quantity:', data.packageQuantity);
+        break;
+      }
     }
     
     return data;
