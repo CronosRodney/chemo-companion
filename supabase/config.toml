@@ -1,1 +1,4 @@
 project_id = "xpxsdlvicmlqpcaldyyz"
+
+[functions.extract-medication-ai]
+verify_jwt = false

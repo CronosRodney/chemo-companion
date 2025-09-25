@@ -1,5 +1,6 @@
 // Service to extract medication data from URLs
 import { AIMedicationExtractor } from './aiMedicationExtractor';
+import { supabase } from '@/integrations/supabase/client';
 export interface ExtractedData {
   name?: string;
   activeIngredient?: string;
@@ -20,7 +21,19 @@ export class URLExtractorService {
     try {
       console.log('Extracting data from URL:', url);
 
-      // Step 1: Try to fetch and parse page content
+      // Step 1: Try AI extraction using edge function (most accurate)
+      try {
+        console.log('Trying AI extraction via edge function...');
+        const aiData = await this.extractWithAI(url);
+        if (aiData && aiData.name) {
+          console.log('AI extraction successful');
+          return aiData;
+        }
+      } catch (aiError) {
+        console.warn('AI extraction failed:', aiError);
+      }
+
+      // Step 2: Try to fetch and parse page content
       let htmlContent: string | null = null;
       try {
         const scrapedData = await this.fetchPageContent(url);
@@ -39,7 +52,7 @@ export class URLExtractorService {
         console.warn('Failed to fetch page content:', fetchError);
       }
 
-      // Step 2: Try AI analysis of text content
+      // Step 3: Try AI analysis of text content (fallback)
       if (htmlContent) {
         try {
           console.log('Trying AI text analysis...');
@@ -53,7 +66,7 @@ export class URLExtractorService {
         }
       }
 
-      // Step 3: Try screenshot + AI analysis
+      // Step 4: Try screenshot + AI analysis
       try {
         console.log('Trying screenshot + AI analysis...');
         const screenshot = await this.captureScreenshot(url);
@@ -76,7 +89,7 @@ export class URLExtractorService {
         console.warn('Screenshot + AI analysis failed:', screenshotError);
       }
 
-      // Step 4: Fallback to URL pattern extraction
+      // Step 5: Fallback to URL pattern extraction
       console.log('Falling back to URL pattern extraction...');
       const data: ExtractedData = {};
       
@@ -109,6 +122,32 @@ export class URLExtractorService {
       return data;
     } catch (error) {
       console.error('URL extraction failed:', error);
+      throw error;
+    }
+  }
+
+  private static async extractWithAI(url: string): Promise<ExtractedData | null> {
+    try {
+      console.log('Calling AI extraction edge function...');
+      
+      const { data, error } = await supabase.functions.invoke('extract-medication-ai', {
+        body: { url }
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
+
+      if (data?.success && data?.data) {
+        console.log('AI extraction successful with confidence:', data.confidence);
+        return data.data;
+      } else {
+        console.log('AI extraction failed:', data?.error);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error calling AI extraction:', error);
       throw error;
     }
   }
