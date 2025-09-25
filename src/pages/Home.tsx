@@ -203,20 +203,20 @@ const Home = () => {
           <Button 
             variant="outline" 
             size="lg" 
-            className="h-20 flex-col gap-2 group glass-effect border-2 border-primary/40 hover:bg-primary/10"
-            onClick={() => navigate('/scanner')}
-          >
-            <QrCode className="h-6 w-6 transition-transform group-hover:scale-110 text-primary" />
-            <span className="text-sm font-bold">Escanear QR</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            size="lg" 
             className="h-20 flex-col gap-2 group glass-effect border-2 border-success/40 hover:bg-success/10"
             onClick={() => navigate('/scan/med')}
           >
             <Pill className="h-6 w-6 transition-transform group-hover:scale-110 text-success" />
             <span className="text-sm font-bold">Medicamento</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            size="lg" 
+            className="h-20 flex-col gap-2 group glass-effect border-2 border-primary/40 hover:bg-primary/10"
+            onClick={() => navigate('/scanner')}
+          >
+            <QrCode className="h-6 w-6 transition-transform group-hover:scale-110 text-primary" />
+            <span className="text-sm font-bold">Escanear QR</span>
           </Button>
           <Button 
             variant="outline" 
