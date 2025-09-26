@@ -70,28 +70,9 @@ export class URLExtractorService {
         }
       }
 
-      // Step 4: Try screenshot + AI analysis
-      try {
-        console.log('Trying screenshot + AI analysis...');
-        const screenshot = await this.captureScreenshot(url);
-        const aiResult = await AIMedicationExtractor.analyzeScreenshot(screenshot);
-        
-        if (aiResult.success && aiResult.data) {
-          console.log('AI screenshot analysis successful');
-          return {
-            ...aiResult.data,
-            screenshot: screenshot
-          };
-        } else {
-          // Return screenshot for manual review
-          return {
-            name: 'Medicamento (revisar imagem)',
-            screenshot: screenshot
-          };
-        }
-      } catch (screenshotError) {
-        console.warn('Screenshot + AI analysis failed:', screenshotError);
-      }
+      // Step 4: Screenshot analysis disabled due to anti-bot protection
+      console.log('Screenshot analysis skipped - many sites have anti-bot protection');
+      console.log('Consider manual data entry if automatic extraction failed');
 
       // Step 5: Fallback to URL pattern extraction
       console.log('Falling back to URL pattern extraction...');
