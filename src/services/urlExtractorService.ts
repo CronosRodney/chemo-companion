@@ -113,8 +113,22 @@ export class URLExtractorService {
 
   private static async extractWithAI(url: string): Promise<ExtractedData | null> {
     try {
-      console.log('Calling AI extraction edge function...');
+      console.log('Calling AI batch extraction (page + screenshot)...');
       
+      // First try the new batch extraction function
+      const { data: batchData, error: batchError } = await supabase.functions.invoke('extract-medication-batch', {
+        body: { url }
+      });
+
+      if (!batchError && batchData?.success && batchData?.data) {
+        console.log('Batch extraction successful with confidence:', batchData.confidence);
+        console.log('Sources used:', batchData.sources);
+        return batchData.data;
+      }
+
+      console.log('Batch extraction failed, trying page-only extraction...');
+      
+      // Fallback to page-only extraction
       const { data, error } = await supabase.functions.invoke('extract-medication-ai', {
         body: { url }
       });
@@ -125,10 +139,10 @@ export class URLExtractorService {
       }
 
       if (data?.success && data?.data) {
-        console.log('AI extraction successful with confidence:', data.confidence);
+        console.log('Page-only extraction successful with confidence:', data.confidence);
         return data.data;
       } else {
-        console.log('AI extraction failed:', data?.error);
+        console.log('Page-only extraction failed:', data?.error);
         return null;
       }
     } catch (error) {

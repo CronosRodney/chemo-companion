@@ -2,3 +2,9 @@ project_id = "xpxsdlvicmlqpcaldyyz"
 
 [functions.extract-medication-ai]
 verify_jwt = false
+
+[functions.screenshot-medication]
+verify_jwt = false
+
+[functions.extract-medication-batch]
+verify_jwt = false
