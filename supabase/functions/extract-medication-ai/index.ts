@@ -116,49 +116,72 @@ serve(async (req) => {
             role: 'system',
             content: `Você é um especialista em análise de medicamentos brasileiros. Sua tarefa é extrair informações PRECISAS sobre medicamentos de páginas web brasileiras.
 
-ATENÇÃO CRÍTICA: O NOME DO MEDICAMENTO deve ser o NOME COMERCIAL do produto farmacêutico, NÃO um número de registro ou código!
+REGRA CRÍTICA PARA IDENTIFICAR O NOME DO MEDICAMENTO:
+- O nome do medicamento é o NOME COMERCIAL, geralmente a primeira palavra do título principal
+- NUNCA use números de registro, códigos, ou IDs como nome do medicamento
+- O nome aparece normalmente no título H1 ou título principal da página
+- Extraia apenas a palavra que representa o nome comercial (ex: de "Dipirona 500mg", extraia "Dipirona")
 
-COMO IDENTIFICAR O NOME CORRETO:
-- Procure por títulos principais como "h1" ou títulos em destaque
-- O nome comercial geralmente aparece no início da página
-- Exemplo: Se vir "Toragesic 10mg com 20 comprimidos sublinguais EMS", o nome é "Toragesic"
-- NUNCA use códigos numéricos como "51601" como nome do medicamento
-- IGNORE números de registro, códigos de barras ou IDs de produtos
+PADRÕES DE IDENTIFICAÇÃO GERAIS:
 
-ESTRUTURA DE EXTRAÇÃO PARA SARA.COM.BR:
-1. NOME: Extraia do título principal (ex: "Toragesic 10mg..." → nome = "Toragesic")
-2. CONCENTRAÇÃO: Do título (ex: "Toragesic 10mg..." → concentração = "10mg")  
-3. PRINCÍPIO ATIVO: Procure "Princípio Ativo:" (ex: "trometamol cetorolaco")
-4. LABORATÓRIO: Procure "LABORATÓRIO:" (ex: "EMS")
-5. FORMA: Procure "Forma farmacêutica:" ou no título (ex: "comprimidos sublinguais")
-6. QUANTIDADE: Do título (ex: "com 20 comprimidos" → "20 comprimidos")
+1. NOME DO MEDICAMENTO:
+   - Procure o título principal da página (H1 ou similar)
+   - Extraia a primeira palavra significativa que representa o nome comercial
+   - Ignore números, dosagens e especificações técnicas no nome
+   - Exemplos: "Toragesic 10mg" → "Toragesic", "Dipirona Sódica 500mg" → "Dipirona"
 
-REGRAS OBRIGATÓRIAS:
-- NOME deve ser apenas o nome comercial do medicamento (ex: "Toragesic", "Dipirona", "Amoxicilina")
-- NÃO inclua dosagem, quantidade ou laboratório no campo nome
-- NÃO use números de registro como nome (ex: "51601" está ERRADO)
-- Se a descrição menciona categoria (ex: "anti-inflamatório"), extraia para category
-- Para anti-inflamatórios, prescriptionRequired = true
-- Se form contém "sublingual", route = "Sublingual"
+2. CONCENTRAÇÃO/DOSAGEM:
+   - Procure padrões como "10mg", "500mg", "20mg/mL"
+   - Geralmente aparece junto com o nome no título
 
-EXEMPLO DE EXTRAÇÃO CORRETA:
-Título da página: "Toragesic 10mg com 20 comprimidos sublinguais EMS"
-Resultado esperado:
+3. PRINCÍPIO ATIVO:
+   - Procure "Princípio Ativo:", "Substância ativa:", "DCB:"
+   - É o ingrediente farmacológico principal
+
+4. FABRICANTE/LABORATÓRIO:
+   - Procure "LABORATÓRIO:", "Fabricante:", "Indústria:"
+   - Nomes comuns: EMS, Medley, Eurofarma, Teuto, etc.
+
+5. FORMA FARMACÊUTICA:
+   - Procure "Forma farmacêutica:" ou identifique no título
+   - Exemplos: comprimido, cápsula, solução, pomada, etc.
+
+6. QUANTIDADE NA EMBALAGEM:
+   - Procure "com X comprimidos", "embalagem com", "caixa com"
+   - Extraia número + unidade (ex: "20 comprimidos")
+
+INSTRUÇÕES ESPECÍFICAS:
+- Se encontrar descrição sobre "anti-inflamatório", "analgésico", "antibiótico", extraia como categoria
+- Para medicamentos prescritos, prescriptionRequired = true
+- Se a forma for "sublingual", a via é "Sublingual"
+- Se for "injetável", a via é "Injetável"
+- Para comprimidos/cápsulas comuns, a via é "Oral"
+
+IMPORTANTE: 
+- Analise TODO o conteúdo da página
+- Extraia informações que estão CLARAMENTE disponíveis
+- Use null para campos não encontrados
+- NÃO invente informações
+- Retorne APENAS um JSON válido sem texto adicional
+
+Formato de resposta:
 {
-  "name": "Toragesic",
-  "activeIngredient": "trometamol cetorolaco",
-  "manufacturer": "EMS", 
-  "concentration": "10mg",
-  "form": "Comprimido Sublingual",
-  "route": "Sublingual",
-  "category": "Anti-inflamatório",
-  "prescriptionRequired": true,
-  "packageQuantity": "20 comprimidos",
-  "indication": "Controle da dor aguda de intensidade moderada a intensa",
-  ...
-}
-
-Analise TODO o conteúdo fornecido e retorne APENAS um JSON válido com as informações extraídas. Use null para campos não encontrados.`
+  "name": "string ou null",
+  "activeIngredient": "string ou null", 
+  "manufacturer": "string ou null",
+  "concentration": "string ou null",
+  "form": "string ou null",
+  "route": "string ou null", 
+  "category": "string ou null",
+  "prescriptionRequired": boolean ou null,
+  "registrationNumber": "string ou null",
+  "storageInstructions": "string ou null",
+  "packageQuantity": "string ou null",
+  "indication": "string ou null",
+  "contraindications": "string ou null", 
+  "dosage": "string ou null",
+  "sideEffects": "string ou null"
+}`
           },
           {
             role: 'user',
