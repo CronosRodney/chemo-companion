@@ -75,19 +75,19 @@ serve(async (req) => {
       throw new Error(`Failed to fetch page content: ${errorMessage}`);
     }
 
-    // Clean HTML content for AI processing - preserve important structure
+    // Clean HTML content for AI processing - preserve important structure and titles
     let cleanContent = pageContent
       .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
       .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
       .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '') // Remove navigation
       .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, '') // Remove header
       .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '') // Remove footer
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s+/g, ' ')
+      .replace(/<\/?[^>]+(>|$)/g, " ") // Remove HTML tags but keep content
+      .replace(/\s+/g, ' ') // Normalize whitespace
       .trim();
     
     // Ensure we have meaningful content
-    if (cleanContent.length < 100) {
+    if (cleanContent.length < 200) {
       console.log('Content too short, trying alternative extraction...');
       // Try to get just the text content with minimal cleaning
       cleanContent = pageContent
@@ -98,7 +98,7 @@ serve(async (req) => {
     }
     
     // Limit content size but keep more content for better analysis
-    cleanContent = cleanContent.substring(0, 12000);
+    cleanContent = cleanContent.substring(0, 15000); // Increased limit
 
     console.log('Cleaned content length:', cleanContent.length);
 
@@ -114,60 +114,51 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `Você é um especialista em análise de medicamentos brasileiros. Analise CUIDADOSAMENTE o conteúdo da página fornecida e extraia as seguintes informações sobre o medicamento:
+            content: `Você é um especialista em análise de medicamentos brasileiros. Sua tarefa é extrair informações PRECISAS sobre medicamentos de páginas web brasileiras.
 
-CAMPOS OBRIGATÓRIOS:
-1. name: Nome comercial completo do medicamento
-2. activeIngredient: Princípio ativo (DCB/substância ativa)
-3. manufacturer: Fabricante/laboratório
-4. concentration: Concentração/dosagem
-5. form: Forma farmacêutica
-6. route: Via de administração
-7. category: Categoria terapêutica
-8. prescriptionRequired: Se requer prescrição (boolean)
-9. packageQuantity: Quantidade por embalagem
-10. indication: Indicações principais
-11. contraindications: Contraindicações
-12. dosage: Posologia/dosagem recomendada
-13. sideEffects: Efeitos colaterais principais
+ATENÇÃO CRÍTICA: O NOME DO MEDICAMENTO deve ser o NOME COMERCIAL do produto farmacêutico, NÃO um número de registro ou código!
 
-INSTRUÇÕES ESPECÍFICAS PARA SARA.COM.BR:
-- O título principal contém nome, concentração e quantidade (ex: "Toragesic 10mg com 20 comprimidos sublinguais EMS")
-- Procure por "Princípio Ativo:" seguido do nome
-- "LABORATÓRIO:" indica o fabricante
-- "Forma farmacêutica:" mostra a forma do medicamento
-- Na descrição, procure por categoria como "anti-inflamatório não esteroidal"
-- Extraia indicações da descrição do produto
-- Se é sublingual, a via é "Sublingual"
-- Anti-inflamatórios geralmente requerem prescrição
+COMO IDENTIFICAR O NOME CORRETO:
+- Procure por títulos principais como "h1" ou títulos em destaque
+- O nome comercial geralmente aparece no início da página
+- Exemplo: Se vir "Toragesic 10mg com 20 comprimidos sublinguais EMS", o nome é "Toragesic"
+- NUNCA use códigos numéricos como "51601" como nome do medicamento
+- IGNORE números de registro, códigos de barras ou IDs de produtos
 
-REGRAS DE EXTRAÇÃO:
-- Se encontrar "10mg com 20 comprimidos", extraia: concentration="10mg", packageQuantity="20 comprimidos"
-- Se encontrar "trometamol cetorolaco", este é o princípio ativo
-- Se encontrar "EMS" após o nome, este é o fabricante
-- Para "Comprimido Sublingual", form="Comprimido Sublingual", route="Sublingual"
-- Para anti-inflamatórios: category="Anti-inflamatório", prescriptionRequired=true
+ESTRUTURA DE EXTRAÇÃO PARA SARA.COM.BR:
+1. NOME: Extraia do título principal (ex: "Toragesic 10mg..." → nome = "Toragesic")
+2. CONCENTRAÇÃO: Do título (ex: "Toragesic 10mg..." → concentração = "10mg")  
+3. PRINCÍPIO ATIVO: Procure "Princípio Ativo:" (ex: "trometamol cetorolaco")
+4. LABORATÓRIO: Procure "LABORATÓRIO:" (ex: "EMS")
+5. FORMA: Procure "Forma farmacêutica:" ou no título (ex: "comprimidos sublinguais")
+6. QUANTIDADE: Do título (ex: "com 20 comprimidos" → "20 comprimidos")
 
-IMPORTANTE: Analise TODO o conteúdo fornecido, não apenas as primeiras linhas. Retorne APENAS um JSON válido, sem texto adicional.
+REGRAS OBRIGATÓRIAS:
+- NOME deve ser apenas o nome comercial do medicamento (ex: "Toragesic", "Dipirona", "Amoxicilina")
+- NÃO inclua dosagem, quantidade ou laboratório no campo nome
+- NÃO use números de registro como nome (ex: "51601" está ERRADO)
+- Se a descrição menciona categoria (ex: "anti-inflamatório"), extraia para category
+- Para anti-inflamatórios, prescriptionRequired = true
+- Se form contém "sublingual", route = "Sublingual"
 
-Formato da resposta (use exatamente estes campos):
+EXEMPLO DE EXTRAÇÃO CORRETA:
+Título da página: "Toragesic 10mg com 20 comprimidos sublinguais EMS"
+Resultado esperado:
 {
-  "name": "string ou null",
-  "activeIngredient": "string ou null", 
-  "manufacturer": "string ou null",
-  "concentration": "string ou null",
-  "form": "string ou null",
-  "route": "string ou null", 
-  "category": "string ou null",
-  "prescriptionRequired": boolean ou null,
-  "registrationNumber": "string ou null",
-  "storageInstructions": "string ou null",
-  "packageQuantity": "string ou null",
-  "indication": "string ou null",
-  "contraindications": "string ou null", 
-  "dosage": "string ou null",
-  "sideEffects": "string ou null"
-}`
+  "name": "Toragesic",
+  "activeIngredient": "trometamol cetorolaco",
+  "manufacturer": "EMS", 
+  "concentration": "10mg",
+  "form": "Comprimido Sublingual",
+  "route": "Sublingual",
+  "category": "Anti-inflamatório",
+  "prescriptionRequired": true,
+  "packageQuantity": "20 comprimidos",
+  "indication": "Controle da dor aguda de intensidade moderada a intensa",
+  ...
+}
+
+Analise TODO o conteúdo fornecido e retorne APENAS um JSON válido com as informações extraídas. Use null para campos não encontrados.`
           },
           {
             role: 'user',
