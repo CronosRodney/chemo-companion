@@ -1,541 +1,491 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// ESTRATÉGIA: Download e análise de arquivos de medicamento
 
 interface ExtractedMedicationData {
   name?: string;
   activeIngredient?: string;
-  manufacturer?: string;
   concentration?: string;
   form?: string;
+  manufacturer?: string;
   route?: string;
-  category?: string;
-  prescriptionRequired?: boolean;
-  registrationNumber?: string;
-  storageInstructions?: string;
-  packageQuantity?: string;
   indication?: string;
   contraindications?: string;
   dosage?: string;
   sideEffects?: string;
+  packageQuantity?: string;
+  note?: string;
 }
 
-interface AIExtractionResult {
-  success: boolean;
-  data?: ExtractedMedicationData;
-  confidence?: number;
-  error?: string;
-  bulaFilesFound?: number;
-}
-
-// Helper function to search for bula download links in HTML
-async function findBulaDownloadLinks(html: string, baseUrl: string): Promise<string[]> {
-  console.log('🔍 Searching for bula download links...');
-  const bulaLinks: string[] = [];
-  
-  // Regex patterns to find download links
-  const linkPatterns = [
-    /href=["']([^"']*bula[^"']*)["']/gi,
-    /href=["']([^"']*\.pdf[^"']*)["']/gi,
-    /href=["']([^"']*download[^"']*)["']/gi,
-    /data-url=["']([^"']*bula[^"']*)["']/gi,
-  ];
-  
-  for (const pattern of linkPatterns) {
-    let match;
-    while ((match = pattern.exec(html)) !== null) {
-      let link = match[1];
-      
-      // Check if link contains 'bula' or is a PDF
-      if (link.toLowerCase().includes('bula') || link.toLowerCase().endsWith('.pdf')) {
-        // Convert relative URLs to absolute
-        if (!link.startsWith('http')) {
-          const base = new URL(baseUrl);
-          if (link.startsWith('/')) {
-            link = `${base.origin}${link}`;
-          } else {
-            link = `${base.origin}/${link}`;
-          }
-        }
-        
-        if (!bulaLinks.includes(link)) {
-          bulaLinks.push(link);
-          console.log('📄 Found potential bula link:', link);
-        }
-      }
-    }
-  }
-  
-  return bulaLinks;
-}
-
-// Helper function to download and extract text from PDF
-async function downloadAndExtractPDF(url: string): Promise<string> {
-  console.log('📥 Downloading file from:', url);
-  
-  try {
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      },
-      signal: AbortSignal.timeout(15000)
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to download: ${response.status}`);
-    }
-    
-    const contentType = response.headers.get('content-type') || '';
-    console.log('📄 Content type:', contentType);
-    
-    // If it's a PDF, we'll need to extract text
-    // For now, we'll try to get the text content if it's HTML or plain text
-    if (contentType.includes('pdf')) {
-      console.log('⚠️ PDF detected - using alternative text extraction');
-      // For PDFs, we'd need a PDF parser library
-      // As a workaround, we'll note this in the logs
-      return '[PDF file detected but text extraction requires additional processing]';
-    }
-    
-    const text = await response.text();
-    console.log('✅ File downloaded, length:', text.length);
-    return text;
-    
-  } catch (error) {
-    console.error('❌ Error downloading file:', error);
-    return '';
-  }
-}
-
-// Simula seleção de texto como humano
-async function simulateTextSelection(url: string): Promise<string> {
-  console.log('\n🖱️ === ETAPA 2: SIMULAÇÃO DE SELEÇÃO COM MOUSE ===');
-  
-  // Estratégias de captura em ordem de prioridade
-  const strategies = [
-    'selecao_tela_completa_desktop',
-    'selecao_tela_completa_mobile',
-    'selecao_body_completo',
-    'selecao_conteudo_principal'
-  ];
-  
-  for (const strategy of strategies) {
-    try {
-      console.log(`\n📋 Tentando SELEÇÃO COMPLETA DA TELA: ${strategy}`);
-      
-      // Simula tempo de carregamento da página
-      const loadDelay = 3000 + Math.random() * 2000;
-      console.log(`⏱️ Aguardando carregamento da página: ${loadDelay}ms`);
-      await new Promise(resolve => setTimeout(resolve, loadDelay));
-      
-      // Faz requisição simulando navegador real
-      const response = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Connection': 'keep-alive',
-          'Upgrade-Insecure-Requests': '1',
-          'Sec-Fetch-Dest': 'document',
-          'Sec-Fetch-Mode': 'navigate',
-          'Sec-Fetch-Site': 'none',
-          'Cache-Control': 'max-age=0'
-        },
-        signal: AbortSignal.timeout(15000)
-      });
-      
-      console.log(`📊 ${strategy} - Status: ${response.status}`);
-      console.log(`📊 ${strategy} - Content-Type: ${response.headers.get('content-type')}`);
-      
-      if (!response.ok) continue;
-      
-      const fullHtml = await response.text();
-      console.log(`✅ ${strategy} - TELA COMPLETA "selecionada": ${fullHtml.length} chars`);
-      
-      // Simula seleção Ctrl+A e Ctrl+C
-      console.log('⌨️ Simulando Ctrl+C...');
-      console.log('✅ Seleção de texto simulada concluída');
-      
-      return fullHtml;
-      
-    } catch (error) {
-      console.log(`❌ ${strategy} falhou:`, error instanceof Error ? error.message : 'Unknown error');
-      continue;
-    }
-  }
-  
-  throw new Error('Nenhuma estratégia de seleção funcionou');
-}
-
-// Simula salvar texto em arquivo temporário
-function simulateSaveToTempFile(content: string): string {
-  console.log('\n📋 === ETAPA 3: CÓPIA PARA ARQUIVO TEMPORÁRIO ===');
-  console.log('🎯 SUCESSO! Usando conteúdo COMPLETO da estratégia: selecao_tela_completa_desktop');
-  console.log('📋 Simulando Ctrl+C e criação de arquivo temporário...');
-  
-  const tempFileName = `temp_medicamento_${Date.now()}.txt`;
-  console.log(`📝 Preview dos primeiros 1000 chars: ${content.substring(0, 1000)}`);
-  console.log(`📝 Preview dos últimos 500 chars: ${content.substring(content.length - 500)}`);
-  
-  return tempFileName;
-}
-
-// Extrai texto visível conservando estrutura
-function extractVisibleText(html: string): string {
-  console.log('\n📖 === ETAPA 4: LEITURA DO ARQUIVO TEMPORÁRIO ===');
-  console.log('📖 Lendo arquivo temporário...');
-  console.log(`📏 Tamanho original da tela completa: ${html.length} chars`);
-  
-  // LIMPEZA CONSERVADORA - Remove APENAS o essencial
-  console.log('🧹 Limpando conteúdo selecionado da TELA COMPLETA...');
-  
-  // 1. Converte tags estruturais em quebras de linha para preservar contexto
-  console.log('🔧 Convertendo tags para quebras de linha (preservando estrutura)...');
-  let text = html
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n\n')
-    .replace(/<\/div>/gi, '\n')
-    .replace(/<\/h[1-6]>/gi, '\n\n')
-    .replace(/<\/li>/gi, '\n')
-    .replace(/<\/tr>/gi, '\n')
-    .replace(/<\/td>/gi, ' | ')
-    .replace(/<\/th>/gi, ' | ');
-  
-  // 2. Remove APENAS scripts, estilos e comentários
-  console.log('🔧 Removendo APENAS scripts, estilos e comentários...');
-  text = text
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-    .replace(/<!--[\s\S]*?-->/g, '');
-  
-  // 3. Remove tags HTML mas PRESERVA o texto interno
-  console.log('📁 Simulando criação de arquivo temporário...');
-  text = text.replace(/<[^>]+>/g, ' ');
-  
-  // 4. Normaliza espaços mas PRESERVA quebras de linha importantes
-  console.log('🔧 Normalizando espaços CONSERVADORAMENTE...');
-  text = text
-    .replace(/[ \t]+/g, ' ')  // Múltiplos espaços/tabs → 1 espaço
-    .replace(/\n\s+\n/g, '\n\n')  // Linhas vazias com espaços → 2 quebras
-    .replace(/\n{3,}/g, '\n\n')  // Múltiplas quebras → máximo 2
-    .trim();
-  
-  // 5. Decodifica entidades HTML
-  console.log('🔧 Decodificando entidades HTML essenciais...');
-  text = text
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&aacute;/g, 'á')
-    .replace(/&eacute;/g, 'é')
-    .replace(/&iacute;/g, 'í')
-    .replace(/&oacute;/g, 'ó')
-    .replace(/&uacute;/g, 'ú')
-    .replace(/&atilde;/g, 'ã')
-    .replace(/&otilde;/g, 'õ')
-    .replace(/&ccedil;/g, 'ç');
-  
-  const tempFileName = `temp_medicamento_${Date.now()}.txt`;
-  console.log(`✅ Arquivo temporário "criado": ${tempFileName}`);
-  console.log(`📏 ${html.length} → ${text.length} chars (${((text.length / html.length) * 100).toFixed(1)}% preservado)`);
-  console.log(`📊 Limpeza CONSERVADORA concluída:`);
-  console.log(`📏 Tamanho do conteúdo copiado: ${text.length} chars`);
-  console.log(`📝 Preview do conteúdo limpo (primeiros 800 chars):\n${text.substring(0, 800)}`);
-  console.log(`📂 Simulando abertura do arquivo: ${tempFileName}`);
-  
-  return text;
-}
-
-// Busca inteligente por padrões de medicamento
-function findMedicationPatterns(text: string): Partial<ExtractedMedicationData> {
-  console.log('\n🔍 === ETAPA 5: BUSCA INTELIGENTE NO TEXTO ===');
-  console.log(`📏 Analisando texto de ${text.length} caracteres`);
-  console.log(`📝 Preview do conteúdo: ${text.substring(0, 100)}`);
-  
-  const patterns: Partial<ExtractedMedicationData> = {};
-  
-  console.log('🔍 Executando busca de padrões dinâmicos...');
-  console.log('🔍 Buscando padrões dinâmicos...');
-  
-  // Nomes de medicamentos (primeira palavra em maiúscula seguida de números/mg)
-  console.log('💊 Buscando nomes de medicamentos dinamicamente...');
-  const namePatterns = [
-    /([A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ][a-zàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþ]+)\s*\d+\s*mg/i,
-    /([A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ][a-zàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþ]+)\s*\d+mg/i,
-    /medicamento[:\s]+([A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ][a-zàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþ]+)/i,
-  ];
-  
-  for (const pattern of namePatterns) {
-    const match = text.match(pattern);
-    if (match && match[1] && !patterns.name) {
-      patterns.name = match[1].trim();
-      console.log(`💊 Nome encontrado: ${patterns.name}`);
-      break;
-    }
-  }
-  
-  // Concentração/Dosagem
-  console.log('⚖️ Buscando concentrações...');
-  const concPatterns = [
-    /(\d+\s*mg(?:\/mL)?)/i,
-    /(\d+\s*mcg)/i,
-    /(\d+\s*%)/i,
-    /(\d+\s*UI)/i,
-  ];
-  
-  for (const pattern of concPatterns) {
-    const match = text.match(pattern);
-    if (match && match[1] && !patterns.concentration) {
-      patterns.concentration = match[1].replace(/\s+/g, '');
-      console.log(`⚖️ Concentração encontrada: ${patterns.concentration}`);
-      break;
-    }
-  }
-  
-  // Forma farmacêutica
-  console.log('💊 Buscando formas farmacêuticas...');
-  const formPatterns = [
-    /(comprimido(?:s)?(?:\s+sublingual(?:is)?)?)/i,
-    /(cápsula(?:s)?)/i,
-    /(solução(?:\s+oral)?)/i,
-    /(pomada)/i,
-    /(xarope)/i,
-    /(suspensão)/i,
-  ];
-  
-  for (const pattern of formPatterns) {
-    const match = text.match(pattern);
-    if (match && match[1] && !patterns.form) {
-      patterns.form = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
-      console.log(`💊 Forma encontrada: ${patterns.form}`);
-      break;
-    }
-  }
-  
-  // Fabricante
-  console.log('🏭 Buscando fabricantes dinamicamente...');
-  const manuPatterns = [
-    /(?:fabricante|laboratório)[:\s]+([A-Z][a-zà-ÿ]+(?:\s+[A-Z][a-zà-ÿ]+)*)/i,
-    /\b(EMS|Medley|Eurofarma|Teuto|Germed|Aché|Neo Química|Pfizer|Novartis|Bayer)\b/i,
-  ];
-  
-  for (const pattern of manuPatterns) {
-    const match = text.match(pattern);
-    if (match && match[1] && !patterns.manufacturer) {
-      patterns.manufacturer = match[1].trim();
-      console.log(`🏭 Fabricante encontrado: ${patterns.manufacturer}`);
-      break;
-    }
-  }
-  
-  console.log(`📊 Padrões dinâmicos encontrados: ${JSON.stringify(patterns, null, 2)}`);
-  
-  return patterns;
-}
-
-// Analisa texto com IA
-async function analyzeWithAI(text: string, apiKey: string): Promise<Partial<ExtractedMedicationData>> {
-  console.log('🤖 Analisando texto completo com IA...');
-  console.log(`📤 Enviando texto para análise IA...`);
-  console.log(`📏 Enviando amostra de ${text.length} chars para IA`);
-  console.log('🤖 Analisando texto com IA...');
-  
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [{
-        role: 'system',
-        content: 'Você é um especialista em medicamentos. Extraia APENAS: name, activeIngredient, concentration, form, manufacturer, indication. Retorne JSON puro sem markdown.'
-      }, {
-        role: 'user',
-        content: `Analise este texto e extraia informações do medicamento:\n\n${text.substring(0, 8000)}`
-      }],
-      temperature: 0.2,
-      max_tokens: 500
-    }),
-  });
-  
-  if (!response.ok) {
-    console.error('❌ Erro na API da IA:', response.status);
-    return {};
-  }
-  
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content || '{}';
-  console.log(`📥 Resposta bruta da IA: ${content}`);
-  
-  try {
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    const result = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
-    console.log('✅ Análise IA concluída:', JSON.stringify(result, null, 2));
-    return result;
-  } catch {
-    console.log('✅ Análise IA concluída: {}');
-    return {};
-  }
-}
-
-// Combina resultados
-function combineResults(patterns: Partial<ExtractedMedicationData>, aiData: Partial<ExtractedMedicationData>): ExtractedMedicationData {
-  console.log('🔧 Combinando resultados da busca...');
-  console.log('📊 Combinando dados das fontes:');
-  console.log(`- Padrões: ${JSON.stringify(patterns, null, 2)}`);
-  console.log(`- IA: ${JSON.stringify(aiData, null, 2)}`);
-  
-  const combined: ExtractedMedicationData = {
-    name: patterns.name || aiData.name || null,
-    activeIngredient: aiData.activeIngredient || null,
-    manufacturer: patterns.manufacturer || aiData.manufacturer || null,
-    concentration: patterns.concentration || aiData.concentration || null,
-    form: patterns.form || aiData.form || null,
-    route: patterns.route || aiData.route || null,
-    category: aiData.category || null,
-    indication: aiData.indication || null,
-  };
-  
-  // Fallback se nenhum dado foi encontrado
-  if (!combined.name && !combined.concentration && !combined.manufacturer) {
-    console.log('⚠️ Nenhum dado encontrado - aplicando fallback');
-    combined.name = 'Medicamento não identificado';
-    combined.note = 'Não foi possível extrair dados do texto';
-  }
-  
-  console.log(`🎯 Dados finais combinados: ${JSON.stringify(combined, null, 2)}`);
-  
-  return combined;
+interface ArquivoBaixado {
+  nome: string;
+  url: string;
+  tipo: string;
+  tamanho: number;
+  conteudo: string;
+  contentType: string;
 }
 
 serve(async (req) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Content-Type': 'application/json'
+  };
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers });
   }
 
   try {
-    const { url } = await req.json();
-    if (!url) throw new Error('URL is required');
+    const body = await req.json();
+    const url = body.url;
+    
+    console.log('📁 === ESTRATÉGIA DE DOWNLOAD DE ARQUIVO ===');
+    console.log('📥 URL recebida:', url);
+    
+    if (!url) {
+      console.log('❌ ERRO: URL não fornecida');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'URL é obrigatória'
+      }), { headers, status: 400 });
+    }
 
+    // IMPORTANTE: Usa OPENAI_API_KEY (não ONCOTRACK_OPENAI_KEY)
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) throw new Error('OpenAI API key not configured');
-
-    // ETAPA 1: Navegar e buscar arquivos de bula
-    console.log('\n🚀 === ETAPA 1: NAVEGAÇÃO E BUSCA DE ARQUIVOS ===');
-    console.log('🔗 Navegando para URL:', url);
-    
-    let pageHtml = '';
-    try {
-      // Tenta conexão HTTPS primeiro
-      const httpsUrl = url.startsWith('http://') ? url.replace('http://', 'https://') : url;
-      const response = await fetch(httpsUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        },
-        signal: AbortSignal.timeout(12000)
-      });
-      
-      if (response.ok) {
-        pageHtml = await response.text();
-        console.log('✅ Navegação bem-sucedida para HTTPS');
-      }
-    } catch {
-      // Fallback para HTTP
-      const response = await fetch(url, {
-        headers: { 'User-Agent': 'Mozilla/5.0' },
-        signal: AbortSignal.timeout(10000)
-      });
-      pageHtml = await response.text();
-      console.log('✅ Navegação bem-sucedida para HTTP');
+    if (!openAIApiKey) {
+      console.log('❌ ERRO: OpenAI API key não configurada');
+      throw new Error('OPENAI_API_KEY not configured');
     }
     
-    console.log('👀 Simulando visualização da página...');
+    console.log('✅ OpenAI API key encontrada');
     
-    const bulaLinks = await findBulaDownloadLinks(pageHtml, url);
-    let bulaContent = '';
+    const result = await buscarEBaixarArquivoMedicamento(url, openAIApiKey);
     
-    if (bulaLinks.length > 0) {
-      console.log(`📋 Encontrados ${bulaLinks.length} arquivo(s) de bula`);
-      for (const link of bulaLinks.slice(0, 2)) {
-        const content = await downloadAndExtractPDF(link);
-        if (content?.length > 100) {
-          bulaContent += content + '\n\n';
-          console.log('✅ Conteúdo extraído do arquivo');
-          break;
-        }
-      }
-    }
+    console.log('🎯 RESULTADO FINAL:', JSON.stringify(result, null, 2));
     
-    // ETAPA 2-4: Simular seleção e extração de texto
-    const selectedHtml = await simulateTextSelection(url);
-    const tempFileName = simulateSaveToTempFile(selectedHtml);
+    return new Response(JSON.stringify(result), { headers });
     
-    console.log(`📖 Simulando leitura do conteúdo...`);
-    await new Promise(r => setTimeout(r, 1000 + Math.random() * 500));
-    
-    console.log(`✅ Arquivo lido com sucesso`);
-    const extractedText = extractVisibleText(selectedHtml);
-    console.log(`📏 Conteúdo lido: ${extractedText.length} chars`);
-    
-    // ETAPA 5: Busca inteligente
-    console.log('🔍 Buscando informações no texto do arquivo...');
-    const patterns = findMedicationPatterns(extractedText);
-    const aiData = await analyzeWithAI(extractedText, openAIApiKey);
-    
-    // ETAPA 6: Resultado final
-    console.log('\n✅ === ETAPA 6: RESULTADO FINAL ===');
-    console.log('✅ Compilando resultado final...');
-    
-    const finalData = combineResults(patterns, aiData);
-    console.log(`🎯 Resultado final compilado: ${JSON.stringify(finalData, null, 2)}`);
-    
-    const fieldsCount = Object.values(finalData).filter(v => v && v !== 'Medicamento não identificado').length;
-    const confidence = Math.min(95, Math.max(40, (fieldsCount / 10) * 100));
-    console.log(`📊 Confiança final: ${confidence}%`);
-    
-    const result: AIExtractionResult = {
-      success: true,
-      data: finalData,
-      confidence: Math.round(confidence),
-      method: 'mouse_text_selection',
-      originalUrl: url,
-      textSelectionSimulated: true,
-      debug: {
-        originalUrl: url,
-        buscaInteligente: {
-          success: true,
-          data: finalData,
-          metodo: 'combinacao_ia_padroes'
-        },
-        metodoUtilizado: 'mouse_text_selection'
-      }
-    };
-    
-    console.log(`🎯 RESULTADO FINAL: ${JSON.stringify(result, null, 2)}`);
-
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-
   } catch (error) {
-    console.error('❌ Erro na função:', error);
+    console.log('💥 ERRO GERAL:', error.message);
+    console.log('📍 Stack trace:', error.stack);
+    
     return new Response(JSON.stringify({
       success: false,
-      error: error instanceof Error ? error.message : 'Erro desconhecido'
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+      error: error.message
+    }), { headers, status: 500 });
   }
 });
+
+async function buscarEBaixarArquivoMedicamento(originalUrl: string, apiKey: string) {
+  console.log('\n📁 === INICIANDO BUSCA POR ARQUIVO DE MEDICAMENTO ===');
+  
+  // ETAPA 1: ACESSAR PÁGINA (OTIMIZADO - SEM DELAYS LONGOS)
+  console.log('\n🚶 ETAPA 1: Acessando página...');
+  const paginaConteudo = await acessarPagina(originalUrl);
+  
+  if (!paginaConteudo.success) {
+    console.log('❌ Falha ao acessar página');
+    return {
+      success: false,
+      error: 'Não foi possível acessar a página',
+      data: { name: 'Erro de acesso' }
+    };
+  }
+  
+  // ETAPA 2: PROCURAR LINKS DE DOWNLOAD
+  console.log('\n🔍 ETAPA 2: Procurando links de download...');
+  const linksDownload = procurarLinksDownload(paginaConteudo.conteudo, originalUrl);
+  
+  if (linksDownload.length === 0) {
+    console.log('⚠️ Nenhum link de download encontrado');
+    // Tenta análise do texto da página
+    return await analisarTextoPagina(paginaConteudo.conteudo, apiKey, originalUrl);
+  }
+  
+  console.log(`✅ Encontrados ${linksDownload.length} links de download`);
+  
+  // ETAPA 3: BAIXAR ARQUIVOS (MÁXIMO 3 PARA OTIMIZAR TIMEOUT)
+  console.log('\n⬇️ ETAPA 3: Baixando arquivos...');
+  const arquivosBaixados = await baixarArquivos(linksDownload.slice(0, 3), originalUrl);
+  
+  if (arquivosBaixados.length === 0) {
+    console.log('⚠️ Nenhum arquivo foi baixado com sucesso');
+    // Fallback: análise do texto da página
+    return await analisarTextoPagina(paginaConteudo.conteudo, apiKey, originalUrl);
+  }
+  
+  console.log(`✅ ${arquivosBaixados.length} arquivos baixados`);
+  
+  // ETAPA 4: ANALISAR ARQUIVOS COM IA
+  console.log('\n🧠 ETAPA 4: Analisando com IA...');
+  const analiseCompleta = await analisarArquivosComIA(arquivosBaixados, apiKey);
+  
+  // ETAPA 5: COMBINAR RESULTADOS
+  console.log('\n🔄 ETAPA 5: Combinando resultados...');
+  const resultadoFinal = combinarResultados(analiseCompleta);
+  
+  return {
+    success: true,
+    data: resultadoFinal.data,
+    confidence: resultadoFinal.confidence,
+    method: 'download_file_strategy',
+    arquivosEncontrados: linksDownload.length,
+    arquivosBaixados: arquivosBaixados.length
+  };
+}
+
+async function acessarPagina(url: string) {
+  console.log('🚶 Acessando página:', url);
+  
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'pt-BR,pt;q=0.9',
+  };
+  
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: headers,
+      signal: AbortSignal.timeout(10000) // 10s timeout
+    });
+    
+    console.log('📊 Status:', response.status);
+    
+    if (response.ok) {
+      const conteudo = await response.text();
+      console.log('✅ Página carregada:', conteudo.length, 'chars');
+      
+      return {
+        success: true,
+        conteudo: conteudo,
+        url: response.url || url
+      };
+    }
+    
+    return { success: false };
+    
+  } catch (error) {
+    console.log('❌ Erro ao acessar:', error.message);
+    return { success: false };
+  }
+}
+
+function procurarLinksDownload(html: string, baseUrl: string) {
+  console.log('🔍 Procurando links...');
+  
+  const linksEncontrados: Array<{url: string, tipo: string}> = [];
+  
+  // PADRÕES DE BUSCA OTIMIZADOS
+  const padroes = [
+    /href\s*=\s*["']([^"']*(?:bula|ficha|leaflet|documento)[^"']*)["']/gi,
+    /href\s*=\s*["']([^"']*\.pdf[^"']*)["']/gi,
+  ];
+  
+  for (const padrao of padroes) {
+    const matches = [...html.matchAll(padrao)];
+    
+    for (const match of matches) {
+      if (match[1]) {
+        let link = match[1];
+        
+        // Converte para URL absoluta
+        if (link.startsWith('/')) {
+          const urlBase = new URL(baseUrl);
+          link = `${urlBase.protocol}//${urlBase.host}${link}`;
+        } else if (!link.startsWith('http')) {
+          const urlBase = new URL(baseUrl);
+          link = `${urlBase.protocol}//${urlBase.host}/${link}`;
+        }
+        
+        linksEncontrados.push({ url: link, tipo: 'pdf' });
+        console.log('🔗 Link encontrado:', link);
+      }
+    }
+  }
+  
+  // Remove duplicatas
+  const unicos = linksEncontrados.filter((link, index, self) => 
+    index === self.findIndex(l => l.url === link.url)
+  );
+  
+  console.log(`📊 ${unicos.length} links únicos`);
+  return unicos;
+}
+
+async function baixarArquivos(links: Array<{url: string, tipo: string}>, baseUrl: string) {
+  console.log('⬇️ Iniciando downloads...');
+  
+  const arquivos: ArquivoBaixado[] = [];
+  
+  for (let i = 0; i < links.length; i++) {
+    const link = links[i];
+    console.log(`📥 Download ${i + 1}/${links.length}: ${link.url}`);
+    
+    try {
+      const response = await fetch(link.url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Referer': baseUrl,
+        },
+        signal: AbortSignal.timeout(12000) // 12s timeout por arquivo
+      });
+      
+      console.log(`📊 Status: ${response.status}`);
+      
+      if (response.ok) {
+        const conteudo = await response.text();
+        const contentType = response.headers.get('content-type') || '';
+        
+        let tipo = 'texto';
+        if (contentType.includes('pdf')) tipo = 'pdf';
+        else if (contentType.includes('html')) tipo = 'html';
+        
+        arquivos.push({
+          nome: `arquivo_${i + 1}`,
+          url: link.url,
+          tipo: tipo,
+          tamanho: conteudo.length,
+          conteudo: conteudo,
+          contentType: contentType
+        });
+        
+        console.log(`✅ Baixado: ${tipo} (${conteudo.length} chars)`);
+      }
+      
+    } catch (error) {
+      console.log(`❌ Erro no download:`, error.message);
+    }
+  }
+  
+  console.log(`📊 Total baixado: ${arquivos.length}`);
+  return arquivos;
+}
+
+async function analisarArquivosComIA(arquivos: ArquivoBaixado[], apiKey: string) {
+  console.log('🧠 Analisando com IA...');
+  
+  const analises = [];
+  
+  for (const arquivo of arquivos) {
+    console.log(`🔍 Analisando ${arquivo.nome} (${arquivo.tipo})`);
+    
+    try {
+      let conteudo = arquivo.conteudo;
+      
+      // Limpeza básica HTML
+      if (arquivo.tipo === 'html') {
+        conteudo = conteudo.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+        conteudo = conteudo.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+        conteudo = conteudo.replace(/<[^>]+>/g, ' ');
+        conteudo = conteudo.replace(/\s+/g, ' ');
+      }
+      
+      // Pega amostra para IA (máximo 4000 chars)
+      const amostra = conteudo.substring(0, 4000);
+      console.log(`📏 Amostra: ${amostra.length} chars`);
+      
+      const prompt = `Analise este arquivo de medicamento e extraia informações.
+
+IMPORTANTE: Extraia APENAS informações explícitas no texto. NÃO invente dados.
+
+CONTEÚDO:
+${amostra}
+
+Responda APENAS JSON válido:
+{
+  "name": "nome do medicamento",
+  "activeIngredient": "princípio ativo",
+  "concentration": "concentração",
+  "form": "forma farmacêutica",
+  "manufacturer": "fabricante",
+  "indication": "indicação"
+}`;
+
+      const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0,
+          max_tokens: 500
+        }),
+      });
+
+      if (aiResponse.ok) {
+        const aiData = await aiResponse.json();
+        const content = aiData.choices[0].message.content.trim();
+        
+        console.log(`🤖 IA respondeu: ${content.substring(0, 150)}...`);
+        
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const data = JSON.parse(jsonMatch[0]);
+          
+          // Remove campos vazios ou nulos
+          Object.keys(data).forEach(key => {
+            if (!data[key] || data[key] === 'null' || data[key] === '' || data[key].toLowerCase().includes('não mencionado')) {
+              delete data[key];
+            }
+          });
+          
+          analises.push({
+            arquivo: arquivo.nome,
+            tipo: arquivo.tipo,
+            dados: data,
+            sucesso: true
+          });
+          
+          console.log(`✅ Extraído:`, Object.keys(data).join(', '));
+        } else {
+          console.log(`⚠️ Nenhum JSON na resposta`);
+          analises.push({ arquivo: arquivo.nome, sucesso: false });
+        }
+      } else {
+        console.log(`❌ Erro na API IA:`, aiResponse.status);
+        analises.push({ arquivo: arquivo.nome, sucesso: false });
+      }
+      
+    } catch (error) {
+      console.log(`❌ Erro:`, error.message);
+      analises.push({ arquivo: arquivo.nome, sucesso: false });
+    }
+  }
+  
+  console.log(`📊 Análises: ${analises.filter(a => a.sucesso).length}/${analises.length} sucessos`);
+  return analises;
+}
+
+async function analisarTextoPagina(html: string, apiKey: string, url: string) {
+  console.log('📄 Analisando texto da página como fallback...');
+  
+  // Limpeza do HTML
+  let texto = html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .substring(0, 4000);
+  
+  console.log(`📏 Texto limpo: ${texto.length} chars`);
+  
+  try {
+    const prompt = `Analise este texto de página de medicamento e extraia informações.
+
+IMPORTANTE: Extraia APENAS informações explícitas.
+
+TEXTO:
+${texto}
+
+Responda APENAS JSON:
+{
+  "name": "nome",
+  "activeIngredient": "princípio ativo",
+  "concentration": "concentração",
+  "form": "forma",
+  "manufacturer": "fabricante"
+}`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0,
+        max_tokens: 300
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const content = data.choices[0].message.content.trim();
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      
+      if (jsonMatch) {
+        const extracted = JSON.parse(jsonMatch[0]);
+        
+        // Remove campos vazios
+        Object.keys(extracted).forEach(key => {
+          if (!extracted[key] || extracted[key] === 'null' || extracted[key] === '') {
+            delete extracted[key];
+          }
+        });
+        
+        return {
+          success: true,
+          data: extracted,
+          confidence: 50,
+          method: 'page_text_analysis',
+          note: 'Extração do texto da página (sem arquivos de download)'
+        };
+      }
+    }
+  } catch (error) {
+    console.log('❌ Erro na análise de texto:', error.message);
+  }
+  
+  return {
+    success: false,
+    error: 'Não foi possível extrair dados',
+    data: { name: 'Medicamento não identificado' }
+  };
+}
+
+function combinarResultados(analises: any[]) {
+  console.log('🔄 Combinando resultados...');
+  
+  const sucesso = analises.filter(a => a.sucesso);
+  
+  if (sucesso.length === 0) {
+    return {
+      data: { name: 'Não identificado', note: 'Nenhum arquivo analisado com sucesso' },
+      confidence: 10
+    };
+  }
+  
+  const final: any = {};
+  
+  // Combina dados de todos os arquivos
+  sucesso.forEach(analise => {
+    Object.entries(analise.dados).forEach(([key, value]) => {
+      if (value && !final[key]) {
+        final[key] = value;
+      }
+    });
+  });
+  
+  if (Object.keys(final).length === 0) {
+    final.name = 'Medicamento não identificado';
+    final.note = 'Não foi possível extrair dados dos arquivos';
+  }
+  
+  // Calcula confiança
+  let confidence = 40; // Base maior para arquivos
+  confidence += sucesso.length * 20;
+  if (final.name && final.name !== 'Medicamento não identificado') confidence += 25;
+  if (final.activeIngredient) confidence += 20;
+  if (final.concentration) confidence += 15;
+  if (final.manufacturer) confidence += 10;
+  
+  // Bonus para arquivos PDF
+  const temPDF = sucesso.some(a => a.tipo === 'pdf');
+  if (temPDF) confidence += 10;
+  
+  confidence = Math.min(95, confidence);
+  
+  console.log('🎯 Dados finais:', Object.keys(final).join(', '));
+  console.log('📊 Confiança:', confidence + '%');
+  
+  return { data: final, confidence };
+}
