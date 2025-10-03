@@ -60,39 +60,50 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen p-4 pb-20">
-      <div className="max-w-md mx-auto space-y-8">
-        {/* Header */}
-        <div className="text-center pt-12 pb-6">
-          <div className="luxury-card p-8 space-y-4">
-            <div className="w-16 h-16 mx-auto rounded-full hero-gradient flex items-center justify-center mb-4 shadow-[var(--shadow-luxury)]">
-              <Pill className="h-8 w-8 text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5 p-4 pb-20">
+      <div className="max-w-md mx-auto space-y-6">
+        {/* Header Premium */}
+        <div className="text-center pt-8 pb-4">
+          <div className="luxury-card p-10 space-y-5 relative overflow-hidden border-2 border-primary/20">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary-glow/5 to-transparent"></div>
+            <div className="absolute -top-20 -right-20 w-64 h-64 bg-primary/20 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-secondary/20 rounded-full blur-3xl"></div>
+            
+            <div className="relative">
+              <div className="w-20 h-20 mx-auto rounded-full medical-gradient flex items-center justify-center mb-5 shadow-[0_0_40px_rgba(var(--primary-rgb),0.4)] animate-pulse">
+                <Pill className="h-10 w-10 text-white" />
+              </div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-primary-glow to-secondary bg-clip-text text-transparent mb-3">
+                {getGreeting()}, {profile?.first_name || 'Maria'}
+              </h1>
+              <p className="text-muted-foreground text-lg font-medium">
+                Como você está se sentindo hoje?
+              </p>
             </div>
-            <h1 className="text-3xl font-bold text-foreground mb-2 text-shadow">
-              {getGreeting()}, {profile?.first_name || 'Maria'}
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              Como você está se sentindo hoje?
-            </p>
           </div>
         </div>
 
-        {/* Next Reminders */}
-        <div className="luxury-card p-6 space-y-4 border-2 border-primary/10">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-card-foreground text-shadow flex items-center gap-3">
-              <Bell className="h-6 w-6 text-primary" />
-              Próximos Lembretes
-            </h2>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowReminderManager(!showReminderManager)}
-            >
-              {showReminderManager ? 'Fechar' : 'Editar'}
-            </Button>
-          </div>
-          <div className="space-y-4">
+        {/* Next Reminders Premium */}
+        <div className="luxury-card p-6 space-y-4 border-2 border-primary/20 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Bell className="h-5 w-5 text-primary" />
+                </div>
+                Próximos Lembretes
+              </h2>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-primary/30 hover:bg-primary/10"
+                onClick={() => setShowReminderManager(!showReminderManager)}
+              >
+                {showReminderManager ? 'Fechar' : 'Editar'}
+              </Button>
+            </div>
+            <div className="space-y-4">
             {reminders.map((reminder) => (
               <div key={reminder.id} className={`glass-effect p-4 rounded-xl border-2 relative overflow-hidden ${reminder.urgent ? 'border-primary/40' : 'border-accent/40'}`}>
                 {reminder.urgent && <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary-glow/5"></div>}
@@ -123,6 +134,7 @@ const Home = () => {
                 />
               </div>
             )}
+            </div>
           </div>
         </div>
 
@@ -173,68 +185,83 @@ const Home = () => {
           </div>
         )}
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="luxury-card p-6 text-center relative overflow-hidden border-2 border-success/20">
-            <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-success/10"></div>
+        {/* Quick Stats Premium */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="luxury-card p-5 text-center relative overflow-hidden border-2 border-success/30 group hover:scale-105 transition-transform">
+            <div className="absolute inset-0 bg-gradient-to-br from-success/10 via-success/5 to-transparent"></div>
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-success/20 rounded-full blur-2xl group-hover:blur-3xl transition-all"></div>
             <div className="relative">
-              <div className="text-3xl font-bold text-success mb-1 text-shadow">{stats.adherence}%</div>
-              <div className="text-xs text-muted-foreground font-medium">Adesão</div>
+              <div className="text-4xl font-bold bg-gradient-to-br from-success to-success/70 bg-clip-text text-transparent mb-2 text-shadow">{stats.adherence}%</div>
+              <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">Adesão</div>
             </div>
           </div>
-          <div className="luxury-card p-6 text-center relative overflow-hidden border-2 border-primary/20">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary-glow/10"></div>
+          <div className="luxury-card p-5 text-center relative overflow-hidden border-2 border-primary/30 group hover:scale-105 transition-transform">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary-glow/5 to-transparent"></div>
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/20 rounded-full blur-2xl group-hover:blur-3xl transition-all"></div>
             <div className="relative">
-              <div className="text-lg font-bold text-primary mb-1 text-shadow">{stats.currentCycle}</div>
-              <div className="text-xs text-muted-foreground font-medium">Ciclos</div>
+              <div className="text-2xl font-bold bg-gradient-to-br from-primary to-primary-glow bg-clip-text text-transparent mb-2 text-shadow">{stats.currentCycle}</div>
+              <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">Ciclos</div>
             </div>
           </div>
-          <div className="luxury-card p-6 text-center relative overflow-hidden border-2 border-secondary/20">
-            <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-secondary-accent/10"></div>
+          <div className="luxury-card p-5 text-center relative overflow-hidden border-2 border-secondary/30 group hover:scale-105 transition-transform">
+            <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 via-secondary-accent/5 to-transparent"></div>
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-secondary/20 rounded-full blur-2xl group-hover:blur-3xl transition-all"></div>
             <div className="relative">
-              <div className="text-lg font-bold text-secondary-accent mb-1 text-shadow">{stats.nextAppointment}</div>
-              <div className="text-xs text-muted-foreground font-medium">Consulta</div>
+              <div className="text-xl font-bold bg-gradient-to-br from-secondary-accent to-secondary bg-clip-text text-transparent mb-2 text-shadow">{stats.nextAppointment}</div>
+              <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">Consulta</div>
             </div>
           </div>
         </div>
 
-        {/* Main Actions */}
+        {/* Main Actions Premium */}
         <div className="grid grid-cols-2 gap-4">
           <Button 
             variant="outline" 
             size="lg" 
-            className="h-20 flex-col gap-2 group glass-effect border-2 border-success/40 hover:bg-success/10"
+            className="h-24 flex-col gap-3 group glass-effect border-2 border-success/50 hover:bg-gradient-to-br hover:from-success/20 hover:to-success/10 relative overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(var(--success-rgb),0.3)]"
             onClick={() => navigate('/scan/med')}
           >
-            <Pill className="h-6 w-6 transition-transform group-hover:scale-110 text-success" />
-            <span className="text-sm font-bold">Medicamento</span>
+            <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="w-12 h-12 rounded-full bg-success/20 flex items-center justify-center relative">
+              <Pill className="h-7 w-7 transition-transform group-hover:scale-125 text-success relative z-10" />
+            </div>
+            <span className="text-sm font-bold relative z-10">Medicamento</span>
           </Button>
           <Button 
             variant="outline" 
             size="lg" 
-            className="h-20 flex-col gap-2 group glass-effect border-2 border-primary/40 hover:bg-primary/10"
+            className="h-24 flex-col gap-3 group glass-effect border-2 border-primary/50 hover:bg-gradient-to-br hover:from-primary/20 hover:to-primary-glow/10 relative overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(var(--primary-rgb),0.3)]"
             onClick={() => navigate('/scanner')}
           >
-            <QrCode className="h-6 w-6 transition-transform group-hover:scale-110 text-primary" />
-            <span className="text-sm font-bold">Escanear QR</span>
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center relative">
+              <QrCode className="h-7 w-7 transition-transform group-hover:scale-125 text-primary relative z-10" />
+            </div>
+            <span className="text-sm font-bold relative z-10">Escanear QR</span>
           </Button>
           <Button 
             variant="outline" 
             size="lg" 
-            className="h-20 flex-col gap-2 group glass-effect border-2 border-secondary/40 hover:bg-secondary/10"
+            className="h-24 flex-col gap-3 group glass-effect border-2 border-secondary/50 hover:bg-gradient-to-br hover:from-secondary/20 hover:to-secondary-accent/10 relative overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(var(--secondary-rgb),0.3)]"
             onClick={() => navigate('/events')}
           >
-            <Plus className="h-6 w-6 transition-transform group-hover:scale-110 text-secondary-accent" />
-            <span className="text-sm font-bold">Registrar</span>
+            <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center relative">
+              <Plus className="h-7 w-7 transition-transform group-hover:scale-125 text-secondary-accent relative z-10" />
+            </div>
+            <span className="text-sm font-bold relative z-10">Registrar</span>
           </Button>
           <Button 
             variant="outline" 
             size="lg" 
-            className="h-20 flex-col gap-2 group glass-effect border-2 border-accent/40 hover:bg-accent/10"
+            className="h-24 flex-col gap-3 group glass-effect border-2 border-accent/50 hover:bg-gradient-to-br hover:from-accent/20 hover:to-accent/10 relative overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(var(--accent-rgb),0.3)]"
             onClick={() => navigate('/timeline')}
           >
-            <Clock className="h-6 w-6 transition-transform group-hover:scale-110 text-accent-foreground" />
-            <span className="text-sm font-bold">Timeline</span>
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center relative">
+              <Clock className="h-7 w-7 transition-transform group-hover:scale-125 text-accent-foreground relative z-10" />
+            </div>
+            <span className="text-sm font-bold relative z-10">Timeline</span>
           </Button>
         </div>
         
@@ -251,13 +278,17 @@ const Home = () => {
           </Button>
         </div>
 
-        {/* Quick Health Check */}
-        <div className="luxury-card p-6 border-2 border-accent/20">
-          <h3 className="font-bold text-card-foreground mb-6 text-xl text-shadow">Como você está hoje?</h3>
-          <FeelingLogger onFeelingLogged={handleFeelingLogged} />
-          <p className="text-sm text-muted-foreground text-center font-medium">
-            1 = Muito mal | 5 = Excelente
-          </p>
+        {/* Quick Health Check Premium */}
+        <div className="luxury-card p-7 border-2 border-accent/30 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent"></div>
+          <div className="absolute -top-16 -right-16 w-48 h-48 bg-accent/20 rounded-full blur-3xl"></div>
+          <div className="relative">
+            <h3 className="font-bold text-2xl bg-gradient-to-r from-accent to-accent-foreground bg-clip-text text-transparent mb-7">Como você está hoje?</h3>
+            <FeelingLogger onFeelingLogged={handleFeelingLogged} />
+            <p className="text-sm text-muted-foreground text-center font-bold uppercase tracking-wide mt-4">
+              1 = Muito mal | 5 = Excelente
+            </p>
+          </div>
         </div>
 
         {/* Emergency Alert */}
