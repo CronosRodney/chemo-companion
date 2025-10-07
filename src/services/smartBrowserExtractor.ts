@@ -46,10 +46,13 @@ export class SmartBrowserExtractor {
    */
   static async openAndExtract(url: string): Promise<ExtractionResult | null> {
     console.log('[SmartBrowserExtractor] Starting extraction for:', url);
+    console.log('[SmartBrowserExtractor] Platform:', this.isNativePlatform() ? 'Native (Mobile)' : 'Web (Browser)');
 
     if (this.isNativePlatform()) {
+      console.log('[SmartBrowserExtractor] Using Capacitor Browser strategy');
       return await this.extractWithCapacitor(url);
     } else {
+      console.log('[SmartBrowserExtractor] Using Edge Function strategy (browser mode)');
       return await this.extractWithEdgeFunction(url);
     }
   }
@@ -93,28 +96,34 @@ export class SmartBrowserExtractor {
    */
   private static async extractWithEdgeFunction(url: string): Promise<ExtractionResult | null> {
     try {
-      console.log('[SmartBrowserExtractor] Extracting via Edge Function:', url);
+      console.log('[SmartBrowserExtractor] 🌐 Calling Edge Function for URL:', url);
+      console.log('[SmartBrowserExtractor] ⏳ This may take 10-30 seconds...');
 
+      const startTime = Date.now();
+      
       const { data, error } = await supabase.functions.invoke('extract-medication-ai', {
         body: { url }
       });
 
+      const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+      console.log(`[SmartBrowserExtractor] ⏱️ Edge Function completed in ${duration}s`);
+
       if (error) {
-        console.error('[SmartBrowserExtractor] Edge Function error:', error);
-        return null;
+        console.error('[SmartBrowserExtractor] ❌ Edge Function error:', error);
+        throw new Error(`Erro ao extrair dados: ${error.message || 'Erro desconhecido'}`);
       }
 
       if (!data) {
-        console.warn('[SmartBrowserExtractor] No data returned from Edge Function');
-        return null;
+        console.warn('[SmartBrowserExtractor] ⚠️ No data returned from Edge Function');
+        throw new Error('Nenhum dado foi retornado pela análise');
       }
 
-      console.log('[SmartBrowserExtractor] Successfully extracted data:', data);
+      console.log('[SmartBrowserExtractor] ✅ Successfully extracted data:', data);
       return data as ExtractionResult;
       
     } catch (error) {
-      console.error('[SmartBrowserExtractor] Error calling Edge Function:', error);
-      return null;
+      console.error('[SmartBrowserExtractor] 💥 Error calling Edge Function:', error);
+      throw error;
     }
   }
 

@@ -22,18 +22,20 @@ export function useAutoScanner() {
     try {
       // Check if it's a URL
       if (rawValue.startsWith('http')) {
-        console.log('[useAutoScanner] Processing URL with SmartBrowserExtractor:', rawValue);
+        console.log('[useAutoScanner] 🔍 Processing URL with SmartBrowserExtractor:', rawValue);
         
         try {
           // Use SmartBrowserExtractor for intelligent extraction
           const extractedData = await SmartBrowserExtractor.openAndExtract(rawValue);
           
           if (extractedData && extractedData.name) {
+            console.log('[useAutoScanner] ✅ Extraction successful:', extractedData.name);
             return {
               type: 'url',
               data: { url: rawValue, extracted: extractedData, needsConfirmation: true }
             };
           } else {
+            console.warn('[useAutoScanner] ⚠️ No medication data extracted');
             // If extraction failed, still return the URL for manual entry
             return {
               type: 'url',
@@ -41,10 +43,11 @@ export function useAutoScanner() {
             };
           }
         } catch (error) {
-          console.error('[useAutoScanner] Extraction error:', error);
+          console.error('[useAutoScanner] ❌ Extraction error:', error);
+          const errorMessage = error instanceof Error ? error.message : 'Erro ao processar URL';
           return {
             type: 'url',
-            data: { url: rawValue, extractionError: error, needsConfirmation: false }
+            data: { url: rawValue, extractionError: errorMessage, needsConfirmation: false }
           };
         }
       } else {
