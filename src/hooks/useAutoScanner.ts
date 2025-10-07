@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { IDetectedBarcode } from '@yudiel/react-qr-scanner';
 import { parseGS1 } from '../lib/gs1';
-import { URLExtractorService } from '../services/urlExtractorService';
+import { SmartBrowserExtractor } from '../services/smartBrowserExtractor';
 import { MedicationService } from '../services/medicationService';
 import { useToast } from './use-toast';
 
@@ -22,18 +22,26 @@ export function useAutoScanner() {
     try {
       // Check if it's a URL
       if (rawValue.startsWith('http')) {
-        // Open URL immediately (non-blocking)
-        window.open(rawValue, '_blank', 'noopener,noreferrer');
+        console.log('[useAutoScanner] Processing URL with SmartBrowserExtractor:', rawValue);
         
         try {
-          // Extract data from URL in parallel
-          const extractedData = await URLExtractorService.extractFromURL(rawValue);
+          // Use SmartBrowserExtractor for intelligent extraction
+          const extractedData = await SmartBrowserExtractor.openAndExtract(rawValue);
           
-          return {
-            type: 'url',
-            data: { url: rawValue, extracted: extractedData, needsConfirmation: true }
-          };
+          if (extractedData && extractedData.name) {
+            return {
+              type: 'url',
+              data: { url: rawValue, extracted: extractedData, needsConfirmation: true }
+            };
+          } else {
+            // If extraction failed, still return the URL for manual entry
+            return {
+              type: 'url',
+              data: { url: rawValue, extractionError: 'Não foi possível extrair dados automaticamente', needsConfirmation: false }
+            };
+          }
         } catch (error) {
+          console.error('[useAutoScanner] Extraction error:', error);
           return {
             type: 'url',
             data: { url: rawValue, extractionError: error, needsConfirmation: false }
@@ -100,15 +108,20 @@ export function useAutoScanner() {
       
       // Show appropriate toast
       if (result.type === 'url') {
-        if (result.data.extracted?.name || result.data.extracted?.screenshot) {
+        if (result.data.extracted?.name) {
           toast({
-            title: "Dados extraídos",
+            title: "✅ Medicamento identificado",
+            description: `${result.data.extracted.name} - Revise e salve`,
+          });
+        } else if (result.data.extracted?.screenshot) {
+          toast({
+            title: "📸 Dados capturados",
             description: "Revise as informações e salve o medicamento",
           });
         } else {
           toast({
-            title: "Link processado",
-            description: "Não foi possível extrair dados automaticamente",
+            title: "⚠️ Extração parcial",
+            description: "Alguns dados não puderam ser extraídos automaticamente",
             variant: "destructive",
           });
         }
