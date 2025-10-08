@@ -22,23 +22,35 @@ export function useAutoScanner() {
     try {
       // Check if it's a URL
       if (rawValue.startsWith('http')) {
-        console.log('[useAutoScanner] 🔍 Extraindo dados do medicamento automaticamente...', rawValue);
+        console.log('[useAutoScanner] 🚀 Abrindo página automaticamente...', rawValue);
         
         try {
-          // Extrai dados em BACKGROUND - não abre navegador externo
+          // Abre browser automaticamente, aguarda carregamento, e extrai
           const extractedData = await SmartBrowserExtractor.openAndExtract(rawValue);
           
-          if (extractedData && extractedData.name) {
-            console.log('[useAutoScanner] ✅ Dados extraídos:', extractedData.name);
+          // Valida se os dados são reais (não são placeholders genéricos)
+          const isValidData = extractedData && 
+            extractedData.name && 
+            extractedData.name !== 'nome' && 
+            extractedData.name !== 'Medicamento não identificado' &&
+            extractedData.name !== 'Não identificado' &&
+            extractedData.name !== 'Erro de acesso';
+          
+          if (isValidData) {
+            console.log('[useAutoScanner] ✅ Dados extraídos com sucesso:', extractedData.name);
             return {
               type: 'url',
               data: { url: rawValue, extracted: extractedData, needsConfirmation: true }
             };
           } else {
-            console.warn('[useAutoScanner] ⚠️ Nenhum dado encontrado');
+            console.warn('[useAutoScanner] ⚠️ Dados extraídos são inválidos ou genéricos');
             return {
               type: 'url',
-              data: { url: rawValue, extractionError: 'Não foi possível extrair dados automaticamente', needsConfirmation: false }
+              data: { 
+                url: rawValue, 
+                extractionError: 'Não foi possível extrair informações válidas. Verifique a página manualmente.', 
+                needsConfirmation: false 
+              }
             };
           }
         } catch (error) {

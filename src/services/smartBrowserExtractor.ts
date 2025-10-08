@@ -42,15 +42,62 @@ export class SmartBrowserExtractor {
   }
 
   /**
-   * Extrai conteúdo da página em BACKGROUND usando Edge Function
-   * NÃO abre navegador - tudo acontece dentro do app
+   * Abre URL no browser, aguarda carregamento, e extrai dados automaticamente
    */
   static async openAndExtract(url: string): Promise<ExtractionResult | null> {
-    console.log('[SmartBrowserExtractor] 🚀 Starting BACKGROUND extraction for:', url);
-    console.log('[SmartBrowserExtractor] 📱 Processing inside app - no external browser');
+    console.log('[SmartBrowserExtractor] 🚀 Starting AUTO extraction for:', url);
+    
+    if (this.isNativePlatform()) {
+      console.log('[SmartBrowserExtractor] 📱 Using Capacitor Browser auto-extraction');
+      return await this.extractWithCapacitorAuto(url);
+    } else {
+      console.log('[SmartBrowserExtractor] 🌐 Using Edge Function (browser mode)');
+      return await this.extractWithEdgeFunction(url);
+    }
+  }
 
-    // SEMPRE usa Edge Function em background - não abre navegador
-    return await this.extractWithEdgeFunction(url);
+  /**
+   * Abre browser automaticamente, aguarda carregamento, fecha e extrai
+   */
+  private static async extractWithCapacitorAuto(url: string): Promise<ExtractionResult | null> {
+    console.log('[SmartBrowserExtractor] 🌐 Opening browser automatically...');
+    
+    try {
+      // Abre o browser
+      await Browser.open({
+        url,
+        presentationStyle: 'fullscreen',
+        toolbarColor: '#1a1a1a',
+      });
+
+      console.log('[SmartBrowserExtractor] ⏳ Waiting for page to load...');
+      
+      // Aguarda 3 segundos para a página carregar completamente (com JS)
+      await this.delay(3000);
+      
+      console.log('[SmartBrowserExtractor] 🔄 Extracting data with Edge Function...');
+      
+      // Extrai dados usando Edge Function
+      const result = await this.extractWithEdgeFunction(url);
+      
+      // Fecha o browser automaticamente
+      console.log('[SmartBrowserExtractor] ❌ Closing browser automatically...');
+      await Browser.close();
+      
+      return result;
+      
+    } catch (error) {
+      console.error('[SmartBrowserExtractor] 💥 Error in auto extraction:', error);
+      
+      // Tenta fechar o browser em caso de erro
+      try {
+        await Browser.close();
+      } catch (closeError) {
+        console.error('[SmartBrowserExtractor] ⚠️ Could not close browser:', closeError);
+      }
+      
+      throw error;
+    }
   }
 
   /**
