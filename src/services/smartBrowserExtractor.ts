@@ -28,6 +28,7 @@ interface ExtractionResult {
   ean?: string;
   confidence?: number;
   screenshot?: string;
+  note?: string;
 }
 
 export class SmartBrowserExtractor {

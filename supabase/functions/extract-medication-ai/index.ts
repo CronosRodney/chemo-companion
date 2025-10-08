@@ -147,22 +147,44 @@ async function acessarPagina(url: string) {
   };
   
   try {
+    // IMPORTANTE: Seguir redirecionamentos automaticamente
     const response = await fetch(url, {
       method: 'GET',
       headers: headers,
-      signal: AbortSignal.timeout(10000) // 10s timeout
+      redirect: 'follow', // Segue redirecionamentos automaticamente
+      signal: AbortSignal.timeout(15000) // 15s timeout (aumentado para redirecionamentos)
     });
     
     console.log('📊 Status:', response.status);
+    const finalUrl = response.url || url;
+    
+    if (finalUrl !== url) {
+      console.log('🔀 Redirecionado para:', finalUrl);
+    }
     
     if (response.ok) {
       const conteudo = await response.text();
       console.log('✅ Página carregada:', conteudo.length, 'chars');
       
+      // Verifica se tem meta refresh (redirecionamento HTML)
+      const metaRefreshMatch = conteudo.match(/<meta[^>]*http-equiv=["']refresh["'][^>]*content=["'][^;"]*;?\s*url=([^"']+)["'][^>]*>/i);
+      if (metaRefreshMatch && metaRefreshMatch[1]) {
+        const redirectUrl = metaRefreshMatch[1].trim();
+        console.log('🔀 Meta refresh detectado, redirecionando para:', redirectUrl);
+        
+        // Se for URL relativa, converte para absoluta
+        const absoluteRedirectUrl = redirectUrl.startsWith('http') 
+          ? redirectUrl 
+          : new URL(redirectUrl, finalUrl).href;
+        
+        // Faz nova requisição para a URL de redirecionamento
+        return await acessarPagina(absoluteRedirectUrl);
+      }
+      
       return {
         success: true,
         conteudo: conteudo,
-        url: response.url || url
+        url: finalUrl
       };
     }
     
@@ -366,31 +388,57 @@ Responda APENAS JSON válido:
 async function analisarTextoPagina(html: string, apiKey: string, url: string) {
   console.log('📄 Analisando texto da página como fallback...');
   
-  // Limpeza do HTML
+  // Limpeza MELHORADA do HTML
   let texto = html
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<noscript[^>]*>[\s\S]*?<\/noscript>/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '')
     .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&[a-z]+;/gi, ' ')
     .replace(/\s+/g, ' ')
-    .substring(0, 4000);
+    .trim();
   
   console.log(`📏 Texto limpo: ${texto.length} chars`);
   
+  // Se o texto for muito curto, a página provavelmente usa JavaScript para carregar conteúdo
+  if (texto.length < 100) {
+    console.log('⚠️ Texto muito curto - página pode usar JavaScript dinâmico');
+    return {
+      success: false,
+      error: 'Página com conteúdo dinâmico (JavaScript). Use o browser para visualizar.',
+      data: { 
+        name: 'Conteúdo não acessível',
+        note: 'Esta página carrega informações via JavaScript. Abra a URL no navegador para visualizar os dados.'
+      }
+    };
+  }
+  
+  // Pega amostra maior para análise
+  const amostra = texto.substring(0, 6000);
+  console.log(`📏 Amostra para IA: ${amostra.length} chars`);
+  
   try {
-    const prompt = `Analise este texto de página de medicamento e extraia informações.
+    const prompt = `Você é um extrator de informações de medicamentos. Analise o texto abaixo e extraia APENAS informações EXPLÍCITAS e REAIS do medicamento.
 
-IMPORTANTE: Extraia APENAS informações explícitas.
+**REGRAS CRÍTICAS:**
+1. NÃO invente dados
+2. NÃO use placeholders genéricos como "nome", "princípio ativo", etc.
+3. Se não encontrar uma informação, deixe o campo vazio ou omita
+4. Busque por: nome comercial, princípio ativo, concentração, forma farmacêutica, fabricante, indicação
 
-TEXTO:
-${texto}
+TEXTO DA PÁGINA:
+${amostra}
 
-Responda APENAS JSON:
+Responda APENAS com JSON válido no formato:
 {
-  "name": "nome",
-  "activeIngredient": "princípio ativo",
-  "concentration": "concentração",
-  "form": "forma",
-  "manufacturer": "fabricante"
+  "name": "nome comercial REAL do medicamento ou vazio",
+  "activeIngredient": "princípio ativo REAL ou vazio",
+  "concentration": "concentração REAL ou vazio",
+  "form": "forma farmacêutica REAL ou vazio",
+  "manufacturer": "fabricante REAL ou vazio",
+  "indication": "indicação REAL ou vazio"
 }`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -399,12 +447,12 @@ Responda APENAS JSON:
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0,
-        max_tokens: 300
-      }),
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0,
+          max_tokens: 500
+        }),
     });
 
     if (response.ok) {
@@ -415,21 +463,44 @@ Responda APENAS JSON:
       if (jsonMatch) {
         const extracted = JSON.parse(jsonMatch[0]);
         
-        // Remove campos vazios
+        console.log('🤖 IA retornou:', JSON.stringify(extracted, null, 2));
+        
+        // Remove campos vazios, nulos, ou placeholders genéricos
+        const genericPlaceholders = ['nome', 'princípio ativo', 'concentração', 'forma', 'fabricante', 
+                                     'não mencionado', 'não especificado', 'vazio', 'n/a', 'desconhecido'];
+        
         Object.keys(extracted).forEach(key => {
-          if (!extracted[key] || extracted[key] === 'null' || extracted[key] === '') {
+          const value = extracted[key];
+          if (!value || 
+              value === 'null' || 
+              value === '' || 
+              genericPlaceholders.some(p => value.toLowerCase().includes(p.toLowerCase()))) {
             delete extracted[key];
           }
         });
         
+        console.log('✨ Dados limpos:', JSON.stringify(extracted, null, 2));
+        
+        // Se não tem dados válidos, retorna erro
+        if (Object.keys(extracted).length === 0 || !extracted.name) {
+          console.log('⚠️ Nenhum dado válido extraído');
+          return {
+            success: false,
+            error: 'Nenhuma informação válida encontrada',
+            data: { name: 'Informações não encontradas' }
+          };
+        }
+        
         return {
           success: true,
           data: extracted,
-          confidence: 50,
+          confidence: 70,
           method: 'page_text_analysis',
-          note: 'Extração do texto da página (sem arquivos de download)'
+          note: 'Extração do texto da página'
         };
       }
+      
+      console.log('⚠️ Nenhum JSON válido na resposta da IA');
     }
   } catch (error) {
     console.log('❌ Erro na análise de texto:', error.message);

@@ -29,12 +29,17 @@ export function useAutoScanner() {
           const extractedData = await SmartBrowserExtractor.openAndExtract(rawValue);
           
           // Valida se os dados são reais (não são placeholders genéricos)
+          const invalidNames = [
+            'nome', 'princípio ativo', 'concentração', 'forma', 'fabricante',
+            'medicamento não identificado', 'não identificado', 'erro de acesso',
+            'informações não encontradas', 'conteúdo não acessível'
+          ];
+          
           const isValidData = extractedData && 
             extractedData.name && 
-            extractedData.name !== 'nome' && 
-            extractedData.name !== 'Medicamento não identificado' &&
-            extractedData.name !== 'Não identificado' &&
-            extractedData.name !== 'Erro de acesso';
+            !invalidNames.some(invalid => 
+              extractedData.name.toLowerCase().includes(invalid.toLowerCase())
+            );
           
           if (isValidData) {
             console.log('[useAutoScanner] ✅ Dados extraídos com sucesso:', extractedData.name);
@@ -43,12 +48,13 @@ export function useAutoScanner() {
               data: { url: rawValue, extracted: extractedData, needsConfirmation: true }
             };
           } else {
-            console.warn('[useAutoScanner] ⚠️ Dados extraídos são inválidos ou genéricos');
+            const errorMsg = (extractedData as any)?.note || 'Não foi possível extrair informações válidas.';
+            console.warn('[useAutoScanner] ⚠️ Dados inválidos:', errorMsg);
             return {
               type: 'url',
               data: { 
                 url: rawValue, 
-                extractionError: 'Não foi possível extrair informações válidas. Verifique a página manualmente.', 
+                extractionError: errorMsg, 
                 needsConfirmation: false 
               }
             };
@@ -122,16 +128,18 @@ export function useAutoScanner() {
       
       // Show appropriate toast
       if (result.type === 'url') {
-        if (result.data.extracted?.name) {
+        if (result.data.needsConfirmation && result.data.extracted?.name) {
           toast({
             title: "✅ Medicamento encontrado",
-            description: `${result.data.extracted.name} - Revise e confirme para salvar`,
+            description: `${result.data.extracted.name} - Revise as informações`,
+            duration: 5000,
           });
         } else {
           toast({
-            title: "⚠️ Dados não encontrados",
-            description: "Não foi possível extrair informações automaticamente",
+            title: "⚠️ Extração incompleta",
+            description: result.data.extractionError || "Não foi possível extrair dados válidos",
             variant: "destructive",
+            duration: 6000,
           });
         }
       } else if (result.type === 'gs1') {
