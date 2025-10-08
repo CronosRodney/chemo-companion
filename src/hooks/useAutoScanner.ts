@@ -22,28 +22,27 @@ export function useAutoScanner() {
     try {
       // Check if it's a URL
       if (rawValue.startsWith('http')) {
-        console.log('[useAutoScanner] 🔍 Processing URL with SmartBrowserExtractor:', rawValue);
+        console.log('[useAutoScanner] 🔍 Extraindo dados do medicamento automaticamente...', rawValue);
         
         try {
-          // Use SmartBrowserExtractor for intelligent extraction
+          // Extrai dados em BACKGROUND - não abre navegador externo
           const extractedData = await SmartBrowserExtractor.openAndExtract(rawValue);
           
           if (extractedData && extractedData.name) {
-            console.log('[useAutoScanner] ✅ Extraction successful:', extractedData.name);
+            console.log('[useAutoScanner] ✅ Dados extraídos:', extractedData.name);
             return {
               type: 'url',
               data: { url: rawValue, extracted: extractedData, needsConfirmation: true }
             };
           } else {
-            console.warn('[useAutoScanner] ⚠️ No medication data extracted');
-            // If extraction failed, still return the URL for manual entry
+            console.warn('[useAutoScanner] ⚠️ Nenhum dado encontrado');
             return {
               type: 'url',
               data: { url: rawValue, extractionError: 'Não foi possível extrair dados automaticamente', needsConfirmation: false }
             };
           }
         } catch (error) {
-          console.error('[useAutoScanner] ❌ Extraction error:', error);
+          console.error('[useAutoScanner] ❌ Erro na extração:', error);
           const errorMessage = error instanceof Error ? error.message : 'Erro ao processar URL';
           return {
             type: 'url',
@@ -113,18 +112,13 @@ export function useAutoScanner() {
       if (result.type === 'url') {
         if (result.data.extracted?.name) {
           toast({
-            title: "✅ Medicamento identificado",
-            description: `${result.data.extracted.name} - Revise e salve`,
-          });
-        } else if (result.data.extracted?.screenshot) {
-          toast({
-            title: "📸 Dados capturados",
-            description: "Revise as informações e salve o medicamento",
+            title: "✅ Medicamento encontrado",
+            description: `${result.data.extracted.name} - Revise e confirme para salvar`,
           });
         } else {
           toast({
-            title: "⚠️ Extração parcial",
-            description: "Alguns dados não puderam ser extraídos automaticamente",
+            title: "⚠️ Dados não encontrados",
+            description: "Não foi possível extrair informações automaticamente",
             variant: "destructive",
           });
         }

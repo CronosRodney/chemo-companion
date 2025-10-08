@@ -42,54 +42,21 @@ export class SmartBrowserExtractor {
   }
 
   /**
-   * Extrai conteúdo da página usando estratégia apropriada para a plataforma
+   * Extrai conteúdo da página em BACKGROUND usando Edge Function
+   * NÃO abre navegador - tudo acontece dentro do app
    */
   static async openAndExtract(url: string): Promise<ExtractionResult | null> {
-    console.log('[SmartBrowserExtractor] Starting extraction for:', url);
-    console.log('[SmartBrowserExtractor] Platform:', this.isNativePlatform() ? 'Native (Mobile)' : 'Web (Browser)');
+    console.log('[SmartBrowserExtractor] 🚀 Starting BACKGROUND extraction for:', url);
+    console.log('[SmartBrowserExtractor] 📱 Processing inside app - no external browser');
 
-    if (this.isNativePlatform()) {
-      console.log('[SmartBrowserExtractor] Using Capacitor Browser strategy');
-      return await this.extractWithCapacitor(url);
-    } else {
-      console.log('[SmartBrowserExtractor] Using Edge Function strategy (browser mode)');
-      return await this.extractWithEdgeFunction(url);
-    }
+    // SEMPRE usa Edge Function em background - não abre navegador
+    return await this.extractWithEdgeFunction(url);
   }
 
   /**
-   * Estratégia para plataformas nativas (Android/iOS)
-   * Abre o browser in-app, aguarda carregamento, injeta scripts e fecha
+   * REMOVIDO - Não abrimos mais navegador externo
+   * Tudo é processado em background via Edge Function
    */
-  private static async extractWithCapacitor(url: string): Promise<ExtractionResult | null> {
-    try {
-      console.log('[SmartBrowserExtractor] Opening URL in Capacitor Browser:', url);
-
-      // Abre o browser in-app
-      await Browser.open({
-        url,
-        presentationStyle: 'fullscreen',
-        toolbarColor: '#1a1a1a'
-      });
-
-      // Aguarda página carregar
-      await this.delay(this.LOAD_TIMEOUT);
-
-      // NOTA: Capacitor Browser não suporta injeção direta de JavaScript
-      // A extração será feita via Edge Function como fallback
-      console.log('[SmartBrowserExtractor] Browser opened, closing and using Edge Function for extraction');
-      
-      await Browser.close();
-
-      // Usa Edge Function para extrair dados
-      return await this.extractWithEdgeFunction(url);
-      
-    } catch (error) {
-      console.error('[SmartBrowserExtractor] Error with Capacitor extraction:', error);
-      await Browser.close().catch(() => {});
-      return null;
-    }
-  }
 
   /**
    * Estratégia usando Edge Function (funciona em todas as plataformas)
