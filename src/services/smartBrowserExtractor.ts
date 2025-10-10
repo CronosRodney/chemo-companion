@@ -43,108 +43,16 @@ export class SmartBrowserExtractor {
   }
 
   /**
-   * Abre URL no browser, aguarda carregamento, e extrai dados automaticamente
+   * Extrai dados em background (sem abrir browser)
    */
   static async openAndExtract(url: string): Promise<ExtractionResult | null> {
-    console.log('[SmartBrowserExtractor] 🚀 Starting AUTO extraction for:', url);
+    console.log('[SmartBrowserExtractor] 🚀 Starting BACKGROUND extraction for:', url);
+    console.log('[SmartBrowserExtractor] 🌐 Processing in background via Edge Function...');
     
-    if (this.isNativePlatform()) {
-      console.log('[SmartBrowserExtractor] 📱 Using Capacitor Browser auto-extraction');
-      return await this.extractWithCapacitorAuto(url);
-    } else {
-      console.log('[SmartBrowserExtractor] 🌐 Using Edge Function (browser mode)');
-      return await this.extractWithEdgeFunction(url);
-    }
+    // Sempre usa Edge Function em background (mais rápido e transparente)
+    return await this.extractWithEdgeFunction(url);
   }
 
-  /**
-   * Abre browser automaticamente e faz polling até extrair dados válidos
-   */
-  private static async extractWithCapacitorAuto(url: string): Promise<ExtractionResult | null> {
-    console.log('[SmartBrowserExtractor] 🌐 Opening browser with polling strategy...');
-    
-    try {
-      // Abre o browser
-      await Browser.open({
-        url,
-        presentationStyle: 'fullscreen',
-        toolbarColor: '#1a1a1a',
-      });
-
-      console.log('[SmartBrowserExtractor] ⏳ Starting polling for page load...');
-      
-      const maxAttempts = 8; // 8 tentativas
-      const pollInterval = 2000; // 2 segundos entre tentativas
-      let attempt = 0;
-      let lastError: any = null;
-      
-      // Polling: tenta extrair dados a cada 2 segundos
-      while (attempt < maxAttempts) {
-        attempt++;
-        console.log(`[SmartBrowserExtractor] 🔄 Polling attempt ${attempt}/${maxAttempts}...`);
-        
-        try {
-          // Aguarda intervalo antes da tentativa
-          if (attempt > 1) {
-            await this.delay(pollInterval);
-          } else {
-            // Primeira tentativa: aguarda 3s para página inicial carregar
-            await this.delay(3000);
-          }
-          
-          // Tenta extrair dados
-          const result = await this.extractWithEdgeFunction(url);
-          
-          // Valida se os dados são reais (não placeholders)
-          const invalidNames = [
-            'nome', 'princípio ativo', 'concentração', 'forma', 'fabricante',
-            'medicamento não identificado', 'não identificado', 'erro de acesso',
-            'informações não encontradas', 'conteúdo não acessível'
-          ];
-          
-          const isValid = result && 
-            result.name && 
-            !invalidNames.some(invalid => 
-              result.name!.toLowerCase().includes(invalid.toLowerCase())
-            );
-          
-          if (isValid) {
-            console.log('[SmartBrowserExtractor] ✅ Valid data extracted:', result.name);
-            
-            // Fecha o browser automaticamente
-            console.log('[SmartBrowserExtractor] ❌ Closing browser...');
-            await Browser.close();
-            
-            return result;
-          }
-          
-          console.log('[SmartBrowserExtractor] ⚠️ Data not ready yet, continuing polling...');
-          
-        } catch (error) {
-          console.error(`[SmartBrowserExtractor] ⚠️ Attempt ${attempt} failed:`, error);
-          lastError = error;
-        }
-      }
-      
-      // Se chegou aqui, todas as tentativas falharam
-      console.log('[SmartBrowserExtractor] ❌ Max attempts reached, closing browser...');
-      await Browser.close();
-      
-      throw new Error('Não foi possível extrair dados após múltiplas tentativas. A página pode usar JavaScript complexo.');
-      
-    } catch (error) {
-      console.error('[SmartBrowserExtractor] 💥 Error in polling extraction:', error);
-      
-      // Tenta fechar o browser em caso de erro
-      try {
-        await Browser.close();
-      } catch (closeError) {
-        console.error('[SmartBrowserExtractor] ⚠️ Could not close browser:', closeError);
-      }
-      
-      throw error;
-    }
-  }
 
   /**
    * REMOVIDO - Não abrimos mais navegador externo

@@ -130,39 +130,17 @@ export default function ScanMed() {
     if (!lastScan) return null;
     
     if (lastScan.type === 'url') {
-      // Show MedicationDataDisplay for extracted data or screenshots
-      if (lastScan.data.extracted && (lastScan.data.extracted.name || lastScan.data.extracted.screenshot)) {
+      // Automatically show MedicationDataDisplay when data is extracted
+      if (lastScan.data.extracted && lastScan.data.extracted.name) {
         return (
-          <div className="space-y-4">
-            <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2 text-blue-700 dark:text-blue-300">
-                  <ExternalLink className="h-5 w-5" />
-                  Dados Extraídos do Link
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => setShowDataDisplay(true)}
-                    className="flex-1"
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Revisar e Salvar Dados
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-            
-            {showDataDisplay && (
-              <MedicationDataDisplay 
-                extractedData={lastScan.data.extracted}
-                sourceUrl={lastScan.data.url}
-                onClose={() => setShowDataDisplay(false)}
-              />
-            )}
-          </div>
+          <MedicationDataDisplay 
+            extractedData={lastScan.data.extracted}
+            sourceUrl={lastScan.data.url}
+            onClose={() => {
+              setShowDataDisplay(false);
+              // Optionally navigate back or clear scan
+            }}
+          />
         );
       }
       

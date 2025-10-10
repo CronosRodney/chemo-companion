@@ -130,26 +130,26 @@ export function useAutoScanner() {
       if (result.type === 'url') {
         if (result.data.needsConfirmation && result.data.extracted?.name) {
           toast({
-            title: "✅ Medicamento encontrado",
-            description: `${result.data.extracted.name} - Revise as informações`,
-            duration: 5000,
+            title: "✅ Dados extraídos com sucesso",
+            description: `${result.data.extracted.name} - Revise e confirme as informações abaixo`,
+            duration: 4000,
           });
         } else {
           toast({
-            title: "⚠️ Extração incompleta",
-            description: result.data.extractionError || "Não foi possível extrair dados válidos",
+            title: "⚠️ Extração automática falhou",
+            description: result.data.extractionError || "Não foi possível extrair informações desta página",
             variant: "destructive",
-            duration: 6000,
+            duration: 5000,
           });
         }
       } else if (result.type === 'gs1') {
         toast({
-          title: "Medicamento registrado",
-          description: "Dados salvos automaticamente na timeline",
+          title: "✅ Código GS1 processado",
+          description: "Medicamento registrado automaticamente",
         });
       } else if (result.type === 'error') {
         toast({
-          title: "Erro no processamento",
+          title: "❌ Erro no processamento",
           description: result.error,
           variant: "destructive",
         });
