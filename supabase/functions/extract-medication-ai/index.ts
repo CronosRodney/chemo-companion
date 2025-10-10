@@ -560,3 +560,142 @@ function combinarResultados(analises: any[]) {
   
   return { data: final, confidence };
 }
+
+/**
+ * Captura screenshot de uma URL
+ */
+async function capturarScreenshot(url: string): Promise<{ success: boolean; screenshot?: string; error?: string }> {
+  try {
+    const screenshotUrl = `https://screenshotapi.net/api/v1/screenshot?url=${encodeURIComponent(url)}&width=1200&height=800&output=image&file_type=png&wait_for_event=load&delay=3000`;
+    
+    const response = await fetch(screenshotUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      },
+      signal: AbortSignal.timeout(20000)
+    });
+
+    if (!response.ok) {
+      return { success: false, error: `Screenshot API error: ${response.status}` };
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const screenshot = `data:image/png;base64,${base64}`;
+    
+    return { success: true, screenshot };
+  } catch (error) {
+    console.error('Erro ao capturar screenshot:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Erro desconhecido' 
+    };
+  }
+}
+
+/**
+ * Analisa screenshot com IA
+ */
+async function analisarScreenshotComIA(screenshot: string, url: string): Promise<ExtractedMedicationData | null> {
+  const apiKey = Deno.env.get('OPENAI_API_KEY');
+  if (!apiKey) {
+    console.error('⚠️ OPENAI_API_KEY não encontrada');
+    return null;
+  }
+
+  try {
+    console.log('🤖 Enviando screenshot para análise com GPT-4o...');
+    
+    const prompt = `Analise esta imagem de uma bula ou informação de medicamento e extraia APENAS informações REAIS e VISÍVEIS.
+
+REGRAS IMPORTANTES:
+- Extraia APENAS dados que você consegue VER claramente na imagem
+- Se um campo não estiver visível, deixe-o vazio
+- NÃO invente ou presuma informações
+- Se o nome do medicamento não estiver claro, retorne null
+
+Retorne um JSON com esta estrutura exata:
+{
+  "name": "Nome do medicamento (se visível)",
+  "activeIngredient": "Princípio ativo (se visível)",
+  "concentration": "Concentração (se visível)",
+  "manufacturer": "Fabricante (se visível)",
+  "dosageForm": "Forma farmacêutica (se visível)",
+  "indication": "Indicações (se visível)",
+  "contraindications": "Contraindicações (se visível)",
+  "sideEffects": "Efeitos colaterais (se visível)",
+  "warnings": "Advertências (se visível)",
+  "anvisa": "Registro ANVISA (se visível)",
+  "confidence": 0.8
+}`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: prompt },
+              { type: 'image_url', image_url: { url: screenshot } }
+            ]
+          }
+        ],
+        max_tokens: 1000,
+        temperature: 0.1
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Erro da API OpenAI:', response.status, errorText);
+      return null;
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+
+    if (!content) {
+      console.error('⚠️ Resposta vazia da IA');
+      return null;
+    }
+
+    console.log('📝 Resposta da IA:', content);
+
+    // Parse JSON da resposta
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.error('⚠️ Não foi possível extrair JSON da resposta');
+      return null;
+    }
+
+    const extracted = JSON.parse(jsonMatch[0]);
+    
+    // Valida se tem nome válido
+    const invalidNames = [
+      'nome', 'não identificado', 'não encontrado', 'desconhecido'
+    ];
+    
+    if (!extracted.name || invalidNames.some(invalid => 
+      extracted.name.toLowerCase().includes(invalid)
+    )) {
+      console.log('⚠️ Nome de medicamento inválido ou não encontrado');
+      return null;
+    }
+
+    console.log('✅ Dados extraídos do screenshot:', extracted.name);
+    return {
+      ...extracted,
+      screenshot: screenshot // Inclui o screenshot no resultado
+    };
+
+  } catch (error) {
+    console.error('💥 Erro ao analisar screenshot com IA:', error);
+    return null;
+  }
+}
