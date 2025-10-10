@@ -1,6 +1,7 @@
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/integrations/supabase/client';
+import { NativeHtmlExtractor } from './nativeHtmlExtractor';
 
 interface ExtractedContent {
   htmlContent: string;
@@ -43,14 +44,57 @@ export class SmartBrowserExtractor {
   }
 
   /**
-   * Extrai dados em background (sem abrir browser)
+   * Abre browser, aguarda JS carregar, extrai HTML e fecha
    */
   static async openAndExtract(url: string): Promise<ExtractionResult | null> {
-    console.log('[SmartBrowserExtractor] 🚀 Starting BACKGROUND extraction for:', url);
-    console.log('[SmartBrowserExtractor] 🌐 Processing in background via Edge Function...');
+    console.log('[SmartBrowserExtractor] 🚀 Starting extraction for:', url);
     
-    // Sempre usa Edge Function em background (mais rápido e transparente)
-    return await this.extractWithEdgeFunction(url);
+    if (this.isNativePlatform()) {
+      console.log('[SmartBrowserExtractor] 📱 Using Capacitor Browser HTML extraction');
+      return await this.extractHtmlWithCapacitor(url);
+    } else {
+      console.log('[SmartBrowserExtractor] 🌐 Using Edge Function (web fallback)');
+      return await this.extractWithEdgeFunction(url);
+    }
+  }
+
+  /**
+   * Estratégia com Capacitor Browser:
+   * 1. Abre browser para usuário VER o carregamento
+   * 2. Aguarda 8 segundos
+   * 3. Fecha browser
+   * 4. Edge Function faz scraping com screenshot (página já carregou)
+   */
+  private static async extractHtmlWithCapacitor(url: string): Promise<ExtractionResult | null> {
+    console.log('[SmartBrowserExtractor] 📱 Starting Capacitor Browser extraction...');
+    
+    try {
+      // PASSO 1: Abre browser visual para usuário ver carregamento
+      const extractionResult = await NativeHtmlExtractor.extractWithUserConfirmation(url);
+      
+      if (!extractionResult.success) {
+        console.error('[SmartBrowserExtractor] ❌ Browser extraction failed:', extractionResult.error);
+        throw new Error(extractionResult.error || 'Failed to open browser');
+      }
+      
+      console.log('[SmartBrowserExtractor] ✅ Browser closed, page should be loaded');
+      
+      // PASSO 2: Agora que a página carregou, usa Edge Function com screenshot
+      console.log('[SmartBrowserExtractor] 📡 Calling Edge Function for AI extraction...');
+      const result = await this.extractWithEdgeFunction(url);
+      
+      if (result && result.name && result.name !== 'Conteúdo não acessível') {
+        console.log('[SmartBrowserExtractor] ✅ Valid data extracted:', result.name);
+        return result;
+      }
+      
+      console.log('[SmartBrowserExtractor] ⚠️ No valid data extracted');
+      return result;
+      
+    } catch (error) {
+      console.error('[SmartBrowserExtractor] 💥 Error in Capacitor extraction:', error);
+      throw error;
+    }
   }
 
 
