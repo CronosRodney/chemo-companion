@@ -562,35 +562,80 @@ function combinarResultados(analises: any[]) {
 }
 
 /**
- * Captura screenshot de uma URL
+ * Captura screenshot com polling (espera página carregar completamente)
  */
 async function capturarScreenshot(url: string): Promise<{ success: boolean; screenshot?: string; error?: string }> {
-  try {
-    const screenshotUrl = `https://screenshotapi.net/api/v1/screenshot?url=${encodeURIComponent(url)}&width=1200&height=800&output=image&file_type=png&wait_for_event=load&delay=3000`;
+  console.log('📸 Iniciando captura de screenshot com polling...');
+  
+  const maxTentativas = 5;
+  const delayEntretentativas = 3000; // 3 segundos entre tentativas
+  
+  for (let tentativa = 1; tentativa <= maxTentativas; tentativa++) {
+    console.log(`🔄 Tentativa ${tentativa}/${maxTentativas} de captura...`);
     
-    const response = await fetch(screenshotUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      },
-      signal: AbortSignal.timeout(20000)
-    });
+    try {
+      // Usa delay progressivo: primeira tentativa 3s, depois 5s, 7s, etc.
+      const delay = 1000 + (tentativa * 2000);
+      
+      const screenshotUrl = `https://screenshotapi.net/api/v1/screenshot?url=${encodeURIComponent(url)}&width=1200&height=800&output=image&file_type=png&wait_for_event=load&delay=${delay}`;
+      
+      console.log(`⏱️ Aguardando ${delay}ms para página carregar...`);
+      
+      const response = await fetch(screenshotUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        signal: AbortSignal.timeout(25000)
+      });
 
-    if (!response.ok) {
-      return { success: false, error: `Screenshot API error: ${response.status}` };
+      if (!response.ok) {
+        console.log(`⚠️ Tentativa ${tentativa} falhou: ${response.status}`);
+        
+        if (tentativa < maxTentativas) {
+          console.log(`⏳ Aguardando ${delayEntretentativas}ms antes da próxima tentativa...`);
+          await new Promise(resolve => setTimeout(resolve, delayEntretentativas));
+          continue;
+        }
+        
+        return { success: false, error: `Screenshot API error após ${maxTentativas} tentativas` };
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      
+      // Valida se a imagem tem conteúdo suficiente (não é apenas carregando)
+      if (arrayBuffer.byteLength < 5000) {
+        console.log(`⚠️ Screenshot muito pequeno (${arrayBuffer.byteLength} bytes) - página pode não ter carregado`);
+        
+        if (tentativa < maxTentativas) {
+          console.log(`⏳ Aguardando ${delayEntretentativas}ms antes da próxima tentativa...`);
+          await new Promise(resolve => setTimeout(resolve, delayEntretentativas));
+          continue;
+        }
+      }
+      
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      const screenshot = `data:image/png;base64,${base64}`;
+      
+      console.log(`✅ Screenshot capturado com sucesso na tentativa ${tentativa} (${arrayBuffer.byteLength} bytes)`);
+      return { success: true, screenshot };
+      
+    } catch (error) {
+      console.error(`❌ Erro na tentativa ${tentativa}:`, error);
+      
+      if (tentativa < maxTentativas) {
+        console.log(`⏳ Aguardando ${delayEntretentativas}ms antes da próxima tentativa...`);
+        await new Promise(resolve => setTimeout(resolve, delayEntretentativas));
+        continue;
+      }
+      
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Erro desconhecido' 
+      };
     }
-
-    const arrayBuffer = await response.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-    const screenshot = `data:image/png;base64,${base64}`;
-    
-    return { success: true, screenshot };
-  } catch (error) {
-    console.error('Erro ao capturar screenshot:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Erro desconhecido' 
-    };
   }
+  
+  return { success: false, error: 'Máximo de tentativas atingido' };
 }
 
 /**
