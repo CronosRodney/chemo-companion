@@ -60,13 +60,13 @@ export const getNextAppointment = async (userId: string): Promise<string> => {
   try {
     const today = new Date().toISOString().split('T')[0];
     
-    // 1. Buscar PRÓXIMAS consultas em user_events
+    // 1. Buscar consultas FUTURAS (após hoje) em user_events
     const { data: futureUserEventData, error: futureUserEventError } = await supabase
       .from('user_events')
       .select('event_date')
       .eq('user_id', userId)
       .eq('event_type', 'appointment')
-      .gte('event_date', today)
+      .gt('event_date', today)
       .order('event_date', { ascending: true })
       .limit(1)
       .maybeSingle();
@@ -80,13 +80,13 @@ export const getNextAppointment = async (userId: string): Promise<string> => {
       return format(date, "d MMM", { locale: ptBR });
     }
 
-    // 2. Buscar PRÓXIMAS consultas em events
+    // 2. Buscar consultas FUTURAS (após hoje) em events
     const { data: futureEventData, error: futureEventError } = await supabase
       .from('events')
       .select('event_date')
       .eq('user_id', userId)
       .eq('event_type', 'appointment')
-      .gte('event_date', today)
+      .gt('event_date', today)
       .order('event_date', { ascending: true })
       .limit(1)
       .maybeSingle();
