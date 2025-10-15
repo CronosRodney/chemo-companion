@@ -1,10 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Pill, Calendar, FileText, AlertTriangle, Filter, MapPin } from "lucide-react";
+import { ArrowLeft, Pill, Calendar, FileText, AlertTriangle, Filter, MapPin, Building2, Phone, Mail, Globe, Clock } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/contexts/AppContext";
+import { Separator } from "@/components/ui/separator";
 
 interface TimelineEvent {
   id: string;
@@ -209,7 +210,7 @@ const Timeline = () => {
                     {/* Event content */}
                     <div className="flex-1 space-y-2">
                       <div className="flex items-start justify-between">
-                        <div>
+                        <div className="flex-1">
                           <h3 className="font-semibold text-sm">{event.title}</h3>
                           <p className="text-xs text-muted-foreground">{event.description}</p>
                         </div>
@@ -220,7 +221,7 @@ const Timeline = () => {
                       </div>
 
                       {/* Status badges */}
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <Badge variant="outline" className="text-xs">
                           {getEventTypeLabel(event.event_type)}
                         </Badge>
@@ -239,6 +240,114 @@ const Timeline = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Clinic Information - Only for medication events from medications context */}
+                  {event.event_type === 'medication' && (() => {
+                    const { medications } = useAppContext();
+                    const matchedMed = medications.find(med => 
+                      event.title.toLowerCase().includes(med.name?.toLowerCase() || '')
+                    );
+                    const clinic = matchedMed?.clinic;
+                    
+                    if (clinic) {
+                      return (
+                        <>
+                          <Separator className="my-3" />
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2 text-sm font-semibold">
+                              <Building2 className="h-4 w-4 text-primary" />
+                              <span>Informações da Clínica</span>
+                            </div>
+                            
+                            <div className="space-y-2 text-xs">
+                              <div>
+                                <p className="font-semibold text-foreground">{clinic.clinic_name}</p>
+                                {clinic.legal_name && clinic.legal_name !== clinic.clinic_name && (
+                                  <p className="text-muted-foreground">{clinic.legal_name}</p>
+                                )}
+                              </div>
+
+                              {(clinic.cnpj || clinic.cnes) && (
+                                <div className="flex gap-3 text-muted-foreground">
+                                  {clinic.cnpj && <span>CNPJ: {clinic.cnpj}</span>}
+                                  {clinic.cnes && <span>CNES: {clinic.cnes}</span>}
+                                </div>
+                              )}
+
+                              {(clinic.street || clinic.city || clinic.state) && (
+                                <div className="flex items-start gap-2">
+                                  <MapPin className="h-3 w-3 mt-0.5 text-muted-foreground flex-shrink-0" />
+                                  <div className="text-muted-foreground">
+                                    {clinic.street && <p>{clinic.street}{clinic.number ? `, ${clinic.number}` : ''}</p>}
+                                    {clinic.district && <p>{clinic.district}</p>}
+                                    {(clinic.city || clinic.state) && (
+                                      <p>{clinic.city}{clinic.state ? ` - ${clinic.state}` : ''}</p>
+                                    )}
+                                    {clinic.zip && <p>CEP: {clinic.zip}</p>}
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="space-y-1">
+                                {clinic.phone && (
+                                  <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Phone className="h-3 w-3" />
+                                    <a href={`tel:${clinic.phone}`} className="hover:text-foreground transition-colors">
+                                      {clinic.phone}
+                                    </a>
+                                  </div>
+                                )}
+                                {clinic.whatsapp && clinic.whatsapp !== clinic.phone && (
+                                  <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Phone className="h-3 w-3" />
+                                    <a href={`https://wa.me/${clinic.whatsapp.replace(/\D/g, '')}`} className="hover:text-foreground transition-colors" target="_blank" rel="noopener noreferrer">
+                                      WhatsApp: {clinic.whatsapp}
+                                    </a>
+                                  </div>
+                                )}
+                                {clinic.email && (
+                                  <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Mail className="h-3 w-3" />
+                                    <a href={`mailto:${clinic.email}`} className="hover:text-foreground transition-colors">
+                                      {clinic.email}
+                                    </a>
+                                  </div>
+                                )}
+                                {clinic.website && (
+                                  <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Globe className="h-3 w-3" />
+                                    <a href={clinic.website} className="hover:text-foreground transition-colors" target="_blank" rel="noopener noreferrer">
+                                      {clinic.website.replace(/^https?:\/\//, '')}
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+
+                              {clinic.hours && (
+                                <div className="flex items-start gap-2">
+                                  <Clock className="h-3 w-3 mt-0.5 text-muted-foreground flex-shrink-0" />
+                                  <p className="text-muted-foreground">{clinic.hours}</p>
+                                </div>
+                              )}
+
+                              {clinic.maps_url && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="w-full mt-2" 
+                                  onClick={() => window.open(clinic.maps_url, '_blank')}
+                                >
+                                  <MapPin className="h-3 w-3 mr-2" />
+                                  Ver no Maps
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      );
+                    }
+                    return null;
+                  })()}
                 </CardContent>
               </Card>
             </div>

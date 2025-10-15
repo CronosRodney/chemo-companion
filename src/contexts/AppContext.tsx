@@ -94,8 +94,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           clinic:clinics (
             id,
             clinic_name,
+            legal_name,
+            cnpj,
+            cnes,
+            street,
+            number,
+            district,
+            city,
+            state,
+            zip,
             phone,
-            email
+            whatsapp,
+            email,
+            website,
+            maps_url,
+            hours
           )
         `)
         .eq('user_id', user.id)
