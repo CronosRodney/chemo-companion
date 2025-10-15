@@ -39,7 +39,7 @@ export default function Medications() {
   const [selectedStrengths, setSelectedStrengths] = useState<string[]>([]);
   const [selectedForms, setSelectedForms] = useState<string[]>([]);
   const [selectedRoutes, setSelectedRoutes] = useState<string[]>([]);
-  const [selectedClinicId, setSelectedClinicId] = useState<string>('');
+  const [selectedClinicId, setSelectedClinicId] = useState<string>('none');
   const [dose, setDose] = useState('');
   const [frequency, setFrequency] = useState('');
   const [instructions, setInstructions] = useState('');
@@ -137,7 +137,7 @@ export default function Medications() {
     setSelectedStrengths([]);
     setSelectedForms([]);
     setSelectedRoutes([]);
-    setSelectedClinicId('');
+    setSelectedClinicId('none');
     setDose('');
     setFrequency('');
     setInstructions('');
@@ -167,7 +167,7 @@ export default function Medications() {
         };
 
         const { id: medicationId } = await MedicationService.saveMedication(medicationData);
-        await MedicationService.linkToUser(medicationId, dose, frequency, instructions, selectedClinicId || undefined);
+        await MedicationService.linkToUser(medicationId, dose, frequency, instructions, selectedClinicId !== 'none' ? selectedClinicId : undefined);
         
         // Add event to timeline
         const selectedClinic = clinics.find(c => c.id === selectedClinicId);
@@ -312,7 +312,7 @@ export default function Medications() {
                         <SelectValue placeholder="Selecione uma clínica..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Nenhuma clínica</SelectItem>
+                        <SelectItem value="none">Nenhuma clínica</SelectItem>
                         {clinics.map((clinic) => (
                           <SelectItem key={clinic.id} value={clinic.id}>
                             {clinic.clinic_name}
