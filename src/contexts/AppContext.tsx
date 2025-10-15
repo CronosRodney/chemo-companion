@@ -292,7 +292,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
 export const useAppContext = () => {
   const context = useContext(AppContext);
+  console.log('useAppContext called, context is:', context);
   if (context === undefined) {
+    console.error('AppContext is undefined! This component is not wrapped in AppProvider');
     throw new Error('useAppContext must be used within an AppProvider');
   }
   return context;
