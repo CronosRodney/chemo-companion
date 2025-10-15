@@ -230,18 +230,6 @@ const Home = () => {
           <Button 
             variant="outline" 
             size="lg" 
-            className="h-24 flex-col gap-3 group glass-effect border-2 border-primary/50 hover:bg-gradient-to-br hover:from-primary/20 hover:to-primary-glow/10 relative overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(var(--primary-rgb),0.3)]"
-            onClick={() => navigate('/scanner')}
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center relative">
-              <QrCode className="h-7 w-7 transition-transform group-hover:scale-125 text-primary relative z-10" />
-            </div>
-            <span className="text-sm font-bold relative z-10">Escanear QR</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            size="lg" 
             className="h-24 flex-col gap-3 group glass-effect border-2 border-secondary/50 hover:bg-gradient-to-br hover:from-secondary/20 hover:to-secondary-accent/10 relative overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(var(--secondary-rgb),0.3)]"
             onClick={() => navigate('/events')}
           >
