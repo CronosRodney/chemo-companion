@@ -17,6 +17,7 @@ import EditableProfile from "./pages/EditableProfile";
 import Share from "./pages/Share";
 import Events from "./pages/Events";
 import Auth from "./pages/Auth";
+import ImportMeds from "./pages/ImportMeds";
 import Navigation from "./components/Navigation";
 import NotFound from "./pages/NotFound";
 
@@ -85,6 +86,11 @@ const App = () => (
               <Route path="/events" element={
                 <ProtectedRoute>
                   <Events />
+                </ProtectedRoute>
+              } />
+              <Route path="/import-meds" element={
+                <ProtectedRoute>
+                  <ImportMeds />
                 </ProtectedRoute>
               } />
               <Route path="*" element={<NotFound />} />
