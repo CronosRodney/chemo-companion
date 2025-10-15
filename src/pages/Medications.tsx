@@ -47,7 +47,88 @@ export default function Medications() {
 
   useEffect(() => {
     loadMedications();
+    checkAndImportData();
   }, []);
+
+  const checkAndImportData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('oncology_meds' as any)
+        .select('id')
+        .limit(1);
+
+      if (!error && (!data || data.length === 0)) {
+        // Table is empty, import data
+        await importData();
+      }
+    } catch (error) {
+      console.error('Error checking data:', error);
+    }
+  };
+
+  const importData = async () => {
+    try {
+      const response = await fetch('/oncology_meds_data.csv');
+      const csvText = await response.text();
+      
+      const Papa = (await import('papaparse')).default;
+      const parsed = Papa.parse(csvText, {
+        header: true,
+        skipEmptyLines: true
+      });
+
+      const parseArray = (str: string | null): string[] | null => {
+        if (!str) return null;
+        const cleaned = str.replace(/^{|}$/g, '');
+        if (!cleaned) return null;
+        return cleaned.split(',').map(s => s.trim()).filter(s => s);
+      };
+
+      const medications = parsed.data.map((row: any) => ({
+        drug_name_inn_dcb: row.drug_name_inn_dcb || null,
+        synonyms_brand_generic: parseArray(row.synonyms_brand_generic),
+        atc_code: row.atc_code || null,
+        drug_class: row.drug_class || null,
+        indications_oncology: parseArray(row.indications_oncology),
+        line_of_therapy: row.line_of_therapy || null,
+        regimen_examples: parseArray(row.regimen_examples),
+        dosage_forms: parseArray(row.dosage_forms),
+        strengths: row.strengths ? row.strengths.split(',').map((s: string) => s.trim()) : null,
+        route: parseArray(row.route),
+        dosing_standard: row.dosing_standard || null,
+        black_box_warnings: row.black_box_warnings || null,
+        common_adverse_events: parseArray(row.common_adverse_events),
+        monitoring: parseArray(row.monitoring),
+        contraindications: parseArray(row.contraindications),
+        pregnancy_lactation: row.pregnancy_lactation || null,
+        interactions_key: parseArray(row.interactions_key),
+        reference_sources: parseArray(row.references),
+        status_brazil_anvisa: row.status_brazil_anvisa || null,
+        manufacturer_originator: row.manufacturer_originator || null,
+        biosimilar_flag: row.biosimilar_flag === 'true' || row.biosimilar_flag === true,
+        pediatric_approved: row.pediatric_approved === 'true' || row.pediatric_approved === true,
+      }));
+
+      const validMeds = medications.filter((med: any) => med.drug_name_inn_dcb);
+
+      const batchSize = 50;
+      for (let i = 0; i < validMeds.length; i += batchSize) {
+        const batch = validMeds.slice(i, i + batchSize);
+        
+        await supabase
+          .from('oncology_meds' as any)
+          .upsert(batch as any, { 
+            onConflict: 'drug_name_inn_dcb',
+            ignoreDuplicates: false 
+          });
+      }
+
+      // Reload medications after import
+      await loadMedications();
+    } catch (error) {
+      console.error('Import error:', error);
+    }
+  };
 
   const loadMedications = async () => {
     try {
