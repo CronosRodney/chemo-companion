@@ -219,7 +219,7 @@ const Home = () => {
             variant="outline" 
             size="lg" 
             className="h-24 flex-col gap-3 group glass-effect border-2 border-success/50 hover:bg-gradient-to-br hover:from-success/20 hover:to-success/10 relative overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(var(--success-rgb),0.3)]"
-            onClick={() => navigate('/scanner')}
+            onClick={() => navigate('/scan/clinic')}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="w-12 h-12 rounded-full bg-success/20 flex items-center justify-center relative">

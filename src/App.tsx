@@ -8,6 +8,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import QRScanner from "./pages/QRScanner";
 import ScanMed from "./pages/ScanMed";
+import ScanClinic from "./pages/ScanClinic";
 import MedicationDetails from "./pages/MedicationDetails";
 import ManualMedicationEntry from "./pages/ManualMedicationEntry";
 import Medications from "./pages/Medications";
@@ -46,6 +47,11 @@ const App = () => (
               <Route path="/scan/med" element={
                 <ProtectedRoute>
                   <ScanMed />
+                </ProtectedRoute>
+              } />
+              <Route path="/scan/clinic" element={
+                <ProtectedRoute>
+                  <ScanClinic />
                 </ProtectedRoute>
               } />
               <Route path="/medication-details" element={
