@@ -130,6 +130,45 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_date: string
+          event_time: string | null
+          event_type: string
+          id: string
+          severity: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_date: string
+          event_time?: string | null
+          event_type: string
+          id?: string
+          severity?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_date?: string
+          event_time?: string | null
+          event_type?: string
+          id?: string
+          severity?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       medications: {
         Row: {
           active_ingredient: string | null
@@ -172,6 +211,96 @@ export type Database = {
           name?: string
           route?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      oncology_meds: {
+        Row: {
+          adjustments: Json | null
+          atc_code: string | null
+          biosimilar_flag: boolean | null
+          black_box_warnings: string | null
+          common_adverse_events: string[] | null
+          contraindications: string[] | null
+          dosage_forms: string[] | null
+          dosing_standard: string | null
+          drug_class: string | null
+          drug_name_inn_dcb: string
+          id: string
+          indications_oncology: string[] | null
+          inserted_at: string | null
+          interactions_key: string[] | null
+          line_of_therapy: string | null
+          manufacturer_originator: string | null
+          monitoring: string[] | null
+          notes: string | null
+          pediatric_approved: boolean | null
+          pregnancy_lactation: string | null
+          reference_sources: string[] | null
+          regimen_examples: string[] | null
+          route: string[] | null
+          status_brazil_anvisa: string | null
+          strengths: string[] | null
+          synonyms_brand_generic: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          adjustments?: Json | null
+          atc_code?: string | null
+          biosimilar_flag?: boolean | null
+          black_box_warnings?: string | null
+          common_adverse_events?: string[] | null
+          contraindications?: string[] | null
+          dosage_forms?: string[] | null
+          dosing_standard?: string | null
+          drug_class?: string | null
+          drug_name_inn_dcb: string
+          id?: string
+          indications_oncology?: string[] | null
+          inserted_at?: string | null
+          interactions_key?: string[] | null
+          line_of_therapy?: string | null
+          manufacturer_originator?: string | null
+          monitoring?: string[] | null
+          notes?: string | null
+          pediatric_approved?: boolean | null
+          pregnancy_lactation?: string | null
+          reference_sources?: string[] | null
+          regimen_examples?: string[] | null
+          route?: string[] | null
+          status_brazil_anvisa?: string | null
+          strengths?: string[] | null
+          synonyms_brand_generic?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          adjustments?: Json | null
+          atc_code?: string | null
+          biosimilar_flag?: boolean | null
+          black_box_warnings?: string | null
+          common_adverse_events?: string[] | null
+          contraindications?: string[] | null
+          dosage_forms?: string[] | null
+          dosing_standard?: string | null
+          drug_class?: string | null
+          drug_name_inn_dcb?: string
+          id?: string
+          indications_oncology?: string[] | null
+          inserted_at?: string | null
+          interactions_key?: string[] | null
+          line_of_therapy?: string | null
+          manufacturer_originator?: string | null
+          monitoring?: string[] | null
+          notes?: string | null
+          pediatric_approved?: boolean | null
+          pregnancy_lactation?: string | null
+          reference_sources?: string[] | null
+          regimen_examples?: string[] | null
+          route?: string[] | null
+          status_brazil_anvisa?: string | null
+          strengths?: string[] | null
+          synonyms_brand_generic?: string[] | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -241,6 +370,45 @@ export type Database = {
           updated_at?: string
           user_id?: string
           zip?: string | null
+        }
+        Relationships: []
+      }
+      reminders: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          cycle: string | null
+          id: string
+          medication: string
+          time: string
+          type: string
+          updated_at: string
+          urgent: boolean | null
+          user_id: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          cycle?: string | null
+          id?: string
+          medication: string
+          time: string
+          type: string
+          updated_at?: string
+          urgent?: boolean | null
+          user_id: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          cycle?: string | null
+          id?: string
+          medication?: string
+          time?: string
+          type?: string
+          updated_at?: string
+          urgent?: boolean | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -379,6 +547,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_stats: {
+        Row: {
+          adherence_percentage: number | null
+          current_cycle: string | null
+          id: string
+          next_appointment_date: string | null
+          total_cycles: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          adherence_percentage?: number | null
+          current_cycle?: string | null
+          id?: string
+          next_appointment_date?: string | null
+          total_cycles?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          adherence_percentage?: number | null
+          current_cycle?: string | null
+          id?: string
+          next_appointment_date?: string | null
+          total_cycles?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
