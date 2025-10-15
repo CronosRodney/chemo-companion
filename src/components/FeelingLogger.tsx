@@ -30,7 +30,7 @@ export const FeelingLogger = ({ onFeelingLogged }: FeelingLoggerProps) => {
       }
 
       const { error } = await supabase
-        .from('user_events')
+        .from('events')
         .insert({
           title: data.title,
           description: data.feeling_text,
@@ -45,7 +45,7 @@ export const FeelingLogger = ({ onFeelingLogged }: FeelingLoggerProps) => {
 
       toast({
         title: "Sentimento registrado",
-        description: "Seu humor foi salvo na linha do tempo"
+        description: "Seu humor foi salvo em Eventos"
       });
 
       setIsDialogOpen(false);

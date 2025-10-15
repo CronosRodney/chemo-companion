@@ -172,8 +172,6 @@ const Events = () => {
                       className="w-full p-2 border rounded-md bg-background"
                     >
                       <option value="general">Geral</option>
-                      <option value="medication">Medicamento</option>
-                      <option value="appointment">Consulta</option>
                       <option value="mood">Humor</option>
                       <option value="adverse">Evento Adverso</option>
                       <option value="symptom">Sintoma</option>

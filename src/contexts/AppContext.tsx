@@ -138,13 +138,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Load user events from database
-  const loadEvents = async () => {
+  // Load manual events from events table (mood, symptoms, etc.)
+  const loadEventsFromEventsTable = async () => {
     if (!user) return;
     
     try {
       const { data, error } = await supabase
-        .from('user_events')
+        .from('events')
         .select('*')
         .eq('user_id', user.id)
         .order('event_date', { ascending: false })
@@ -157,11 +157,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Load automatic events from user_events table (medications, appointments)
+  const loadEvents = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_events')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('event_date', { ascending: false })
+        .order('event_time', { ascending: false });
+
+      if (error) throw error;
+      // This is used by Timeline for automatic events
+      return data || [];
+    } catch (error) {
+      console.error('Error loading events:', error);
+      return [];
+    }
+  };
+
   // Load data when user changes
   useEffect(() => {
     if (user) {
       loadMedications();
-      loadEvents();
+      loadEventsFromEventsTable();
     }
   }, [user]);
 
@@ -171,14 +192,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const now = new Date();
       const { data, error } = await supabase
-        .from('user_events')
+        .from('events')
         .insert({
           user_id: user.id,
           event_type: newEvent.event_type,
           title: newEvent.title,
           description: newEvent.description,
-          event_date: now.toISOString().split('T')[0],
-          event_time: now.toTimeString().split(' ')[0],
+          event_date: newEvent.event_date || now.toISOString().split('T')[0],
+          event_time: newEvent.event_time || now.toTimeString().split(' ')[0],
           severity: newEvent.severity || 3
         })
         .select()
@@ -259,7 +280,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     logFeeling,
     refetchClinics,
     refetchMedications: loadMedications,
-    refetchEvents: loadEvents
+    refetchEvents: loadEventsFromEventsTable
   };
 
   return (
