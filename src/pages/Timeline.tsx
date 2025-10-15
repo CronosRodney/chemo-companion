@@ -58,6 +58,7 @@ const Timeline = () => {
   const [eventToDelete, setEventToDelete] = useState<{id: string, table: 'events' | 'user_events'} | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [defaultEventType, setDefaultEventType] = useState<string | undefined>(undefined);
+  const [hiddenEventIds, setHiddenEventIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const loadTimelineEvents = async () => {
@@ -176,13 +177,25 @@ const Timeline = () => {
     if (!eventToDelete) return;
 
     try {
-      await deleteEventFromContext(eventToDelete.id, eventToDelete.table);
-      setTimelineEvents(prev => prev.filter(e => e.id !== eventToDelete.id));
-      setSelectedEvent(null);
-      toast({
-        title: "Sucesso",
-        description: "Evento excluído com sucesso"
-      });
+      // Se estiver na aba "Todos", apenas ocultar localmente
+      if (filter === 'all') {
+        setHiddenEventIds(prev => new Set(prev).add(eventToDelete.id));
+        setTimelineEvents(prev => prev.filter(e => e.id !== eventToDelete.id));
+        setSelectedEvent(null);
+        toast({
+          title: "Sucesso",
+          description: "Evento ocultado da visualização"
+        });
+      } else {
+        // Nas outras abas, deletar permanentemente do banco
+        await deleteEventFromContext(eventToDelete.id, eventToDelete.table);
+        setTimelineEvents(prev => prev.filter(e => e.id !== eventToDelete.id));
+        setSelectedEvent(null);
+        toast({
+          title: "Sucesso",
+          description: "Evento excluído permanentemente"
+        });
+      }
     } catch (error) {
       toast({
         title: "Erro",
@@ -291,11 +304,28 @@ const Timeline = () => {
     }
   };
 
-  const filteredEvents = filter === 'all' 
-    ? timelineEvents.filter(event => event.event_type !== 'mood')
-    : filter === 'date'
-    ? timelineEvents.filter(event => event.event_date === selectedDate)
-    : timelineEvents.filter(event => event.event_type === filter);
+  const handleFilterChange = (newFilter: string) => {
+    if (newFilter !== 'all') {
+      setHiddenEventIds(new Set()); // Limpar eventos ocultos ao sair da aba "Todos"
+    }
+    setFilter(newFilter);
+  };
+
+  const filteredEvents = timelineEvents.filter(event => {
+    // Remover eventos ocultos apenas na aba "Todos"
+    if (filter === 'all' && hiddenEventIds.has(event.id)) {
+      return false;
+    }
+
+    // Resto da lógica de filtro existente
+    if (filter === 'date') {
+      return event.event_date === selectedDate;
+    }
+    if (filter === 'all') {
+      return event.event_type !== 'mood';
+    }
+    return event.event_type === filter;
+  });
 
   if (loading) {
     return (
@@ -341,13 +371,13 @@ const Timeline = () => {
               />
               <div className="flex gap-2">
                 <Button size="sm" onClick={() => {
-                  setFilter('date');
+                  handleFilterChange('date');
                   setShowDateFilter(false);
                 }}>
                   Aplicar
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => {
-                  setFilter('all');
+                  handleFilterChange('all');
                   setShowDateFilter(false);
                 }}>
                   Limpar
@@ -362,7 +392,7 @@ const Timeline = () => {
           <Button
             variant={filter === 'all' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setFilter('all')}
+            onClick={() => handleFilterChange('all')}
             className="whitespace-nowrap"
           >
             Todos
@@ -370,7 +400,7 @@ const Timeline = () => {
           <Button
             variant={filter === 'medication' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setFilter('medication')}
+            onClick={() => handleFilterChange('medication')}
             className="whitespace-nowrap"
           >
             Medicamentos
@@ -378,7 +408,7 @@ const Timeline = () => {
           <Button
             variant={filter === 'appointment' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setFilter('appointment')}
+            onClick={() => handleFilterChange('appointment')}
             className="whitespace-nowrap"
           >
             Consultas
@@ -386,7 +416,7 @@ const Timeline = () => {
           <Button
             variant={filter === 'exam' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setFilter('exam')}
+            onClick={() => handleFilterChange('exam')}
             className="whitespace-nowrap"
           >
             Exames
@@ -394,7 +424,7 @@ const Timeline = () => {
           <Button
             variant={filter === 'mood' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setFilter('mood')}
+            onClick={() => handleFilterChange('mood')}
             className="whitespace-nowrap"
           >
             Eventos
@@ -651,7 +681,9 @@ const Timeline = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita.
+              {filter === 'all' 
+                ? "Este evento será ocultado apenas da aba 'Todos', mas continuará visível nas outras abas e não será excluído permanentemente." 
+                : "Esta ação não pode ser desfeita. O evento será excluído permanentemente do banco de dados."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
