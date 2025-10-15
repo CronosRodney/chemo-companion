@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Home, QrCode, Calendar, User, Share2, LogOut } from "lucide-react";
+import { Home, Pill, Calendar, User, Share2, LogOut } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../hooks/useAuth";
@@ -20,7 +20,7 @@ const Navigation = () => {
 
   const navItems = [
     { path: "/", icon: Home, label: "Início" },
-    { path: "/scanner", icon: QrCode, label: "Scanner" },
+    { path: "/medications", icon: Pill, label: "Medicamentos" },
     { path: "/timeline", icon: Calendar, label: "Timeline" },
     { path: "/share", icon: Share2, label: "Compartilhar" },
     { path: "/profile", icon: User, label: "Perfil" },
