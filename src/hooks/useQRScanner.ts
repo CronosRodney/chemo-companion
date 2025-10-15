@@ -192,7 +192,17 @@ export const useQRScanner = () => {
       }
       
       // Se não for JSON, tentar fazer parse como texto de clínica
-      if (data.includes('Hospital') || data.includes('Clínica') || data.includes('Diretor')) {
+      // Aceitar múltiplos formatos de texto
+      const lowerData = data.toLowerCase();
+      if (lowerData.includes('hospital') || 
+          lowerData.includes('clínica') || 
+          lowerData.includes('clinica') ||
+          lowerData.includes('diretor') || 
+          lowerData.includes('responsável') ||
+          lowerData.includes('responsavel') ||
+          lowerData.includes('nome da clínica') ||
+          lowerData.includes('telefone') ||
+          lowerData.includes('email')) {
         return parseClinicText(data);
       }
       
@@ -214,25 +224,84 @@ export const useQRScanner = () => {
 
   const parseClinicText = (text: string): ParsedQRData | null => {
     try {
-      // Extrair nome da clínica/hospital
-      const nameMatch = text.match(/(Hospital|Clínica)\s+([^-]+)/);
-      const clinicName = nameMatch ? nameMatch[0].trim() : 'Clínica não identificada';
+      console.log('Iniciando parse de texto da clínica:', text);
       
-      // Extrair diretor/responsável
-      const directorMatch = text.match(/Diretor\s+Clínico\s+([^E]+)/);
-      const directorName = directorMatch ? directorMatch[1].trim() : '';
+      let clinicName = '';
+      let responsibleName = '';
+      let phone = '';
+      let email = '';
+      let addressText = '';
       
-      // Extrair endereço
-      const addressMatch = text.match(/Endereço\s+([^C]+)/);
-      const addressText = addressMatch ? addressMatch[1].trim() : '';
+      // Extrair nome da clínica - múltiplos formatos (case-insensitive)
+      const namePatterns = [
+        /Nome\s+da\s+Clínica:\s*(.+?)(?:\n|$)/i,
+        /Clínica:\s*(.+?)(?:\n|$)/i,
+        /(Hospital|Clínica)\s+([^\n-]+)/i
+      ];
       
-      // Extrair telefone
-      const phoneMatch = text.match(/Telefone:\s*([^\s]+)/);
-      const phone = phoneMatch ? phoneMatch[1].trim() : '';
+      for (const pattern of namePatterns) {
+        const match = text.match(pattern);
+        if (match) {
+          clinicName = match[1] ? match[1].trim() : (match[0] ? match[0].trim() : '');
+          console.log('Nome da clínica encontrado:', clinicName);
+          break;
+        }
+      }
       
-      // Extrair email
-      const emailMatch = text.match(/Email:\s*([^\s"]+)/);
-      const email = emailMatch ? emailMatch[1].trim() : '';
+      // Extrair responsável - múltiplos formatos (case-insensitive)
+      const responsiblePatterns = [
+        /Responsável:\s*(.+?)(?:\n|$)/i,
+        /Responsavel:\s*(.+?)(?:\n|$)/i,
+        /Diretor\s+Clínico:\s*(.+?)(?:\n|$)/i,
+        /Diretor:\s*(.+?)(?:\n|$)/i,
+        /Médico\s+Responsável:\s*(.+?)(?:\n|$)/i
+      ];
+      
+      for (const pattern of responsiblePatterns) {
+        const match = text.match(pattern);
+        if (match) {
+          responsibleName = match[1].trim();
+          console.log('Responsável encontrado:', responsibleName);
+          break;
+        }
+      }
+      
+      // Extrair telefone - múltiplos formatos
+      const phonePatterns = [
+        /Telefone:\s*(.+?)(?:\n|$)/i,
+        /Tel:\s*(.+?)(?:\n|$)/i,
+        /Fone:\s*(.+?)(?:\n|$)/i,
+        /\(?(\d{2})\)?\s*(\d{4,5}[-\s]?\d{4})/
+      ];
+      
+      for (const pattern of phonePatterns) {
+        const match = text.match(pattern);
+        if (match) {
+          phone = match[1] ? match[1].trim() : `${match[0]}`.trim();
+          console.log('Telefone encontrado:', phone);
+          break;
+        }
+      }
+      
+      // Extrair email (case-insensitive)
+      const emailMatch = text.match(/Email:\s*(.+?)(?:\n|$)/i);
+      if (emailMatch) {
+        email = emailMatch[1].trim();
+        console.log('Email encontrado:', email);
+      }
+      
+      // Extrair endereço (case-insensitive)
+      const addressMatch = text.match(/Endereço:\s*(.+?)(?:\n|Telefone|Email|$)/i);
+      if (addressMatch) {
+        addressText = addressMatch[1].trim();
+        console.log('Endereço encontrado:', addressText);
+      }
+      
+      // Validar se encontrou pelo menos o nome da clínica
+      if (!clinicName) {
+        console.warn('Nome da clínica não encontrado no texto');
+        return null;
+      }
       
       // Parse do endereço
       let address = {};
@@ -245,21 +314,27 @@ export const useQRScanner = () => {
             city: parts[2].split(' - ')[0],
             state: parts[2].split(' - ')[1] || ''
           };
+        } else if (parts.length === 1) {
+          address = {
+            street: parts[0]
+          };
         }
       }
       
       const clinicData: ClinicData = {
         clinic_name: clinicName,
-        address,
+        address: Object.keys(address).length > 0 ? address : undefined,
         contacts: {
-          phone: phone,
-          email: email
+          phone: phone || undefined,
+          email: email || undefined
         },
-        responsible: directorName ? {
-          name: directorName,
-          role: 'Diretor Clínico'
+        responsible: responsibleName ? {
+          name: responsibleName,
+          role: 'Responsável'
         } : undefined
       };
+      
+      console.log('Dados da clínica parseados:', clinicData);
       
       return {
         type: 'clinic',
