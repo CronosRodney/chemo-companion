@@ -15,7 +15,7 @@ export const SimpleQRScanner: React.FC<SimpleQRScannerProps> = ({
   onScanComplete,
   onError,
 }) => {
-  const { handleBarCodeScanned } = useQRScanner();
+  const { parseQRData } = useQRScanner();
   const [scannerMode, setScannerMode] = useState<'camera' | 'text' | 'file'>('camera');
   const [manualInput, setManualInput] = useState('');
   const [cameraError, setCameraError] = useState(false);
@@ -39,8 +39,12 @@ export const SimpleQRScanner: React.FC<SimpleQRScannerProps> = ({
       console.log('Dados extraídos:', data);
       
       if (data && typeof data === 'string') {
-        const processedResult = await handleBarCodeScanned({ data });
-        onScanComplete(processedResult);
+        const parsedData = await parseQRData(data);
+        if (parsedData) {
+          onScanComplete(parsedData);
+        } else {
+          onError('QR Code não reconhecido');
+        }
       } else {
         onError('QR Code sem dados válidos: ' + typeof data);
       }
@@ -62,8 +66,12 @@ export const SimpleQRScanner: React.FC<SimpleQRScannerProps> = ({
     }
 
     try {
-      const result = await handleBarCodeScanned({ data: manualInput });
-      onScanComplete(result);
+      const parsedData = await parseQRData(manualInput);
+      if (parsedData) {
+        onScanComplete(parsedData);
+      } else {
+        onError('Formato não reconhecido');
+      }
     } catch (error: any) {
       onError(error.message || 'Erro ao processar dados');
     }
@@ -73,9 +81,12 @@ export const SimpleQRScanner: React.FC<SimpleQRScannerProps> = ({
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Por enquanto, simular com dados demo
     try {
-      const result = await handleBarCodeScanned({ data: 'file-upload-simulation' });
-      onScanComplete(result);
+      const parsedData = await parseQRData('demo');
+      if (parsedData) {
+        onScanComplete(parsedData);
+      }
     } catch (error: any) {
       onError('Não foi possível processar a imagem');
     }
