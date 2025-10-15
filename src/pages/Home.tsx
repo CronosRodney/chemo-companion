@@ -79,6 +79,16 @@ const Home = () => {
               <p className="text-muted-foreground text-lg font-medium">
                 Como você está se sentindo hoje?
               </p>
+              
+              {/* FeelingLogger Integration */}
+              <div className="mt-6">
+                <FeelingLogger onFeelingLogged={handleFeelingLogged} />
+              </div>
+              
+              {/* Legend */}
+              <p className="text-sm text-muted-foreground text-center font-bold uppercase tracking-wide mt-4">
+                1 = Muito mal | 5 = Excelente
+              </p>
             </div>
           </div>
         </div>
@@ -252,19 +262,6 @@ const Home = () => {
             <Share2 className="h-6 w-6 transition-transform group-hover:scale-110" />
             <span className="text-base font-bold">Compartilhar Dados</span>
           </Button>
-        </div>
-
-        {/* Quick Health Check Premium */}
-        <div className="luxury-card p-7 border-2 border-accent/30 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent"></div>
-          <div className="absolute -top-16 -right-16 w-48 h-48 bg-accent/20 rounded-full blur-3xl"></div>
-          <div className="relative">
-            <h3 className="font-bold text-2xl bg-gradient-to-r from-accent to-accent-foreground bg-clip-text text-transparent mb-7">Como você está hoje?</h3>
-            <FeelingLogger onFeelingLogged={handleFeelingLogged} />
-            <p className="text-sm text-muted-foreground text-center font-bold uppercase tracking-wide mt-4">
-              1 = Muito mal | 5 = Excelente
-            </p>
-          </div>
         </div>
 
         {/* Emergency Alert */}
