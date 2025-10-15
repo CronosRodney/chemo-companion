@@ -180,7 +180,6 @@ const Timeline = () => {
       // Se estiver na aba "Todos", apenas ocultar localmente
       if (filter === 'all') {
         setHiddenEventIds(prev => new Set(prev).add(eventToDelete.id));
-        setTimelineEvents(prev => prev.filter(e => e.id !== eventToDelete.id));
         setSelectedEvent(null);
         toast({
           title: "Sucesso",
