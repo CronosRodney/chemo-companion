@@ -13,7 +13,8 @@ import {
   Camera, 
   Settings,
   Smartphone,
-  Edit
+  Edit,
+  FileText
 } from 'lucide-react';
 import { useAutoScanner } from '../hooks/useAutoScanner';
 import { MedicationDataDisplay } from '../components/MedicationDataDisplay';
@@ -230,15 +231,24 @@ export default function ScanMed() {
 
   return (
     <div className="container mx-auto p-4 space-y-6 max-w-2xl">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-2xl font-semibold">Escanear Medicamento</h1>
+        </div>
         <Button 
-          variant="outline" 
-          size="icon"
-          onClick={() => navigate(-1)}
+          variant="outline"
+          onClick={() => navigate('/manual-medication-entry')}
         >
-          <ArrowLeft className="h-4 w-4" />
+          <FileText className="h-4 w-4 mr-2" />
+          Entrada Manual
         </Button>
-        <h1 className="text-2xl font-semibold">Escanear Medicamento</h1>
       </div>
 
       {renderCameraError()}

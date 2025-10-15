@@ -9,6 +9,7 @@ import Home from "./pages/Home";
 import QRScanner from "./pages/QRScanner";
 import ScanMed from "./pages/ScanMed";
 import MedicationDetails from "./pages/MedicationDetails";
+import ManualMedicationEntry from "./pages/ManualMedicationEntry";
 import Timeline from "./pages/Timeline";
 import Profile from "./pages/Profile";
 import EditableProfile from "./pages/EditableProfile";
@@ -48,6 +49,11 @@ const App = () => (
               <Route path="/medication-details" element={
                 <ProtectedRoute>
                   <MedicationDetails />
+                </ProtectedRoute>
+              } />
+              <Route path="/manual-medication-entry" element={
+                <ProtectedRoute>
+                  <ManualMedicationEntry />
                 </ProtectedRoute>
               } />
               <Route path="/timeline" element={
