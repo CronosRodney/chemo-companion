@@ -252,7 +252,7 @@ const Home = () => {
                 variant="outline"
                 size="sm"
                 className="border-destructive/30 hover:bg-destructive/10 text-destructive"
-                onClick={() => navigate('/editable-profile')}
+                onClick={() => navigate('/profile/edit')}
               >
                 Editar
               </Button>
