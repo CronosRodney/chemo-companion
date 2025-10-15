@@ -304,9 +304,6 @@ const Timeline = () => {
   };
 
   const handleFilterChange = (newFilter: string) => {
-    if (newFilter !== 'all') {
-      setHiddenEventIds(new Set()); // Limpar eventos ocultos ao sair da aba "Todos"
-    }
     setFilter(newFilter);
   };
 
