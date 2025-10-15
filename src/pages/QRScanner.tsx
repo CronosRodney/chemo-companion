@@ -354,30 +354,17 @@ const QRScanner = () => {
         </div>
 
         {/* QR Scanner Options */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="flex justify-center">
           <Button
             variant="default"
             size="lg"
-            className="h-32 flex-col gap-3 group bg-primary text-primary-foreground hover:bg-primary/90"
+            className="h-32 w-full max-w-xs flex-col gap-3 group bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={() => setShowScanner(true)}
           >
             <QrCode className="h-10 w-10 transition-transform group-hover:scale-110" />
             <div className="text-center">
               <span className="text-base font-bold block">QR da Clínica</span>
               <span className="text-xs opacity-80">Vincular oncologista</span>
-            </div>
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="lg"
-            className="h-32 flex-col gap-3 group border-secondary-accent text-secondary-accent hover:bg-secondary-accent/10"
-            onClick={() => setShowScanner(true)}
-          >
-            <Pill className="h-10 w-10 transition-transform group-hover:scale-110" />
-            <div className="text-center">
-              <span className="text-base font-bold block">QR do Medicamento</span>
-              <span className="text-xs opacity-80">Registrar medicamento</span>
             </div>
           </Button>
         </div>
