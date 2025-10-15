@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { MedicationService } from '@/services/medicationService';
@@ -27,7 +28,7 @@ export default function Medications() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const context = useAppContext();
-  const { refetchMedications = () => {}, refetchEvents = () => {} } = context || {};
+  const { refetchMedications = () => {}, refetchEvents = () => {}, clinics = [], clinicsLoading = false } = context || {};
   
   const [medOptions, setMedOptions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,6 +39,7 @@ export default function Medications() {
   const [selectedStrengths, setSelectedStrengths] = useState<string[]>([]);
   const [selectedForms, setSelectedForms] = useState<string[]>([]);
   const [selectedRoutes, setSelectedRoutes] = useState<string[]>([]);
+  const [selectedClinicId, setSelectedClinicId] = useState<string>('');
   const [dose, setDose] = useState('');
   const [frequency, setFrequency] = useState('');
   const [instructions, setInstructions] = useState('');
@@ -135,6 +137,7 @@ export default function Medications() {
     setSelectedStrengths([]);
     setSelectedForms([]);
     setSelectedRoutes([]);
+    setSelectedClinicId('');
     setDose('');
     setFrequency('');
     setInstructions('');
@@ -164,10 +167,12 @@ export default function Medications() {
         };
 
         const { id: medicationId } = await MedicationService.saveMedication(medicationData);
-        await MedicationService.linkToUser(medicationId, dose, frequency, instructions);
+        await MedicationService.linkToUser(medicationId, dose, frequency, instructions, selectedClinicId || undefined);
         
         // Add event to timeline
+        const selectedClinic = clinics.find(c => c.id === selectedClinicId);
         const eventDescription = [
+          selectedClinic ? `Clínica: ${selectedClinic.clinic_name}` : '',
           selectedStrengths.length > 0 ? `Concentração: ${selectedStrengths.join(', ')}` : '',
           selectedForms.length > 0 ? `Forma: ${selectedForms.join(', ')}` : '',
           selectedRoutes.length > 0 ? `Via: ${selectedRoutes.join(', ')}` : '',
@@ -289,6 +294,36 @@ export default function Medications() {
                     placeholder={selectedMedNames.length === 0 ? "Primeiro selecione um medicamento" : "Busque e selecione vias de administração..."}
                     emptyMessage={selectedMedNames.length === 0 ? "Selecione medicamentos primeiro" : "Nenhuma via disponível."}
                   />
+                </div>
+
+                {/* Clínica - Select (optional) */}
+                <div className="space-y-2">
+                  <Label htmlFor="clinic">Clínica (Opcional)</Label>
+                  {clinicsLoading ? (
+                    <p className="text-sm text-muted-foreground">Carregando clínicas...</p>
+                  ) : clinics.length === 0 ? (
+                    <div className="text-sm text-muted-foreground border border-dashed rounded-lg p-4">
+                      <p>Você ainda não escaneou nenhuma clínica.</p>
+                      <p className="mt-1">Vá para Home e escaneie o QR Code de uma clínica para poder selecioná-la aqui.</p>
+                    </div>
+                  ) : (
+                    <Select value={selectedClinicId} onValueChange={setSelectedClinicId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma clínica..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Nenhuma clínica</SelectItem>
+                        {clinics.map((clinic) => (
+                          <SelectItem key={clinic.id} value={clinic.id}>
+                            {clinic.clinic_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    A clínica que prescreveu/forneceu este medicamento
+                  </p>
                 </div>
 
                 {/* Dose Prescrita */}

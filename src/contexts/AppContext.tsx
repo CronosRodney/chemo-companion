@@ -80,6 +80,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           frequency,
           instructions,
           scanned_at,
+          clinic_id,
           medication:medications (
             id,
             name,
@@ -89,10 +90,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             manufacturer,
             batch_number,
             expiry_date
+          ),
+          clinic:clinics (
+            id,
+            clinic_name,
+            phone,
+            email
           )
         `)
         .eq('user_id', user.id)
-        .order('scanned_at', { ascending: false });
+        .order('scanned_at', { ascending: false});
 
       if (error) throw error;
 
@@ -108,7 +115,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         manufacturer: um.medication?.manufacturer,
         batch_number: um.medication?.batch_number,
         expiry_date: um.medication?.expiry_date,
-        scanned_at: um.scanned_at
+        scanned_at: um.scanned_at,
+        clinic: um.clinic
       }));
 
       setMedications(formattedMeds);

@@ -82,7 +82,7 @@ export class MedicationService {
   }
   
   // Link medication to user
-  static async linkToUser(medicationId: string, dose?: string, frequency?: string, instructions?: string): Promise<void> {
+  static async linkToUser(medicationId: string, dose?: string, frequency?: string, instructions?: string, clinicId?: string): Promise<void> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
@@ -103,6 +103,7 @@ export class MedicationService {
             dose,
             frequency,
             instructions,
+            clinic_id: clinicId,
             scanned_at: new Date().toISOString()
           })
           .eq('id', existing.id);
@@ -117,7 +118,8 @@ export class MedicationService {
             medication_id: medicationId,
             dose,
             frequency,
-            instructions
+            instructions,
+            clinic_id: clinicId
           });
           
         if (error) throw error;

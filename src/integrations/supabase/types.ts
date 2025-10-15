@@ -512,6 +512,7 @@ export type Database = {
       }
       user_medications: {
         Row: {
+          clinic_id: string | null
           dose: string | null
           frequency: string | null
           id: string
@@ -521,6 +522,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          clinic_id?: string | null
           dose?: string | null
           frequency?: string | null
           id?: string
@@ -530,6 +532,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          clinic_id?: string | null
           dose?: string | null
           frequency?: string | null
           id?: string
@@ -539,6 +542,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_medications_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_medications_medication_id_fkey"
             columns: ["medication_id"]
