@@ -6,10 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { MedicationService } from '@/services/medicationService';
+import { MultiSelect } from '@/components/MultiSelect';
 
 interface OncologyMed {
   id: string;
@@ -30,44 +30,24 @@ export default function Medications() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Form fields
-  const [selectedMedId, setSelectedMedId] = useState('');
-  const [selectedMed, setSelectedMed] = useState<OncologyMed | null>(null);
-  
-  const [selectedStrength, setSelectedStrength] = useState('');
-  const [customStrength, setCustomStrength] = useState('');
-  const [selectedForm, setSelectedForm] = useState('');
-  const [customForm, setCustomForm] = useState('');
-  const [selectedRoute, setSelectedRoute] = useState('');
-  const [customRoute, setCustomRoute] = useState('');
+  // Form fields - multi-select
+  const [selectedMedNames, setSelectedMedNames] = useState<string[]>([]);
+  const [selectedStrengths, setSelectedStrengths] = useState<string[]>([]);
+  const [selectedForms, setSelectedForms] = useState<string[]>([]);
+  const [selectedRoutes, setSelectedRoutes] = useState<string[]>([]);
   const [dose, setDose] = useState('');
   const [frequency, setFrequency] = useState('');
   const [instructions, setInstructions] = useState('');
 
+  // Available options
+  const [allMedNames, setAllMedNames] = useState<string[]>([]);
+  const [allStrengths, setAllStrengths] = useState<string[]>([]);
+  const [allForms, setAllForms] = useState<string[]>([]);
+  const [allRoutes, setAllRoutes] = useState<string[]>([]);
+
   useEffect(() => {
     loadMedications();
   }, []);
-
-  useEffect(() => {
-    if (selectedMedId) {
-      const med = medications.find(m => m.id === selectedMedId);
-      if (med) {
-        setSelectedMed(med);
-        // Auto-select first option if available
-        if (med.strengths && med.strengths.length > 0) {
-          setSelectedStrength(med.strengths[0]);
-        }
-        if (med.dosage_forms && med.dosage_forms.length > 0) {
-          setSelectedForm(med.dosage_forms[0]);
-        }
-        if (med.route && med.route.length > 0) {
-          setSelectedRoute(med.route[0]);
-        }
-      }
-    } else {
-      setSelectedMed(null);
-    }
-  }, [selectedMedId, medications]);
 
   const loadMedications = async () => {
     try {
@@ -78,6 +58,24 @@ export default function Medications() {
 
       if (error) throw error;
       setMedications((data as any) || []);
+      
+      // Extract all unique values for multi-selects
+      const names = new Set<string>();
+      const strengths = new Set<string>();
+      const forms = new Set<string>();
+      const routes = new Set<string>();
+      
+      (data as any)?.forEach((med: OncologyMed) => {
+        names.add(med.drug_name_inn_dcb);
+        med.strengths?.forEach(s => strengths.add(s));
+        med.dosage_forms?.forEach(f => forms.add(f));
+        med.route?.forEach(r => routes.add(r));
+      });
+      
+      setAllMedNames(Array.from(names).sort());
+      setAllStrengths(Array.from(strengths).sort());
+      setAllForms(Array.from(forms).sort());
+      setAllRoutes(Array.from(routes).sort());
     } catch (error) {
       console.error('Error loading medications:', error);
       toast({
@@ -91,24 +89,20 @@ export default function Medications() {
   };
 
   const resetForm = () => {
-    setSelectedMedId('');
-    setSelectedMed(null);
-    setSelectedStrength('');
-    setCustomStrength('');
-    setSelectedForm('');
-    setCustomForm('');
-    setSelectedRoute('');
-    setCustomRoute('');
+    setSelectedMedNames([]);
+    setSelectedStrengths([]);
+    setSelectedForms([]);
+    setSelectedRoutes([]);
     setDose('');
     setFrequency('');
     setInstructions('');
   };
 
   const handleSave = async () => {
-    if (!selectedMed) {
+    if (selectedMedNames.length === 0) {
       toast({
         title: 'Atenção',
-        description: 'Selecione um medicamento.',
+        description: 'Selecione pelo menos um medicamento.',
         variant: 'destructive',
       });
       return;
@@ -117,25 +111,24 @@ export default function Medications() {
     setIsSaving(true);
 
     try {
-      const finalStrength = customStrength || selectedStrength;
-      const finalForm = customForm || selectedForm;
-      const finalRoute = customRoute || selectedRoute;
+      // Save each selected medication
+      for (const medName of selectedMedNames) {
+        const medicationData = {
+          name: medName,
+          active_ingredient: medName,
+          concentration: selectedStrengths.join(', ') || null,
+          form: selectedForms.join(', ') || null,
+          route: selectedRoutes.join(', ') || null,
+        };
 
-      const medicationData = {
-        name: selectedMed.drug_name_inn_dcb,
-        active_ingredient: selectedMed.drug_name_inn_dcb,
-        concentration: finalStrength || null,
-        form: finalForm || null,
-        route: finalRoute || null,
-      };
-
-      const { id: medicationId } = await MedicationService.saveMedication(medicationData);
-      await MedicationService.linkToUser(medicationId, dose, frequency, instructions);
-      await MedicationService.addTimelineEvent(
-        'medication_added',
-        `Medicamento adicionado: ${selectedMed.drug_name_inn_dcb}`,
-        `Classe: ${selectedMed.drug_class || 'Não especificada'}\nConcentração: ${finalStrength || 'Não especificada'}\nDose: ${dose || 'Não especificada'}\nFrequência: ${frequency || 'Não especificada'}`
-      );
+        const { id: medicationId } = await MedicationService.saveMedication(medicationData);
+        await MedicationService.linkToUser(medicationId, dose, frequency, instructions);
+        await MedicationService.addTimelineEvent(
+          'medication_added',
+          `Medicamento adicionado: ${medName}`,
+          `Concentração: ${selectedStrengths.join(', ') || 'Não especificada'}\nForma: ${selectedForms.join(', ') || 'Não especificada'}\nVia: ${selectedRoutes.join(', ') || 'Não especificada'}\nDose: ${dose || 'Não especificada'}\nFrequência: ${frequency || 'Não especificada'}`
+        );
+      }
 
       toast({
         title: 'Sucesso!',
@@ -190,202 +183,107 @@ export default function Medications() {
 
             {!isLoading && (
               <>
-                {/* Nome do Medicamento - Select */}
+                {/* Nome do Medicamento - MultiSelect */}
                 <div className="space-y-2">
-                  <Label htmlFor="medicationSelect">Nome do Medicamento *</Label>
-                  <Select value={selectedMedId} onValueChange={setSelectedMedId}>
-                    <SelectTrigger id="medicationSelect" className="text-base">
-                      <SelectValue placeholder="Selecione o medicamento" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover z-50 max-h-[300px]">
-                      {medications.map((med) => (
-                        <SelectItem key={med.id} value={med.id}>
-                          {med.drug_name_inn_dcb}
-                          {med.drug_class && ` - ${med.drug_class}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>Nome do Medicamento *</Label>
+                  <MultiSelect
+                    options={allMedNames}
+                    selected={selectedMedNames}
+                    onChange={setSelectedMedNames}
+                    placeholder="Busque e selecione medicamentos..."
+                    emptyMessage="Nenhum medicamento encontrado."
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Você pode selecionar múltiplos medicamentos
+                  </p>
                 </div>
 
-                {selectedMed && (
-                  <>
-                    {/* Info do medicamento selecionado */}
-                    <Card className="border-2 border-green-200 bg-green-50 dark:bg-green-950/20">
-                      <CardContent className="pt-4">
-                        <div className="flex items-start gap-3">
-                          <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                          <div className="flex-1">
-                            <div className="font-semibold text-green-900 dark:text-green-100">
-                              {selectedMed.drug_name_inn_dcb}
-                            </div>
-                            {selectedMed.drug_class && (
-                              <div className="text-sm text-green-700 dark:text-green-300 mt-1">
-                                Classe: {selectedMed.drug_class}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                {/* Concentração - MultiSelect */}
+                <div className="space-y-2">
+                  <Label>Concentração</Label>
+                  <MultiSelect
+                    options={allStrengths}
+                    selected={selectedStrengths}
+                    onChange={setSelectedStrengths}
+                    placeholder="Busque e selecione concentrações..."
+                    emptyMessage="Nenhuma concentração encontrada."
+                  />
+                </div>
 
-                    {/* Concentração - Select */}
-                    <div className="space-y-2">
-                      <Label>Concentração</Label>
-                      {selectedMed.strengths && selectedMed.strengths.length > 0 ? (
-                        <div className="space-y-2">
-                          <Select value={selectedStrength} onValueChange={setSelectedStrength}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione a concentração" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-popover z-50">
-                              {selectedMed.strengths.map((strength, idx) => (
-                                <SelectItem key={idx} value={strength}>
-                                  {strength}
-                                </SelectItem>
-                              ))}
-                              <SelectItem value="custom">Outra (informar manualmente)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          {selectedStrength === 'custom' && (
-                            <Input
-                              placeholder="Ex: 100mg/mL, 500mg"
-                              value={customStrength}
-                              onChange={(e) => setCustomStrength(e.target.value)}
-                            />
-                          )}
-                        </div>
-                      ) : (
-                        <Input
-                          placeholder="Ex: 100mg/mL, 500mg, 50mg/m²"
-                          value={customStrength}
-                          onChange={(e) => setCustomStrength(e.target.value)}
-                        />
-                      )}
-                    </div>
+                {/* Forma Farmacêutica - MultiSelect */}
+                <div className="space-y-2">
+                  <Label>Forma Farmacêutica</Label>
+                  <MultiSelect
+                    options={allForms}
+                    selected={selectedForms}
+                    onChange={setSelectedForms}
+                    placeholder="Busque e selecione formas farmacêuticas..."
+                    emptyMessage="Nenhuma forma encontrada."
+                  />
+                </div>
 
-                    {/* Forma Farmacêutica - Select */}
-                    <div className="space-y-2">
-                      <Label>Forma Farmacêutica</Label>
-                      {selectedMed.dosage_forms && selectedMed.dosage_forms.length > 0 ? (
-                        <div className="space-y-2">
-                          <Select value={selectedForm} onValueChange={setSelectedForm}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione a forma farmacêutica" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-popover z-50">
-                              {selectedMed.dosage_forms.map((form, idx) => (
-                                <SelectItem key={idx} value={form}>
-                                  {form}
-                                </SelectItem>
-                              ))}
-                              <SelectItem value="custom">Outra (informar manualmente)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          {selectedForm === 'custom' && (
-                            <Input
-                              placeholder="Ex: Comprimido, Solução injetável"
-                              value={customForm}
-                              onChange={(e) => setCustomForm(e.target.value)}
-                            />
-                          )}
-                        </div>
-                      ) : (
-                        <Input
-                          placeholder="Ex: Comprimido, Cápsula, Solução injetável"
-                          value={customForm}
-                          onChange={(e) => setCustomForm(e.target.value)}
-                        />
-                      )}
-                    </div>
+                {/* Via de Administração - MultiSelect */}
+                <div className="space-y-2">
+                  <Label>Via de Administração</Label>
+                  <MultiSelect
+                    options={allRoutes}
+                    selected={selectedRoutes}
+                    onChange={setSelectedRoutes}
+                    placeholder="Busque e selecione vias de administração..."
+                    emptyMessage="Nenhuma via encontrada."
+                  />
+                </div>
 
-                    {/* Via de Administração - Select */}
-                    <div className="space-y-2">
-                      <Label>Via de Administração</Label>
-                      {selectedMed.route && selectedMed.route.length > 0 ? (
-                        <div className="space-y-2">
-                          <Select value={selectedRoute} onValueChange={setSelectedRoute}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione a via de administração" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-popover z-50">
-                              {selectedMed.route.map((route, idx) => (
-                                <SelectItem key={idx} value={route}>
-                                  {route}
-                                </SelectItem>
-                              ))}
-                              <SelectItem value="custom">Outra (informar manualmente)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          {selectedRoute === 'custom' && (
-                            <Input
-                              placeholder="Ex: Oral, Intravenosa, Subcutânea"
-                              value={customRoute}
-                              onChange={(e) => setCustomRoute(e.target.value)}
-                            />
-                          )}
-                        </div>
-                      ) : (
-                        <Input
-                          placeholder="Ex: Oral, Intravenosa (IV), Subcutânea (SC)"
-                          value={customRoute}
-                          onChange={(e) => setCustomRoute(e.target.value)}
-                        />
-                      )}
-                    </div>
+                {/* Dose Prescrita */}
+                <div className="space-y-2">
+                  <Label htmlFor="dose">Dose Prescrita</Label>
+                  <Input
+                    id="dose"
+                    placeholder="Ex: 100mg, 200mg/m², 1 comprimido"
+                    value={dose}
+                    onChange={(e) => setDose(e.target.value)}
+                  />
+                </div>
 
-                    {/* Dose Prescrita */}
-                    <div className="space-y-2">
-                      <Label htmlFor="dose">Dose Prescrita</Label>
-                      <Input
-                        id="dose"
-                        placeholder="Ex: 100mg, 200mg/m², 1 comprimido"
-                        value={dose}
-                        onChange={(e) => setDose(e.target.value)}
-                      />
-                    </div>
+                {/* Frequência */}
+                <div className="space-y-2">
+                  <Label htmlFor="frequency">Frequência</Label>
+                  <Input
+                    id="frequency"
+                    placeholder="Ex: 1x ao dia, a cada 21 dias, 2x por semana"
+                    value={frequency}
+                    onChange={(e) => setFrequency(e.target.value)}
+                  />
+                </div>
 
-                    {/* Frequência */}
-                    <div className="space-y-2">
-                      <Label htmlFor="frequency">Frequência</Label>
-                      <Input
-                        id="frequency"
-                        placeholder="Ex: 1x ao dia, a cada 21 dias, 2x por semana"
-                        value={frequency}
-                        onChange={(e) => setFrequency(e.target.value)}
-                      />
-                    </div>
+                {/* Instruções Adicionais */}
+                <div className="space-y-2">
+                  <Label htmlFor="instructions">Instruções Adicionais</Label>
+                  <Textarea
+                    id="instructions"
+                    placeholder="Observações, cuidados especiais, horários específicos, etc."
+                    value={instructions}
+                    onChange={(e) => setInstructions(e.target.value)}
+                    rows={4}
+                  />
+                </div>
 
-                    {/* Instruções Adicionais */}
-                    <div className="space-y-2">
-                      <Label htmlFor="instructions">Instruções Adicionais</Label>
-                      <Textarea
-                        id="instructions"
-                        placeholder="Observações, cuidados especiais, horários específicos, etc."
-                        value={instructions}
-                        onChange={(e) => setInstructions(e.target.value)}
-                        rows={4}
-                      />
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button 
-                        onClick={handleSave} 
-                        disabled={isSaving || !selectedMed} 
-                        className="flex-1 h-12 text-base font-semibold"
-                      >
-                        {isSaving ? 'Salvando...' : 'Salvar Medicamento'}
-                      </Button>
-                      <Button 
-                        variant="outline"
-                        onClick={resetForm} 
-                        className="h-12"
-                      >
-                        Limpar
-                      </Button>
-                    </div>
-                  </>
-                )}
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleSave} 
+                    disabled={isSaving || selectedMedNames.length === 0} 
+                    className="flex-1 h-12 text-base font-semibold"
+                  >
+                    {isSaving ? 'Salvando...' : 'Salvar Medicamento'}
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={resetForm} 
+                    className="h-12"
+                  >
+                    Limpar
+                  </Button>
+                </div>
               </>
             )}
           </CardContent>
