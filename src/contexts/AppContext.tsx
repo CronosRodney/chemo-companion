@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserClinics, ConnectedClinic } from '@/hooks/useUserClinics';
 import { supabase } from '@/integrations/supabase/client';
+import { loadUserStats, UserStats } from '@/services/statsService';
+import { toast } from '@/hooks/use-toast';
 
 interface AppData {
   // User data
@@ -32,6 +34,11 @@ interface AppData {
   refetchClinics: () => void;
   refetchMedications: () => void;
   refetchEvents: () => void;
+  refetchStats: () => Promise<void>;
+  refetchAllData: () => Promise<void>;
+  addReminder: (reminder: any) => Promise<void>;
+  updateReminder: (id: string, reminder: any) => Promise<void>;
+  deleteReminder: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppData | undefined>(undefined);
@@ -43,30 +50,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [medications, setMedications] = useState<any[]>([]);
 
   const [events, setEvents] = useState<any[]>([]);
-
-  const [reminders, setReminders] = useState([
-    { 
-      id: '1', 
-      medication: "Oxaliplatina", 
-      time: "14:00", 
-      type: "IV", 
-      cycle: "Ciclo 3 - FOLFOX", 
-      urgent: true 
-    },
-    { 
-      id: '2', 
-      medication: "5-Fluoruracil", 
-      time: "21:30", 
-      type: "Oral", 
-      cycle: "Ciclo 3 - FOLFOX", 
-      urgent: false 
-    },
-  ]);
-
-  const [stats, setStats] = useState({
+  const [reminders, setReminders] = useState<any[]>([]);
+  const [stats, setStats] = useState<UserStats>({
     adherence: 95,
-    nextAppointment: "15 Jan",
-    currentCycle: "3 de 12"
+    nextAppointment: "Não agendada",
+    currentCycle: "N/A"
   });
 
   // Load user medications from database
@@ -180,12 +168,131 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Load reminders from database
+  const loadReminders = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('reminders')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('active', true)
+        .order('time', { ascending: true });
+
+      if (error) throw error;
+      setReminders(data || []);
+    } catch (error) {
+      console.error('Error loading reminders:', error);
+    }
+  };
+
+  // Load stats from database
+  const loadStats = async () => {
+    if (!user) return;
+    
+    try {
+      const statsData = await loadUserStats(user.id);
+      setStats(statsData);
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
+  };
+
   // Load data when user changes
   useEffect(() => {
     if (user) {
       loadMedications();
       loadEventsFromEventsTable();
+      loadReminders();
+      loadStats();
     }
+  }, [user]);
+
+  // Setup realtime listeners for data updates
+  useEffect(() => {
+    if (!user) return;
+
+    // Listen to reminders changes
+    const remindersChannel = supabase
+      .channel('reminders-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reminders',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          console.log('Reminders changed, reloading...');
+          loadReminders();
+        }
+      )
+      .subscribe();
+
+    // Listen to user_events changes (for stats)
+    const userEventsChannel = supabase
+      .channel('user-events-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_events',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          console.log('User events changed, reloading stats...');
+          loadStats();
+          loadEventsFromEventsTable();
+        }
+      )
+      .subscribe();
+
+    // Listen to events changes
+    const eventsChannel = supabase
+      .channel('events-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'events',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          console.log('Events changed, reloading...');
+          loadEventsFromEventsTable();
+          loadStats();
+        }
+      )
+      .subscribe();
+
+    // Listen to user_stats changes
+    const statsChannel = supabase
+      .channel('user-stats-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_stats',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          console.log('Stats changed, reloading...');
+          loadStats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(remindersChannel);
+      supabase.removeChannel(userEventsChannel);
+      supabase.removeChannel(eventsChannel);
+      supabase.removeChannel(statsChannel);
+    };
   }, [user]);
 
   const addEvent = async (newEvent: any) => {
@@ -222,6 +329,117 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateReminders = (newReminders: any[]) => {
     setReminders(newReminders);
+  };
+
+  const addReminder = async (reminder: any) => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('reminders')
+        .insert({
+          user_id: user.id,
+          medication: reminder.medication,
+          time: reminder.time,
+          type: reminder.type,
+          cycle: reminder.cycle || null,
+          urgent: reminder.urgent || false,
+          active: true
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      toast({
+        title: "Lembrete adicionado",
+        description: "Novo lembrete foi criado com sucesso"
+      });
+    } catch (error) {
+      console.error('Error adding reminder:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível adicionar o lembrete",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  const updateReminder = async (id: string, reminder: any) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('reminders')
+        .update({
+          medication: reminder.medication,
+          time: reminder.time,
+          type: reminder.type,
+          cycle: reminder.cycle || null,
+          urgent: reminder.urgent || false
+        })
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Lembrete atualizado",
+        description: "Lembrete foi atualizado com sucesso"
+      });
+    } catch (error) {
+      console.error('Error updating reminder:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o lembrete",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  const deleteReminder = async (id: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('reminders')
+        .update({ active: false })
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Lembrete removido",
+        description: "Lembrete foi removido com sucesso"
+      });
+    } catch (error) {
+      console.error('Error deleting reminder:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover o lembrete",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  const refetchStats = async () => {
+    await loadStats();
+  };
+
+  const refetchAllData = async () => {
+    if (!user) return;
+    
+    await Promise.all([
+      loadMedications(),
+      loadEventsFromEventsTable(),
+      loadReminders(),
+      loadStats(),
+      refetchClinics()
+    ]);
   };
 
   const logFeeling = async (rating: number) => {
@@ -323,7 +541,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateEvent,
     refetchClinics,
     refetchMedications: loadMedications,
-    refetchEvents: loadEventsFromEventsTable
+    refetchEvents: loadEventsFromEventsTable,
+    refetchStats,
+    refetchAllData,
+    addReminder,
+    updateReminder,
+    deleteReminder
   };
 
   return (

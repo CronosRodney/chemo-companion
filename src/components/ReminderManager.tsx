@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Edit, Clock, Pill } from "lucide-react";
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useAppContext } from "@/contexts/AppContext";
 
 interface Reminder {
   id: string;
@@ -31,35 +31,21 @@ export const ReminderManager = ({ reminders, onUpdate }: ReminderManagerProps) =
     cycle: '',
     urgent: false
   });
-  const { toast } = useToast();
+  const { addReminder, updateReminder, deleteReminder } = useAppContext();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (editingId) {
-      const updatedReminders = reminders.map(reminder => 
-        reminder.id === editingId 
-          ? { ...reminder, ...formData }
-          : reminder
-      );
-      onUpdate(updatedReminders);
-      toast({
-        title: "Lembrete atualizado",
-        description: "Lembrete foi atualizado com sucesso"
-      });
-    } else {
-      const newReminder: Reminder = {
-        id: Date.now().toString(),
-        ...formData
-      };
-      onUpdate([...reminders, newReminder]);
-      toast({
-        title: "Lembrete adicionado",
-        description: "Novo lembrete foi criado com sucesso"
-      });
+    try {
+      if (editingId) {
+        await updateReminder(editingId, formData);
+      } else {
+        await addReminder(formData);
+      }
+      resetForm();
+    } catch (error) {
+      console.error('Error saving reminder:', error);
     }
-    
-    resetForm();
   };
 
   const handleEdit = (reminder: Reminder) => {
@@ -74,13 +60,12 @@ export const ReminderManager = ({ reminders, onUpdate }: ReminderManagerProps) =
     setShowForm(true);
   };
 
-  const handleDelete = (id: string) => {
-    const updatedReminders = reminders.filter(reminder => reminder.id !== id);
-    onUpdate(updatedReminders);
-    toast({
-      title: "Lembrete removido",
-      description: "Lembrete foi removido com sucesso"
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteReminder(id);
+    } catch (error) {
+      console.error('Error deleting reminder:', error);
+    }
   };
 
   const resetForm = () => {

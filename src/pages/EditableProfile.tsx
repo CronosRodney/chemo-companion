@@ -17,37 +17,47 @@ import {
   Save,
   X
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAppContext } from "@/contexts/AppContext";
 
 const EditableProfile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { profile, stats, updateProfile, clinics, loading } = useAppContext();
   const [isEditing, setIsEditing] = useState(false);
-  const [patientData, setPatientData] = useState({
-    name: "João Silva",
-    email: "joao.silva@email.com",
-    phone: "(11) 99999-9999",
-    birthDate: "15/03/1965",
-    diagnosis: "Câncer Colorretal",
-    stage: "III",
-    clinic: "Hospital São José",
-    oncologist: "Dra. Maria Santos",
-    emergencyContact: "Maria Silva - (11) 88888-8888",
-    adherence: 95,
-    nextAppointment: "15/01/2025"
+
+  const [editableData, setEditableData] = useState({
+    first_name: profile?.first_name || "",
+    last_name: profile?.last_name || "",
+    email: profile?.email || "",
+    phone: profile?.phone || "",
+    birth_date: profile?.birth_date || "",
+    medical_history: profile?.medical_history || "",
+    emergency_contact_name: profile?.emergency_contact_name || "",
+    emergency_contact_phone: profile?.emergency_contact_phone || ""
   });
 
-  const [editableData, setEditableData] = useState(patientData);
+  useEffect(() => {
+    if (profile) {
+      setEditableData({
+        first_name: profile.first_name || "",
+        last_name: profile.last_name || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+        birth_date: profile.birth_date || "",
+        medical_history: profile.medical_history || "",
+        emergency_contact_name: profile.emergency_contact_name || "",
+        emergency_contact_phone: profile.emergency_contact_phone || ""
+      });
+    }
+  }, [profile]);
 
   const handleSave = async () => {
     try {
-      setPatientData(editableData);
+      await updateProfile(editableData);
       setIsEditing(false);
-      
-      // Simulate saving to database
-      await new Promise(resolve => setTimeout(resolve, 500));
       
       toast({
         title: "Sucesso",
@@ -63,9 +73,31 @@ const EditableProfile = () => {
   };
 
   const handleCancel = () => {
-    setEditableData(patientData);
+    if (profile) {
+      setEditableData({
+        first_name: profile.first_name || "",
+        last_name: profile.last_name || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+        birth_date: profile.birth_date || "",
+        medical_history: profile.medical_history || "",
+        emergency_contact_name: profile.emergency_contact_name || "",
+        emergency_contact_phone: profile.emergency_contact_phone || ""
+      });
+    }
     setIsEditing(false);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   const EditableField = ({ 
     label, 
@@ -128,11 +160,20 @@ const EditableProfile = () => {
             </div>
             {isEditing ? (
               <div className="space-y-2">
-                <Input
-                  value={editableData.name}
-                  onChange={(e) => setEditableData({...editableData, name: e.target.value})}
-                  className="text-xl font-semibold text-center"
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    value={editableData.first_name}
+                    onChange={(e) => setEditableData({...editableData, first_name: e.target.value})}
+                    placeholder="Nome"
+                    className="h-8 text-sm text-center"
+                  />
+                  <Input
+                    value={editableData.last_name}
+                    onChange={(e) => setEditableData({...editableData, last_name: e.target.value})}
+                    placeholder="Sobrenome"
+                    className="h-8 text-sm text-center"
+                  />
+                </div>
                 <Input
                   type="email"
                   value={editableData.email}
@@ -142,16 +183,18 @@ const EditableProfile = () => {
               </div>
             ) : (
               <>
-                <h2 className="text-xl font-semibold">{patientData.name}</h2>
-                <p className="text-sm text-muted-foreground">{patientData.email}</p>
+                <h2 className="text-xl font-semibold">
+                  {profile?.first_name || ''} {profile?.last_name || ''}
+                </h2>
+                <p className="text-sm text-muted-foreground">{profile?.email || ''}</p>
               </>
             )}
             <div className="flex justify-center gap-2 mt-3">
               <Badge className="bg-success/20 text-success border-success/30">
-                Adesão {patientData.adherence}%
+                Adesão {stats.adherence}%
               </Badge>
               <Badge variant="outline">
-                Estágio {patientData.stage}
+                {profile?.medical_history ? 'Cadastrado' : 'Incompleto'}
               </Badge>
             </div>
           </CardContent>
@@ -168,51 +211,31 @@ const EditableProfile = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <EditableField
-                label="Diagnóstico"
-                value={editableData.diagnosis}
-                onChange={(value) => setEditableData({...editableData, diagnosis: value})}
+                label="Histórico Médico"
+                value={editableData.medical_history}
+                onChange={(value) => setEditableData({...editableData, medical_history: value})}
               />
               <EditableField
                 label="Data Nascimento"
-                value={editableData.birthDate}
-                onChange={(value) => setEditableData({...editableData, birthDate: value})}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <EditableField
-                label="Estágio"
-                value={editableData.stage}
-                onChange={(value) => setEditableData({...editableData, stage: value})}
-              />
-              <EditableField
-                label="Próxima Consulta"
-                value={editableData.nextAppointment}
-                onChange={(value) => setEditableData({...editableData, nextAppointment: value})}
+                value={editableData.birth_date || ""}
+                onChange={(value) => setEditableData({...editableData, birth_date: value})}
+                type="date"
               />
             </div>
             <div className="p-3 bg-primary/10 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <Building2 className="h-4 w-4 text-primary" />
-                <Label className="text-xs text-muted-foreground">Clínica Atual</Label>
+                <Label className="text-xs text-muted-foreground">Clínica Conectada</Label>
               </div>
-              {isEditing ? (
-                <div className="space-y-2">
-                  <Input
-                    value={editableData.clinic}
-                    onChange={(e) => setEditableData({...editableData, clinic: e.target.value})}
-                    className="h-8 text-sm"
-                  />
-                  <Input
-                    value={editableData.oncologist}
-                    onChange={(e) => setEditableData({...editableData, oncologist: e.target.value})}
-                    className="h-8 text-sm"
-                  />
-                </div>
-              ) : (
+              {clinics.length > 0 ? (
                 <>
-                  <p className="font-medium text-sm">{patientData.clinic}</p>
-                  <p className="text-xs text-muted-foreground">{patientData.oncologist}</p>
+                  <p className="font-medium text-sm">{clinics[0].clinic_name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {clinics[0].city}, {clinics[0].state}
+                  </p>
                 </>
+              ) : (
+                <p className="text-sm text-muted-foreground">Nenhuma clínica conectada</p>
               )}
             </div>
           </CardContent>
@@ -239,13 +262,25 @@ const EditableProfile = () => {
                 <Label className="text-xs text-warning font-medium">Contato de Emergência</Label>
               </div>
               {isEditing ? (
-                <Input
-                  value={editableData.emergencyContact}
-                  onChange={(e) => setEditableData({...editableData, emergencyContact: e.target.value})}
-                  className="mt-2 h-8 text-sm"
-                />
+                <div className="space-y-2">
+                  <Input
+                    value={editableData.emergency_contact_name}
+                    onChange={(e) => setEditableData({...editableData, emergency_contact_name: e.target.value})}
+                    placeholder="Nome do contato"
+                    className="mt-2 h-8 text-sm"
+                  />
+                  <Input
+                    value={editableData.emergency_contact_phone}
+                    onChange={(e) => setEditableData({...editableData, emergency_contact_phone: e.target.value})}
+                    placeholder="Telefone"
+                    className="h-8 text-sm"
+                    type="tel"
+                  />
+                </div>
               ) : (
-                <p className="text-sm">{patientData.emergencyContact}</p>
+                <p className="text-sm">
+                  {profile?.emergency_contact_name || 'Não informado'} - {profile?.emergency_contact_phone || ''}
+                </p>
               )}
             </div>
           </CardContent>
@@ -256,12 +291,12 @@ const EditableProfile = () => {
           <Card className="shadow-md border-0 text-center p-4">
             <Calendar className="h-6 w-6 mx-auto text-primary mb-2" />
             <p className="text-xs text-muted-foreground">Próxima Consulta</p>
-            <p className="font-semibold text-sm">{patientData.nextAppointment}</p>
+            <p className="font-semibold text-sm">{stats.nextAppointment}</p>
           </Card>
           <Card className="shadow-md border-0 text-center p-4">
             <Shield className="h-6 w-6 mx-auto text-success mb-2" />
-            <p className="text-xs text-muted-foreground">Status</p>
-            <p className="font-semibold text-sm text-success">Ativo</p>
+            <p className="text-xs text-muted-foreground">Ciclo Atual</p>
+            <p className="font-semibold text-sm text-success">{stats.currentCycle}</p>
           </Card>
         </div>
 
