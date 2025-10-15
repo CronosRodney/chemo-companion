@@ -45,18 +45,34 @@ const Timeline = () => {
       
       setLoading(true);
       try {
-        const { data, error } = await supabase
+        // Buscar eventos automáticos de user_events
+        const { data: userEventsData, error: userEventsError } = await supabase
           .from('user_events')
           .select('*')
-          .eq('user_id', user.id)
-          .order('event_date', { ascending: false })
-          .order('event_time', { ascending: false });
+          .eq('user_id', user.id);
         
-        if (error) {
-          console.error('Error loading timeline:', error);
-        } else {
-          setTimelineEvents(data || []);
+        // Buscar eventos manuais de events (incluindo humor)
+        const { data: eventsData, error: eventsError } = await supabase
+          .from('events')
+          .select('*')
+          .eq('user_id', user.id);
+        
+        if (userEventsError) {
+          console.error('Error loading user_events:', userEventsError);
         }
+        if (eventsError) {
+          console.error('Error loading events:', eventsError);
+        }
+        
+        // Combinar os dois arrays e ordenar
+        const combined = [...(userEventsData || []), ...(eventsData || [])];
+        const sorted = combined.sort((a, b) => {
+          const dateCompare = new Date(b.event_date).getTime() - new Date(a.event_date).getTime();
+          if (dateCompare !== 0) return dateCompare;
+          return (b.event_time || '').localeCompare(a.event_time || '');
+        });
+        
+        setTimelineEvents(sorted);
       } catch (error) {
         console.error('Error loading timeline:', error);
       } finally {
@@ -212,9 +228,9 @@ const Timeline = () => {
             Exames
           </Button>
           <Button
-            variant={filter === 'adverse_event' ? 'default' : 'outline'}
+            variant={filter === 'mood' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setFilter('adverse_event')}
+            onClick={() => setFilter('mood')}
             className="whitespace-nowrap"
           >
             Eventos
