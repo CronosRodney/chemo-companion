@@ -4,11 +4,22 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, Clock, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Plus, Trash2, Pencil } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/contexts/AppContext";
 import { useToast } from "@/hooks/use-toast";
+import { EventEditDialog } from "@/components/EventEditDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface UserEvent {
   id: string;
@@ -24,10 +35,14 @@ interface UserEvent {
 const Events = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { events, loading, addEvent } = useAppContext();
+  const { events, loading, addEvent, deleteEvent: deleteEventFromContext, updateEvent: updateEventFromContext } = useAppContext();
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -71,13 +86,50 @@ const Events = () => {
     }
   };
 
-  const deleteEvent = async (id: string) => {
-    // For now, we'll just show a message since we don't have delete in context
-    toast({
-      title: "Info",
-      description: "Funcionalidade de remoção será implementada em breve",
-      variant: "default"
-    });
+  const handleDeleteClick = (id: string) => {
+    setEventToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!eventToDelete) return;
+
+    try {
+      await deleteEventFromContext(eventToDelete, 'events');
+      toast({
+        title: "Sucesso",
+        description: "Evento excluído com sucesso"
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o evento",
+        variant: "destructive"
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setEventToDelete(null);
+    }
+  };
+
+  const handleUpdateEvent = async (data: any) => {
+    if (!selectedEvent) return;
+
+    try {
+      await updateEventFromContext(selectedEvent.id, 'events', data);
+      setEditDialogOpen(false);
+      setSelectedEvent(null);
+      toast({
+        title: "Sucesso",
+        description: "Evento atualizado com sucesso"
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o evento",
+        variant: "destructive"
+      });
+    }
   };
 
   const getEventTypeLabel = (type: string) => {
@@ -256,14 +308,27 @@ const Events = () => {
                     <div className="flex-1 space-y-2">
                       <div className="flex items-start justify-between">
                         <h3 className="font-semibold text-sm">{event.title}</h3>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => deleteEvent(event.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => {
+                              setSelectedEvent(event);
+                              setEditDialogOpen(true);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteClick(event.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                       
                       {event.description && (
@@ -311,6 +376,33 @@ const Events = () => {
           Agendar para {new Date(selectedDate).toLocaleDateString('pt-BR')}
         </Button>
       </div>
+
+      {/* Edit Dialog */}
+      <EventEditDialog
+        event={selectedEvent}
+        tableName="events"
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSave={handleUpdateEvent}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

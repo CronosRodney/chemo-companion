@@ -1,12 +1,24 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Pill, Calendar, FileText, AlertTriangle, Filter, MapPin, Building2, Phone, Mail, Globe, Clock } from "lucide-react";
+import { ArrowLeft, Pill, Calendar, FileText, AlertTriangle, Filter, MapPin, Building2, Phone, Mail, Globe, Clock, Pencil, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/contexts/AppContext";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
+import { EventEditDialog } from "@/components/EventEditDialog";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface TimelineEvent {
   id: string;
@@ -32,12 +44,17 @@ interface TimelineEvent {
 
 const Timeline = () => {
   const navigate = useNavigate();
-  const { user } = useAppContext();
+  const { toast } = useToast();
+  const { user, deleteEvent: deleteEventFromContext, updateEvent: updateEventFromContext } = useAppContext();
   const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
   const [showDateFilter, setShowDateFilter] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<{id: string, table: 'events' | 'user_events'} | null>(null);
 
   useEffect(() => {
     const loadTimelineEvents = async () => {
@@ -124,6 +141,77 @@ const Timeline = () => {
       case 'mood': return 'Humor';
       case 'adverse': return 'Efeito Adverso';
       default: return 'Evento';
+    }
+  };
+
+  const handleDeleteClick = (eventId: string, fromUserEvents: boolean) => {
+    setEventToDelete({ id: eventId, table: fromUserEvents ? 'user_events' : 'events' });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!eventToDelete) return;
+
+    try {
+      await deleteEventFromContext(eventToDelete.id, eventToDelete.table);
+      setTimelineEvents(prev => prev.filter(e => e.id !== eventToDelete.id));
+      setSelectedEvent(null);
+      toast({
+        title: "Sucesso",
+        description: "Evento excluído com sucesso"
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o evento",
+        variant: "destructive"
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setEventToDelete(null);
+    }
+  };
+
+  const handleUpdateEvent = async (data: any) => {
+    if (!selectedEvent) return;
+
+    const tableName = selectedEvent.hasOwnProperty('created_at') ? 'events' : 'user_events';
+    
+    try {
+      await updateEventFromContext(selectedEvent.id, tableName, data);
+      
+      // Reload events
+      const { data: userEventsData } = await supabase
+        .from('user_events')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      const { data: eventsData } = await supabase
+        .from('events')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      const combined = [...(userEventsData || []), ...(eventsData || [])];
+      const sorted = combined.sort((a, b) => {
+        const dateCompare = new Date(b.event_date).getTime() - new Date(a.event_date).getTime();
+        if (dateCompare !== 0) return dateCompare;
+        return (b.event_time || '').localeCompare(a.event_time || '');
+      });
+      
+      setTimelineEvents(sorted);
+      setEditDialogOpen(false);
+      setSelectedEvent(null);
+      
+      toast({
+        title: "Sucesso",
+        description: "Evento atualizado com sucesso"
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o evento",
+        variant: "destructive"
+      });
     }
   };
 
@@ -246,7 +334,10 @@ const Timeline = () => {
                 <div className="absolute left-6 top-12 w-0.5 h-8 bg-border"></div>
               )}
               
-              <Card className="luxury-card">
+              <Card 
+                className={`luxury-card cursor-pointer transition-all ${selectedEvent?.id === event.id ? 'ring-2 ring-primary' : ''}`}
+                onClick={() => setSelectedEvent(selectedEvent?.id === event.id ? null : event)}
+              >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
                     {/* Event icon */}
@@ -285,6 +376,35 @@ const Timeline = () => {
                           </Badge>
                         )}
                       </div>
+
+                      {/* Action buttons - Show when selected */}
+                      {selectedEvent?.id === event.id && (
+                        <div className="flex gap-2 pt-3 border-t mt-3">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditDialogOpen(true);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Editar
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const isUserEvent = event.hasOwnProperty('updated_at');
+                              handleDeleteClick(event.id, isUserEvent);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -428,6 +548,33 @@ const Timeline = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Edit Dialog */}
+      <EventEditDialog
+        event={selectedEvent}
+        tableName={selectedEvent?.hasOwnProperty('created_at') ? 'events' : 'user_events'}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSave={handleUpdateEvent}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

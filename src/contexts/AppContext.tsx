@@ -27,6 +27,8 @@ interface AppData {
   addMedication: (medication: any) => void;
   updateReminders: (reminders: any[]) => void;
   logFeeling: (rating: number) => Promise<void>;
+  deleteEvent: (eventId: string, tableName: 'events' | 'user_events') => Promise<void>;
+  updateEvent: (eventId: string, tableName: 'events' | 'user_events', data: any) => Promise<void>;
   refetchClinics: () => void;
   refetchMedications: () => void;
   refetchEvents: () => void;
@@ -259,6 +261,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const deleteEvent = async (eventId: string, tableName: 'events' | 'user_events') => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from(tableName)
+        .delete()
+        .eq('id', eventId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setEvents(prev => prev.filter(e => e.id !== eventId));
+      await loadEventsFromEventsTable();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      throw error;
+    }
+  };
+
+  const updateEvent = async (eventId: string, tableName: 'events' | 'user_events', data: any) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from(tableName)
+        .update(data)
+        .eq('id', eventId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      await loadEventsFromEventsTable();
+    } catch (error) {
+      console.error('Error updating event:', error);
+      throw error;
+    }
+  };
+
   const updateProfile = async (data: any) => {
     await updateUserProfile(data);
   };
@@ -278,6 +319,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addMedication,
     updateReminders,
     logFeeling,
+    deleteEvent,
+    updateEvent,
     refetchClinics,
     refetchMedications: loadMedications,
     refetchEvents: loadEventsFromEventsTable
