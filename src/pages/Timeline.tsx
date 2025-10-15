@@ -46,7 +46,7 @@ interface TimelineEvent {
 const Timeline = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, deleteEvent: deleteEventFromContext, updateEvent: updateEventFromContext, addEvent } = useAppContext();
+  const { user, deleteEvent: deleteEventFromContext, updateEvent: updateEventFromContext, addEvent, refetchStats } = useAppContext();
   const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
@@ -258,6 +258,11 @@ const Timeline = () => {
       });
       
       setCreateDialogOpen(false);
+      
+      // Forçar reload de stats se for uma consulta
+      if (data.event_type === 'appointment') {
+        await refetchStats();
+      }
       
       toast({
         title: "Sucesso",

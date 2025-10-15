@@ -60,8 +60,8 @@ export const getNextAppointment = async (userId: string): Promise<string> => {
   try {
     const today = new Date().toISOString().split('T')[0];
     
-    // Buscar próxima consulta da tabela user_events
-    const { data: userEventData, error: userEventError } = await supabase
+    // 1. Buscar PRÓXIMAS consultas em user_events
+    const { data: futureUserEventData, error: futureUserEventError } = await supabase
       .from('user_events')
       .select('event_date')
       .eq('user_id', userId)
@@ -71,17 +71,17 @@ export const getNextAppointment = async (userId: string): Promise<string> => {
       .limit(1)
       .maybeSingle();
 
-    if (userEventError && userEventError.code !== 'PGRST116') {
-      throw userEventError;
+    if (futureUserEventError && futureUserEventError.code !== 'PGRST116') {
+      throw futureUserEventError;
     }
 
-    if (userEventData?.event_date) {
-      const date = parseISO(userEventData.event_date);
+    if (futureUserEventData?.event_date) {
+      const date = parseISO(futureUserEventData.event_date);
       return format(date, "d MMM", { locale: ptBR });
     }
 
-    // Se não encontrou em user_events, buscar em events
-    const { data: eventData, error: eventError } = await supabase
+    // 2. Buscar PRÓXIMAS consultas em events
+    const { data: futureEventData, error: futureEventError } = await supabase
       .from('events')
       .select('event_date')
       .eq('user_id', userId)
@@ -91,16 +91,56 @@ export const getNextAppointment = async (userId: string): Promise<string> => {
       .limit(1)
       .maybeSingle();
 
-    if (eventError && eventError.code !== 'PGRST116') {
-      throw eventError;
+    if (futureEventError && futureEventError.code !== 'PGRST116') {
+      throw futureEventError;
     }
 
-    if (eventData?.event_date) {
-      const date = parseISO(eventData.event_date);
+    if (futureEventData?.event_date) {
+      const date = parseISO(futureEventData.event_date);
       return format(date, "d MMM", { locale: ptBR });
     }
 
-    // Verificar user_stats
+    // 3. Fallback: Buscar ÚLTIMA consulta PASSADA em events
+    const { data: pastEventData, error: pastEventError } = await supabase
+      .from('events')
+      .select('event_date')
+      .eq('user_id', userId)
+      .eq('event_type', 'appointment')
+      .lt('event_date', today)
+      .order('event_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (pastEventError && pastEventError.code !== 'PGRST116') {
+      throw pastEventError;
+    }
+
+    if (pastEventData?.event_date) {
+      const date = parseISO(pastEventData.event_date);
+      return format(date, "d MMM", { locale: ptBR }) + " (passada)";
+    }
+
+    // 4. Fallback: Buscar ÚLTIMA consulta PASSADA em user_events
+    const { data: pastUserEventData, error: pastUserEventError } = await supabase
+      .from('user_events')
+      .select('event_date')
+      .eq('user_id', userId)
+      .eq('event_type', 'appointment')
+      .lt('event_date', today)
+      .order('event_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (pastUserEventError && pastUserEventError.code !== 'PGRST116') {
+      throw pastUserEventError;
+    }
+
+    if (pastUserEventData?.event_date) {
+      const date = parseISO(pastUserEventData.event_date);
+      return format(date, "d MMM", { locale: ptBR }) + " (passada)";
+    }
+
+    // 5. Último fallback: user_stats
     const { data: statsData, error: statsError } = await supabase
       .from('user_stats')
       .select('next_appointment_date')
