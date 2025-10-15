@@ -1,0 +1,501 @@
+drug_name_inn_dcb,strengths,dosage_forms,route
+Cisplatina,"{""10 mg/frasco"",""50 mg/frasco""}","{""frasco-ampola""}","{""IV""}"
+Carboplatina,"{""50 mg/5 mL"",""150 mg/15 mL"",""450 mg/45 mL""}","{""frasco-ampola""}","{""IV""}"
+Oxaliplatina,"{""50 mg/frasco"",""100 mg/frasco""}","{""frasco-ampola""}","{""IV""}"
+Paclitaxel,"{""30 mg/5 mL"",""100 mg/16"",""7 mL""}","{""frasco-ampola""}","{""IV""}"
+Docetaxel,"{""20 mg/frasco"",""80 mg/frasco""}","{""frasco-ampola""}","{""IV""}"
+Nab-paclitaxel,"{""100 mg/frasco (pó)""}","{""frasco-ampola""}","{""IV""}"
+Doxorrubicina,"{""10 mg/frasco"",""50 mg/frasco""}","{""frasco-ampola""}","{""IV""}"
+Epirrubicina,"{""10 mg/frasco"",""50 mg/frasco"",""200 mg/frasco""}","{""frasco-ampola""}","{""IV""}"
+Idarrubicina,"{""5 mg/5 mL"",""10 mg/10 mL""}","{""frasco-ampola""}","{""IV""}"
+Daunorrubicina,"{""20 mg/frasco (pó liof.)""}","{""frasco-ampola""}","{""IV""}"
+Mitoxantrona,"{""20 mg/10 mL"",""25 mg/10 mL""}","{""frasco-ampola""}","{""IV""}"
+5-Fluorouracil,"{""250 mg/5 mL"",""500 mg/10 mL"",""2.500 mg/50 mL""}","{""frasco-ampola""}","{""IV""}"
+Capecitabina,"{""150 mg"",""500 mg""}","{""frasco-ampola""}","{""IV""}"
+Citarabina,"{""100 mg/5 mL"",""500 mg/25 mL"",""1 g/10 mL""}","{""frasco-ampola""}","{""IV""}"
+Gemcitabina,"{""200 mg/frasco"",""1.000 mg/frasco""}","{""frasco-ampola""}","{""IV""}"
+Pemetrexede,"{""100 mg/frasco"",""500 mg/frasco""}","{""frasco-ampola""}","{""IV""}"
+Metotrexato,"{""2"",""5 mg (comprimido)"",""50 mg/2 mL"",""500 mg/20 mL""}","{""frasco-ampola""}","{""IV""}"
+Cladribina,"{""10 mg/10 mL""}","{""frasco-ampola""}","{""IV""}"
+Fludarabina,"{""50 mg/2 mL""}","{""frasco-ampola""}","{""IV""}"
+Mercaptopurina,"{""50 mg""}","{""frasco-ampola""}","{""IV""}"
+Tioguanina,"{""40 mg""}","{""frasco-ampola""}","{""IV""}"
+Azacitidina,"{""100 mg/frasco (pó liof.)""}","{""frasco-ampola""}","{""IV""}"
+Decitabina,"{""50 mg/frasco (pó liof.)""}","{""frasco-ampola""}","{""IV""}"
+Trifluridina/Tipiracil,"{""15 mg/6"",""14 mg; 20 mg/8"",""19 mg (comprimidos)""}","{""frasco-ampola""}","{""IV""}"
+Ciclofosfamida,"{""200 mg/frasco"",""500 mg/frasco"",""1 g/frasco; 25 mg"",""50 mg (oral)""}","{""frasco-ampola""}","{""IV""}"
+Ifosfamida,"{""1 g/frasco"",""2 g/frasco"",""3 g/frasco""}","{""frasco-ampola""}","{""IV""}"
+Melphalan,"{""50 mg/frasco (IV)"",""2 mg (oral)""}","{""frasco-ampola""}","{""IV""}"
+Bendamustina,"{""25 mg/frasco"",""100 mg/frasco""}","{""frasco-ampola""}","{""IV""}"
+Busulfano,"{""60 mg/10 mL (IV)"",""2 mg (comprimido)""}","{""frasco-ampola""}","{""IV""}"
+Dacarbazina,"{""100 mg/frasco"",""200 mg/frasco"",""500 mg/frasco""}","{""frasco-ampola""}","{""IV""}"
+Temozolomida,"{""5 mg"",""20 mg"",""100 mg"",""140 mg"",""180 mg"",""250 mg""}","{""frasco-ampola""}","{""IV""}"
+Procarbazina,"{""50 mg (cápsula)""}","{""frasco-ampola""}","{""IV""}"
+Clorambucil,"{""2 mg (comprimido)""}","{""frasco-ampola""}","{""IV""}"
+Carmustina,"{""100 mg/frasco (pó liof.)""}","{""frasco-ampola""}","{""IV""}"
+Lomustina,"{""10 mg"",""40 mg"",""100 mg (cápsulas)""}","{""frasco-ampola""}","{""IV""}"
+Tiotepa,"{""15 mg/frasco""}","{""frasco-ampola""}","{""IV""}"
+Etoposídeo,"{""20 mg/mL (5 mL"",""25 mL)"",""50 mg (cápsula)""}","{""frasco-ampola""}","{""IV""}"
+Teniposídeo,"{""50 mg/5 mL""}","{""frasco-ampola""}","{""IV""}"
+Irinotecano,"{""100 mg/5 mL"",""500 mg/25 mL""}","{""frasco-ampola""}","{""IV""}"
+Topotecano,"{""4 mg/frasco; 0"",""25 mg"",""1 mg (cápsulas)""}","{""frasco-ampola""}","{""IV""}"
+Vincristina,"{""1 mg/1 mL"",""2 mg/2 mL""}","{""frasco-ampola""}","{""IV""}"
+Vinblastina,"{""10 mg/10 mL""}","{""frasco-ampola""}","{""IV""}"
+Vinorelbina,"{""10 mg/1 mL"",""50 mg/5 mL; 20 mg"",""30 mg (cápsulas)""}","{""frasco-ampola""}","{""IV""}"
+Bleomicina,"{""15 UI/frasco""}","{""frasco-ampola""}","{""IV""}"
+Mitomicina C,"{""20 mg/frasco""}","{""frasco-ampola""}","{""IV""}"
+Dactinomicina,"{""0"",""5 mg/frasco""}","{""frasco-ampola""}","{""IV""}"
+Trabectedina,"{""0"",""25 mg/frasco"",""1 mg/frasco""}","{""frasco-ampola""}","{""IV""}"
+Eribulina,"{""1 mg/2 mL (0"",""5 mg/mL)""}","{""frasco-ampola""}","{""IV""}"
+Asparaginase,"{""10.000 UI/frasco""}","{""frasco-ampola""}","{""IV""}"
+Pegaspargase,"{""3.750 UI/5 mL""}","{""frasco-ampola""}","{""IV""}"
+Nelarabina,"{""250 mg/50 mL""}","{""frasco-ampola""}","{""IV""}"
+Pralatrexato,"{""20 mg/mL (20 mL)""}","{""frasco-ampola""}","{""IV""}"
+Imatinibe,"{""100 mg"",""400 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Dasatinibe,"{""20 mg"",""50 mg"",""70 mg"",""80 mg"",""100 mg"",""140 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Nilotinibe,"{""150 mg"",""200 mg (cápsulas)""}","{""comprimido"",""cápsula""}","{""VO""}"
+Bosutinibe,"{""100 mg"",""400 mg"",""500 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Ponatinibe,"{""15 mg"",""30 mg"",""45 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Erlotinibe,"{""25 mg"",""100 mg"",""150 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Gefitinibe,"{""250 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Afatinibe,"{""20 mg"",""30 mg"",""40 mg"",""50 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Dacomitinibe,"{""45 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Osimertinibe,"{""40 mg"",""80 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Crizotinibe,"{""200 mg"",""250 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Ceritinibe,"{""150 mg (cápsula)"",""200 mg (comprimido)""}","{""comprimido"",""cápsula""}","{""VO""}"
+Alectinibe,"{""150 mg (cápsula)""}","{""comprimido"",""cápsula""}","{""VO""}"
+Brigatinibe,"{""30 mg"",""90 mg"",""180 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Lorlatinibe,"{""25 mg"",""100 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Entrectinibe,"{""200 mg (cápsula)"",""100 mg (granulado)""}","{""comprimido"",""cápsula""}","{""VO""}"
+Larotrectinibe,"{""25 mg"",""100 mg; solução 20 mg/mL""}","{""comprimido"",""cápsula""}","{""VO""}"
+Sunitinibe,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Sorafenibe,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Pazopanibe,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Axitinibe,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Cabozantinibe,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Regorafenibe,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Lenvatinibe,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Vandetanibe,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Tivozanibe,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Everolimo,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Temsirolimo,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Palbociclibe,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Ribociclibe,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Abemaciclibe,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Vemurafenibe,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Dabrafenibe,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Encorafenibe,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Trametinibe,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Cobimetinibe,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Binimetinibe,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Selpercatinibe,"{""40 mg"",""80 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Pralsetinibe,"{""100 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Capmatinibe,"{""150 mg"",""200 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Tepotinibe,"{""225 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Ripretinibe,"{""150 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Avapritinibe,"{""50 mg"",""100 mg"",""200 mg"",""300 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Pemigatinibe,"{""4"",""5 mg"",""9 mg"",""13"",""5 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Infigratinibe,"{""25 mg"",""100 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Futibatinibe,"{""4 mg"",""20 mg (comprimidos dispersíveis)""}","{""comprimido"",""cápsula""}","{""VO""}"
+Sotorasib,"{""120 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Adagrasibe,"{""200 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Alpelisibe,"{""50 mg"",""150 mg"",""200 mg"",""250 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Idelalisibe,"{""100 mg"",""150 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Duvelisibe,"{""25 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Copanlisibe,"{""60 mg/frasco""}","{""comprimido"",""cápsula""}","{""VO""}"
+Ivosidenibe,"{""250 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Enasidenibe,"{""50 mg"",""100 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Gilteritinibe,"{""40 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Midostaurina,"{""25 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Quizartinibe,"{""17"",""7 mg"",""26"",""5 mg"",""35"",""4 mg"",""53 mg (equiv.)""}","{""comprimido"",""cápsula""}","{""VO""}"
+Belzutifan,"{""40 mg"",""80 mg"",""120 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Selinexor,"{""20 mg"",""40 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Tazemetostat,"{""200 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Vismodegibe,"{""150 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Sonidegibe,"{""200 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Glasdegibe,"{""100 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Ruxolitinibe,"{""5 mg"",""10 mg"",""15 mg"",""20 mg"",""25 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Fedratinibe,"{""100 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Pacritinibe,"{""100 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Momelotinibe,"{""200 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Lapatinibe,"{""250 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Neratinibe,"{""40 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Tucatinibe,"{""150 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Olaparibe,"{""50 mg (cápsula)"",""100 mg"",""150 mg (comprimidos)""}","{""comprimido"",""cápsula""}","{""VO""}"
+Niraparibe,"{""100 mg"",""200 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Rucaparibe,"{""200 mg"",""250 mg"",""300 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Talazoparibe,"{""0"",""25 mg"",""0"",""5 mg"",""0"",""75 mg"",""1 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Ibrutinibe,"{""140 mg"",""280 mg"",""420 mg"",""560 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Acalabrutinibe,"{""100 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Zanubrutinibe,"{""80 mg"",""160 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Pirtobrutinibe,"{""100 mg"",""200 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Venetoclax,"{""10 mg"",""50 mg"",""100 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Bortezomibe,"{""3"",""5 mg/frasco""}","{""comprimido"",""cápsula""}","{""VO""}"
+Carfilzomibe,"{""10 mg/frasco"",""30 mg/frasco"",""60 mg/frasco""}","{""comprimido"",""cápsula""}","{""VO""}"
+Ixazomibe,"{""2"",""3 mg"",""3 mg"",""4 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Talidomida,"{""50 mg"",""100 mg"",""200 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Lenalidomida,"{""2"",""5 mg"",""5 mg"",""10 mg"",""15 mg"",""20 mg"",""25 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Pomalidomida,"{""1 mg"",""2 mg"",""3 mg"",""4 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Vorinostate,"{""100 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Romidepsina,"{""10 mg/frasco""}","{""comprimido"",""cápsula""}","{""VO""}"
+Belinostate,"{""500 mg/frasco""}","{""comprimido"",""cápsula""}","{""VO""}"
+Panobinostate,"{""10 mg"",""15 mg"",""20 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Omacetaxina,"{""3"",""5 mg/1"",""5 mL""}","{""comprimido"",""cápsula""}","{""VO""}"
+Trastuzumabe,"{""150 mg/frasco"",""420 mg/frasco; SC 600 mg/5 mL""}","{""frasco-ampola"",""seringa preenchida""}","{""IV"",""SC""}"
+Pertuzumabe,"{""420 mg/14 mL; SC 600 mg/10 mL""}","{""frasco-ampola"",""seringa preenchida""}","{""IV"",""SC""}"
+Trastuzumabe emtansina (T-DM1),"{""100 mg/frasco"",""160 mg/frasco""}","{""frasco-ampola"",""seringa preenchida""}","{""IV"",""SC""}"
+Trastuzumabe deruxtecana (T-DXd),"{""100 mg/frasco""}","{""frasco-ampola"",""seringa preenchida""}","{""IV"",""SC""}"
+Margetuximabe,"{""400 mg/10 mL""}","{""frasco-ampola"",""seringa preenchida""}","{""IV"",""SC""}"
+Rituximabe,"{""100 mg/10 mL"",""500 mg/50 mL; SC 1.400 mg/11"",""7 mL""}","{""frasco-ampola"",""seringa preenchida""}","{""IV"",""SC""}"
+Obinutuzumabe,"{""1.000 mg/40 mL""}","{""frasco-ampola"",""seringa preenchida""}","{""IV"",""SC""}"
+Ofatumumabe,"{""100 mg/5 mL"",""1.000 mg/50 mL""}","{""frasco-ampola"",""seringa preenchida""}","{""IV"",""SC""}"
+Brentuximabe vedotina,"{""50 mg/frasco""}","{""frasco-ampola"",""seringa preenchida""}","{""IV""}"
+Polatuzumabe vedotina,"{""140 mg/frasco""}","{""frasco-ampola"",""seringa preenchida""}","{""IV""}"
+Inotuzumabe ozogamicina,"{""0"",""9 mg/frasco""}","{""frasco-ampola"",""seringa preenchida""}","{""IV""}"
+Sacituzumabe govitecana,"{""180 mg/frasco""}","{""frasco-ampola"",""seringa preenchida""}","{""IV""}"
+Enfortumabe vedotina,"{""20 mg/frasco"",""30 mg/frasco""}","{""frasco-ampola"",""seringa preenchida""}","{""IV""}"
+Tisotumabe vedotina,"{""40 mg/frasco""}","{""frasco-ampola"",""seringa preenchida""}","{""IV""}"
+Cetuximabe,"{""100 mg/20 mL (5 mg/mL)"",""500 mg/100 mL""}","{""frasco-ampola"",""seringa preenchida""}","{""IV""}"
+Panitumumabe,"{""100 mg/5 mL"",""400 mg/20 mL""}","{""frasco-ampola"",""seringa preenchida""}","{""IV""}"
+Ramucirumabe,"{""100 mg/10 mL"",""500 mg/50 mL""}","{""frasco-ampola"",""seringa preenchida""}","{""IV""}"
+Bevacizumabe,"{""100 mg/4 mL"",""400 mg/16 mL""}","{""frasco-ampola"",""seringa preenchida""}","{""IV""}"
+Daratumumabe,"{""100 mg/5 mL"",""400 mg/20 mL; SC 1.800 mg/15 mL""}","{""frasco-ampola"",""seringa preenchida""}","{""IV""}"
+Isatuximabe,"{""100 mg/5 mL"",""500 mg/25 mL""}","{""frasco-ampola"",""seringa preenchida""}","{""IV""}"
+Elotuzumabe,"{""300 mg/frasco"",""400 mg/frasco""}","{""frasco-ampola"",""seringa preenchida""}","{""IV""}"
+Gemtuzumabe ozogamicina,"{""4"",""5 mg/frasco""}","{""frasco-ampola"",""seringa preenchida""}","{""IV""}"
+Ipilimumabe,"{""50 mg/10 mL"",""200 mg/40 mL""}","{""frasco-ampola""}","{""IV""}"
+Pembrolizumabe,"{""100 mg/4 mL""}","{""frasco-ampola""}","{""IV""}"
+Nivolumabe,"{""40 mg/4 mL"",""100 mg/10 mL""}","{""frasco-ampola""}","{""IV""}"
+Cemiplimabe,"{""350 mg/7 mL""}","{""frasco-ampola""}","{""IV""}"
+Atezolizumabe,"{""1.200 mg/20 mL"",""840 mg/14 mL"",""1.680 mg/28 mL""}","{""frasco-ampola""}","{""IV""}"
+Durvalumabe,"{""500 mg/10 mL""}","{""frasco-ampola""}","{""IV""}"
+Avelumabe,"{""200 mg/10 mL""}","{""frasco-ampola""}","{""IV""}"
+Blinatumomabe,"{""35 mcg/frasco""}","{""frasco-ampola""}","{""IV""}"
+Teclistamabe,"{""90 mg/mL (solução)""}","{""frasco-ampola""}","{""IV""}"
+Talquetamabe,"{""40 mg/mL; 200 mg/2 mL""}","{""frasco-ampola""}","{""IV""}"
+Mosunetuzumabe,"{""1 mg/1 mL; 30 mg/30 mL (doses tituláveis)""}","{""frasco-ampola""}","{""IV""}"
+Epcoritamabe,"{""160 mg/mL (solução)""}","{""frasco-ampola""}","{""IV""}"
+Glofitamabe,"{""2"",""5 mg/2"",""5 mL; 10 mg/10 mL; 30 mg/30 mL""}","{""frasco-ampola""}","{""IV""}"
+Tebentafusp,"{""100 mcg/0"",""5 mL""}","{""frasco-ampola""}","{""IV""}"
+Tamoxifeno,"{""10 mg"",""20 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Toremifeno,"{""60 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Fulvestranto,"{""250 mg/5 mL (seringa)""}","{""comprimido"",""cápsula""}","{""VO""}"
+Elacestranto,"{""86 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Anastrozol,"{""1 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Letrozol,"{""2"",""5 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Exemesano,"{""25 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Goserelina,"{""3"",""6 mg; 10"",""8 mg (implante)""}","{""comprimido"",""cápsula""}","{""VO""}"
+Leuprorrelina,"{""3"",""75 mg; 7"",""5 mg; 11"",""25 mg; 22"",""5 mg (depósitos)""}","{""comprimido"",""cápsula""}","{""VO""}"
+Triptorelina,"{""3"",""75 mg; 11"",""25 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Degarelix,"{""80 mg; 120 mg (pó + solvente)""}","{""comprimido"",""cápsula""}","{""VO""}"
+Relugolix,"{""120 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Bicalutamida,"{""50 mg"",""150 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Flutamida,"{""250 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Nilutamida,"{""50 mg"",""150 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Enzalutamida,"{""40 mg (cápsula/comprimido)""}","{""comprimido"",""cápsula""}","{""VO""}"
+Apalutamida,"{""60 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Darolutamida,"{""300 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Abiraterona,"{""250 mg (comprimido)"",""500 mg (granulado)""}","{""comprimido"",""cápsula""}","{""VO""}"
+Rádio-223 dicloreto,"{""1.100 kBq/mL (frascos multiuso)""}","{""frasco-ampola""}","{""IV""}"
+Lutetium-177 PSMA-617,"{""7"",""4 GBq (dose preparada)""}","{""frasco-ampola""}","{""IV""}"
+Lutetium-177 DOTATATE,"{""7"",""4 GBq (dose preparada)""}","{""frasco-ampola""}","{""IV""}"
+Iobenguano I-131 (MIBG),"{""74–7.400 MBq (preparação variada)""}","{""frasco-ampola""}","{""IV""}"
+Hidroxiureia,{},"{""comprimido"",""cápsula""}","{""VO""}"
+Mitotano,"{""500 mg""}","{""comprimido"",""cápsula""}","{""VO""}"
+Estramustina,"{""140 mg (cápsula)""}","{""comprimido"",""cápsula""}","{""VO""}"
+Asparaginase Erwinia,{},"{""frasco-ampola""}","{""IV""}"
+Tretinoína (ATRA),"{""10 mg (cápsula)""}","{""comprimido"",""cápsula""}","{""VO""}"
+Arsênico trióxido,"{""10 mg/10 mL""}","{""frasco-ampola""}","{""IV""}"
+Bexaroteno,"{""75 mg (cápsula)""}","{""comprimido"",""cápsula""}","{""VO""}"
+Megestrol,"{""40 mg (comp.)"",""400 mg/10 mL (suspensão)""}","{""comprimido"",""cápsula""}","{""VO""}"
+Interferon alfa-2b,"{""3 MIU/frasco; 5 MIU/frasco""}","{""frasco-ampola""}","{""IV""}"
+Aldesleucina (IL-2),"{""22 MIU/frasco""}","{""frasco-ampola""}","{""IV""}"
+Denileucina diftitox,{},"{""frasco-ampola""}","{""IV""}"
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}
+,{},{},{}

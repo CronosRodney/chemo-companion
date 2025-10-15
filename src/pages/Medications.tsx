@@ -26,7 +26,7 @@ export default function Medications() {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [medications, setMedications] = useState<OncologyMed[]>([]);
+  const [medOptions, setMedOptions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -39,36 +39,54 @@ export default function Medications() {
   const [frequency, setFrequency] = useState('');
   const [instructions, setInstructions] = useState('');
 
-  // Available options
+  // Available options (dynamically filtered based on selected medications)
   const [allMedNames, setAllMedNames] = useState<string[]>([]);
-  const [allStrengths, setAllStrengths] = useState<string[]>([]);
-  const [allForms, setAllForms] = useState<string[]>([]);
-  const [allRoutes, setAllRoutes] = useState<string[]>([]);
+  const [availableStrengths, setAvailableStrengths] = useState<string[]>([]);
+  const [availableForms, setAvailableForms] = useState<string[]>([]);
+  const [availableRoutes, setAvailableRoutes] = useState<string[]>([]);
 
   useEffect(() => {
-    loadMedications();
-    checkAndImportData();
+    loadMedOptions();
   }, []);
 
-  const checkAndImportData = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('oncology_meds' as any)
-        .select('id')
-        .limit(1);
-
-      if (!error && (!data || data.length === 0)) {
-        // Table is empty, import data
-        await importData();
-      }
-    } catch (error) {
-      console.error('Error checking data:', error);
+  // Update available options when selected medications change
+  useEffect(() => {
+    if (selectedMedNames.length === 0) {
+      setAvailableStrengths([]);
+      setAvailableForms([]);
+      setAvailableRoutes([]);
+      return;
     }
-  };
 
-  const importData = async () => {
+    // Filter options based on selected medications
+    const selectedMeds = medOptions.filter(med => 
+      selectedMedNames.includes(med.drug_name_inn_dcb)
+    );
+
+    // Combine and deduplicate options
+    const strengthsSet = new Set<string>();
+    const formsSet = new Set<string>();
+    const routesSet = new Set<string>();
+
+    selectedMeds.forEach(med => {
+      med.strengths?.forEach((s: string) => strengthsSet.add(s));
+      med.dosage_forms?.forEach((f: string) => formsSet.add(f));
+      med.route?.forEach((r: string) => routesSet.add(r));
+    });
+
+    setAvailableStrengths(Array.from(strengthsSet).sort());
+    setAvailableForms(Array.from(formsSet).sort());
+    setAvailableRoutes(Array.from(routesSet).sort());
+
+    // Clear selections that are no longer valid
+    setSelectedStrengths(prev => prev.filter(s => strengthsSet.has(s)));
+    setSelectedForms(prev => prev.filter(f => formsSet.has(f)));
+    setSelectedRoutes(prev => prev.filter(r => routesSet.has(r)));
+  }, [selectedMedNames, medOptions]);
+
+  const loadMedOptions = async () => {
     try {
-      const response = await fetch('/oncology_meds_data.csv');
+      const response = await fetch('/meds_options.csv');
       const csvText = await response.text();
       
       const Papa = (await import('papaparse')).default;
@@ -77,91 +95,31 @@ export default function Medications() {
         skipEmptyLines: true
       });
 
-      const parseArray = (str: string | null): string[] | null => {
-        if (!str) return null;
-        const cleaned = str.replace(/^{|}$/g, '');
-        if (!cleaned) return null;
+      const parseArray = (str: string | null): string[] => {
+        if (!str) return [];
+        // Handle PostgreSQL array format {\"...\",\"...\"}
+        const cleaned = str.replace(/^{|}$/g, '').replace(/"/g, '');
+        if (!cleaned) return [];
         return cleaned.split(',').map(s => s.trim()).filter(s => s);
       };
 
-      const medications = parsed.data.map((row: any) => ({
-        drug_name_inn_dcb: row.drug_name_inn_dcb || null,
-        synonyms_brand_generic: parseArray(row.synonyms_brand_generic),
-        atc_code: row.atc_code || null,
-        drug_class: row.drug_class || null,
-        indications_oncology: parseArray(row.indications_oncology),
-        line_of_therapy: row.line_of_therapy || null,
-        regimen_examples: parseArray(row.regimen_examples),
+      const options = parsed.data.map((row: any) => ({
+        drug_name_inn_dcb: row.drug_name_inn_dcb,
+        strengths: parseArray(row.strengths),
         dosage_forms: parseArray(row.dosage_forms),
-        strengths: row.strengths ? row.strengths.split(',').map((s: string) => s.trim()) : null,
         route: parseArray(row.route),
-        dosing_standard: row.dosing_standard || null,
-        black_box_warnings: row.black_box_warnings || null,
-        common_adverse_events: parseArray(row.common_adverse_events),
-        monitoring: parseArray(row.monitoring),
-        contraindications: parseArray(row.contraindications),
-        pregnancy_lactation: row.pregnancy_lactation || null,
-        interactions_key: parseArray(row.interactions_key),
-        reference_sources: parseArray(row.references),
-        status_brazil_anvisa: row.status_brazil_anvisa || null,
-        manufacturer_originator: row.manufacturer_originator || null,
-        biosimilar_flag: row.biosimilar_flag === 'true' || row.biosimilar_flag === true,
-        pediatric_approved: row.pediatric_approved === 'true' || row.pediatric_approved === true,
-      }));
+      })).filter((med: any) => med.drug_name_inn_dcb);
 
-      const validMeds = medications.filter((med: any) => med.drug_name_inn_dcb);
-
-      const batchSize = 50;
-      for (let i = 0; i < validMeds.length; i += batchSize) {
-        const batch = validMeds.slice(i, i + batchSize);
-        
-        await supabase
-          .from('oncology_meds' as any)
-          .upsert(batch as any, { 
-            onConflict: 'drug_name_inn_dcb',
-            ignoreDuplicates: false 
-          });
-      }
-
-      // Reload medications after import
-      await loadMedications();
+      setMedOptions(options);
+      
+      // Extract all medication names
+      const names = options.map((m: any) => m.drug_name_inn_dcb).sort();
+      setAllMedNames(names);
     } catch (error) {
-      console.error('Import error:', error);
-    }
-  };
-
-  const loadMedications = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('oncology_meds' as any)
-        .select('id, drug_name_inn_dcb, drug_class, strengths, dosage_forms, route, indications_oncology, common_adverse_events')
-        .order('drug_name_inn_dcb');
-
-      if (error) throw error;
-      setMedications((data as any) || []);
-      
-      // Extract all unique values for multi-selects
-      const names = new Set<string>();
-      const strengths = new Set<string>();
-      const forms = new Set<string>();
-      const routes = new Set<string>();
-      
-      (data as any)?.forEach((med: OncologyMed) => {
-        names.add(med.drug_name_inn_dcb);
-        med.strengths?.forEach(s => strengths.add(s));
-        med.dosage_forms?.forEach(f => forms.add(f));
-        med.route?.forEach(r => routes.add(r));
-      });
-      
-      setAllMedNames(Array.from(names).sort());
-      setAllStrengths(Array.from(strengths).sort());
-      setAllForms(Array.from(forms).sort());
-      setAllRoutes(Array.from(routes).sort());
-    } catch (error) {
-      console.error('Error loading medications:', error);
+      console.error('Error loading medication options:', error);
       toast({
         title: 'Erro',
-        description: 'Não foi possível carregar a lista de medicamentos.',
+        description: 'Não foi possível carregar as opções de medicamentos.',
         variant: 'destructive',
       });
     } finally {
@@ -279,39 +237,39 @@ export default function Medications() {
                   </p>
                 </div>
 
-                {/* Concentração - MultiSelect */}
+                {/* Concentração - MultiSelect (dependent on medication selection) */}
                 <div className="space-y-2">
                   <Label>Concentração</Label>
                   <MultiSelect
-                    options={allStrengths}
+                    options={availableStrengths}
                     selected={selectedStrengths}
                     onChange={setSelectedStrengths}
-                    placeholder="Busque e selecione concentrações..."
-                    emptyMessage="Nenhuma concentração encontrada."
+                    placeholder={selectedMedNames.length === 0 ? "Primeiro selecione um medicamento" : "Busque e selecione concentrações..."}
+                    emptyMessage={selectedMedNames.length === 0 ? "Selecione medicamentos primeiro" : "Nenhuma concentração disponível."}
                   />
                 </div>
 
-                {/* Forma Farmacêutica - MultiSelect */}
+                {/* Forma Farmacêutica - MultiSelect (dependent on medication selection) */}
                 <div className="space-y-2">
                   <Label>Forma Farmacêutica</Label>
                   <MultiSelect
-                    options={allForms}
+                    options={availableForms}
                     selected={selectedForms}
                     onChange={setSelectedForms}
-                    placeholder="Busque e selecione formas farmacêuticas..."
-                    emptyMessage="Nenhuma forma encontrada."
+                    placeholder={selectedMedNames.length === 0 ? "Primeiro selecione um medicamento" : "Busque e selecione formas farmacêuticas..."}
+                    emptyMessage={selectedMedNames.length === 0 ? "Selecione medicamentos primeiro" : "Nenhuma forma disponível."}
                   />
                 </div>
 
-                {/* Via de Administração - MultiSelect */}
+                {/* Via de Administração - MultiSelect (dependent on medication selection) */}
                 <div className="space-y-2">
                   <Label>Via de Administração</Label>
                   <MultiSelect
-                    options={allRoutes}
+                    options={availableRoutes}
                     selected={selectedRoutes}
                     onChange={setSelectedRoutes}
-                    placeholder="Busque e selecione vias de administração..."
-                    emptyMessage="Nenhuma via encontrada."
+                    placeholder={selectedMedNames.length === 0 ? "Primeiro selecione um medicamento" : "Busque e selecione vias de administração..."}
+                    emptyMessage={selectedMedNames.length === 0 ? "Selecione medicamentos primeiro" : "Nenhuma via disponível."}
                   />
                 </div>
 
