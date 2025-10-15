@@ -151,17 +151,20 @@ export class MedicationService {
   }
   
   // Add timeline event
-  static async addTimelineEvent(kind: string, title: string, details: string): Promise<void> {
+  static async addTimelineEvent(eventType: string, title: string, description: string): Promise<void> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
       
-      const { error } = await supabase.from('timeline_events').insert({
+      const now = new Date();
+      const { error } = await supabase.from('user_events').insert({
         user_id: user.id,
-        kind,
+        event_type: eventType,
         title,
-        details,
-        occurred_at: new Date().toISOString()
+        description,
+        event_date: now.toISOString().split('T')[0],
+        event_time: now.toTimeString().split(' ')[0],
+        severity: 3 // Default severity for medication events
       });
       
       if (error) throw error;

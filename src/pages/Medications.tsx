@@ -162,10 +162,21 @@ export default function Medications() {
 
         const { id: medicationId } = await MedicationService.saveMedication(medicationData);
         await MedicationService.linkToUser(medicationId, dose, frequency, instructions);
+        
+        // Add event to timeline
+        const eventDescription = [
+          selectedStrengths.length > 0 ? `Concentração: ${selectedStrengths.join(', ')}` : '',
+          selectedForms.length > 0 ? `Forma: ${selectedForms.join(', ')}` : '',
+          selectedRoutes.length > 0 ? `Via: ${selectedRoutes.join(', ')}` : '',
+          dose ? `Dose: ${dose}` : '',
+          frequency ? `Frequência: ${frequency}` : '',
+          instructions ? `Instruções: ${instructions}` : ''
+        ].filter(Boolean).join('\n');
+
         await MedicationService.addTimelineEvent(
-          'medication_added',
+          'medication',
           `Medicamento adicionado: ${medName}`,
-          `Concentração: ${selectedStrengths.join(', ') || 'Não especificada'}\nForma: ${selectedForms.join(', ') || 'Não especificada'}\nVia: ${selectedRoutes.join(', ') || 'Não especificada'}\nDose: ${dose || 'Não especificada'}\nFrequência: ${frequency || 'Não especificada'}`
+          eventDescription || 'Medicamento adicionado com sucesso'
         );
       }
 
