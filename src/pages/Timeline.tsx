@@ -8,6 +8,7 @@ import { useAppContext } from "@/contexts/AppContext";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { EventEditDialog } from "@/components/EventEditDialog";
+import { EventCreateDialog } from "@/components/EventCreateDialog";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -45,7 +46,7 @@ interface TimelineEvent {
 const Timeline = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, deleteEvent: deleteEventFromContext, updateEvent: updateEventFromContext } = useAppContext();
+  const { user, deleteEvent: deleteEventFromContext, updateEvent: updateEventFromContext, addEvent } = useAppContext();
   const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
@@ -55,6 +56,8 @@ const Timeline = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<{id: string, table: 'events' | 'user_events'} | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [defaultEventType, setDefaultEventType] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const loadTimelineEvents = async () => {
@@ -232,6 +235,59 @@ const Timeline = () => {
         description: "Não foi possível atualizar o evento",
         variant: "destructive"
       });
+    }
+  };
+
+  const handleCreateEvent = async (data: any) => {
+    try {
+      await addEvent({
+        ...data,
+        user_id: user?.id
+      });
+      
+      setCreateDialogOpen(false);
+      
+      toast({
+        title: "Sucesso",
+        description: getCreateSuccessMessage(data.event_type),
+      });
+      
+      // Reload events
+      const { data: userEventsData } = await supabase
+        .from('user_events')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      const { data: eventsData } = await supabase
+        .from('events')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      const combined = [...(userEventsData || []), ...(eventsData || [])];
+      const sorted = combined.sort((a, b) => {
+        const dateCompare = new Date(b.event_date).getTime() - new Date(a.event_date).getTime();
+        if (dateCompare !== 0) return dateCompare;
+        return (b.event_time || '').localeCompare(a.event_time || '');
+      });
+      
+      setTimelineEvents(sorted);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível criar o evento",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getCreateSuccessMessage = (eventType: string) => {
+    switch (eventType) {
+      case 'appointment': return 'Consulta adicionada com sucesso';
+      case 'exam': return 'Exame adicionado com sucesso';
+      case 'medication': return 'Medicamento adicionado com sucesso';
+      case 'mood': return 'Evento de humor adicionado com sucesso';
+      case 'adverse_event': return 'Evento adverso adicionado com sucesso';
+      default: return 'Evento adicionado com sucesso';
     }
   };
 
@@ -558,11 +614,10 @@ const Timeline = () => {
         <Card className="luxury-card">
           <CardContent className="p-4">
             <Button 
-              onClick={() => navigate('/events', { 
-                state: { 
-                  defaultEventType: filter === 'all' || filter === 'date' ? undefined : filter 
-                } 
-              })} 
+              onClick={() => {
+                setDefaultEventType(filter === 'all' || filter === 'date' ? undefined : filter);
+                setCreateDialogOpen(true);
+              }} 
               className="w-full"
               size="lg"
             >
@@ -580,6 +635,14 @@ const Timeline = () => {
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         onSave={handleUpdateEvent}
+      />
+
+      {/* Create Dialog */}
+      <EventCreateDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSave={handleCreateEvent}
+        defaultEventType={defaultEventType}
       />
 
       {/* Delete Confirmation Dialog */}
