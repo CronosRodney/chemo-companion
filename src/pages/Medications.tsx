@@ -26,7 +26,8 @@ interface OncologyMed {
 export default function Medications() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { refetchMedications, refetchEvents } = useAppContext();
+  const context = useAppContext();
+  const { refetchMedications = () => {}, refetchEvents = () => {} } = context || {};
   
   const [medOptions, setMedOptions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
