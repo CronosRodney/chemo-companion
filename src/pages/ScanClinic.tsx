@@ -88,11 +88,9 @@ export default function ScanClinic() {
     }
   });
 
-  const handleScanComplete = async (data: string) => {
+  const handleScanComplete = (result: any) => {
     try {
-      const parsed = await parseQRData(data);
-      
-      if (!parsed || parsed.type !== 'clinic') {
+      if (!result || result.type !== 'clinic') {
         toast({
           title: 'Erro',
           description: 'QR Code não contém dados de clínica válidos',
@@ -101,7 +99,7 @@ export default function ScanClinic() {
         return;
       }
 
-      const clinicData = parsed.data as any;
+      const clinicData = result.data as any;
       
       setEditableData({
         clinic_name: clinicData.clinic_name || '',
