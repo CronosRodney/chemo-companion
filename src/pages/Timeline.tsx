@@ -128,7 +128,7 @@ const Timeline = () => {
   };
 
   const filteredEvents = filter === 'all' 
-    ? timelineEvents 
+    ? timelineEvents.filter(event => event.event_type !== 'mood')
     : filter === 'date'
     ? timelineEvents.filter(event => event.event_date === selectedDate)
     : timelineEvents.filter(event => event.event_type === filter);
