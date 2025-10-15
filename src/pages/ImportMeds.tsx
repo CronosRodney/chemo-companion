@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,7 +7,16 @@ import Papa from 'papaparse';
 
 export default function ImportMeds() {
   const [isImporting, setIsImporting] = useState(false);
+  const [autoImported, setAutoImported] = useState(false);
   const { toast } = useToast();
+
+  // Auto-import on mount
+  useEffect(() => {
+    if (!autoImported) {
+      setAutoImported(true);
+      handleImport();
+    }
+  }, []);
 
   const handleImport = async () => {
     setIsImporting(true);
