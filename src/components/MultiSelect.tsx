@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { X } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
@@ -23,6 +23,7 @@ export function MultiSelect({
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState('');
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   const handleUnselect = (item: string) => {
     onChange(selected.filter((s) => s !== item));
@@ -44,15 +45,18 @@ export function MultiSelect({
     <div className={cn('relative', className)}>
       <Command className="overflow-visible bg-transparent">
         <div
-          className="group rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 min-h-[2.5rem]"
-          onClick={() => setOpen(true)}
+          className="group rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 min-h-[2.5rem]"
+          onClick={() => {
+            setOpen(true);
+            inputRef.current?.focus();
+          }}
         >
           <div className="flex flex-wrap gap-1">
             {selected.map((item) => (
               <Badge
                 key={item}
                 variant="secondary"
-                className="rounded-sm px-1 font-normal"
+                className="rounded-sm px-2 py-1 font-normal"
               >
                 {item}
                 <button
@@ -77,9 +81,10 @@ export function MultiSelect({
               </Badge>
             ))}
             <CommandInput
+              ref={inputRef}
               value={inputValue}
               onValueChange={setInputValue}
-              onBlur={() => setOpen(false)}
+              onBlur={() => setTimeout(() => setOpen(false), 200)}
               onFocus={() => setOpen(true)}
               placeholder={selected.length === 0 ? placeholder : ''}
               className="ml-2 flex-1 bg-transparent outline-none placeholder:text-muted-foreground border-0 p-0 h-6"
@@ -101,29 +106,14 @@ export function MultiSelect({
                       }}
                       onSelect={() => handleSelect(option)}
                       className={cn(
-                        'cursor-pointer',
+                        'cursor-pointer flex items-center justify-between',
                         isSelected && 'bg-accent'
                       )}
                     >
-                      <div
-                        className={cn(
-                          'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
-                          isSelected
-                            ? 'bg-primary text-primary-foreground'
-                            : 'opacity-50 [&_svg]:invisible'
-                        )}
-                      >
-                        <svg
-                          className="h-4 w-4"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          viewBox="0 0 24 24"
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      </div>
-                      {option}
+                      <span>{option}</span>
+                      {isSelected && (
+                        <Check className="h-4 w-4 text-primary" />
+                      )}
                     </CommandItem>
                   );
                 })}
