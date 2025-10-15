@@ -2,10 +2,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Pill, Calendar, FileText, AlertTriangle, Filter, MapPin, Building2, Phone, Mail, Globe, Clock } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/contexts/AppContext";
 import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TimelineEvent {
   id: string;
@@ -31,10 +32,40 @@ interface TimelineEvent {
 
 const Timeline = () => {
   const navigate = useNavigate();
-  const { events, loading } = useAppContext();
+  const { user } = useAppContext();
+  const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
   const [showDateFilter, setShowDateFilter] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+
+  useEffect(() => {
+    const loadTimelineEvents = async () => {
+      if (!user) return;
+      
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('user_events')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('event_date', { ascending: false })
+          .order('event_time', { ascending: false });
+        
+        if (error) {
+          console.error('Error loading timeline:', error);
+        } else {
+          setTimelineEvents(data || []);
+        }
+      } catch (error) {
+        console.error('Error loading timeline:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadTimelineEvents();
+  }, [user]);
 
   const getEventIcon = (type: string) => {
     switch (type) {
@@ -81,10 +112,10 @@ const Timeline = () => {
   };
 
   const filteredEvents = filter === 'all' 
-    ? events 
+    ? timelineEvents 
     : filter === 'date'
-    ? events.filter(event => event.event_date === selectedDate)
-    : events.filter(event => event.event_type === filter);
+    ? timelineEvents.filter(event => event.event_date === selectedDate)
+    : timelineEvents.filter(event => event.event_type === filter);
 
   if (loading) {
     return (
