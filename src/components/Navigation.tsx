@@ -23,6 +23,7 @@ const Navigation = () => {
     { path: "/medications", icon: Pill, label: "Medicamentos" },
     { path: "/scan/clinic", icon: Building2, label: "Clínica" },
     { path: "/timeline", icon: Calendar, label: "Timeline" },
+    { path: "/share", icon: Share2, label: "Compartilhar" },
     { path: "/profile", icon: User, label: "Perfil" },
   ];
   return (

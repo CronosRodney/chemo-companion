@@ -223,19 +223,6 @@ const Home = () => {
           </div>
         </div>
 
-        
-        {/* Secondary Actions */}
-        <div className="grid grid-cols-1 gap-4">
-          <Button 
-            variant="outline" 
-            size="lg" 
-            className="h-16 flex gap-3 group glass-effect border-2 border-muted/40"
-            onClick={() => navigate('/share')}
-          >
-            <Share2 className="h-6 w-6 transition-transform group-hover:scale-110" />
-            <span className="text-base font-bold">Compartilhar Dados</span>
-          </Button>
-        </div>
 
         {/* Emergency Alert */}
         <div className="luxury-card bg-destructive/5 border-2 border-destructive/30 p-6 relative overflow-hidden">
