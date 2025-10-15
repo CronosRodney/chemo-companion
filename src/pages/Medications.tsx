@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { MedicationService } from '@/services/medicationService';
 import { MultiSelect } from '@/components/MultiSelect';
+import { useAppContext } from '@/contexts/AppContext';
 
 interface OncologyMed {
   id: string;
@@ -25,6 +26,7 @@ interface OncologyMed {
 export default function Medications() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { refetchMedications, refetchEvents } = useAppContext();
   
   const [medOptions, setMedOptions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -154,10 +156,10 @@ export default function Medications() {
       for (const medName of selectedMedNames) {
         const medicationData = {
           name: medName,
-          active_ingredient: medName,
-          concentration: selectedStrengths.join(', ') || null,
-          form: selectedForms.join(', ') || null,
-          route: selectedRoutes.join(', ') || null,
+          activeIngredient: medName,
+          concentration: selectedStrengths.join(', ') || undefined,
+          form: selectedForms.join(', ') || undefined,
+          route: selectedRoutes.join(', ') || undefined,
         };
 
         const { id: medicationId } = await MedicationService.saveMedication(medicationData);
@@ -180,9 +182,13 @@ export default function Medications() {
         );
       }
 
+      // Refresh the data in context
+      refetchMedications();
+      refetchEvents();
+
       toast({
         title: 'Sucesso!',
-        description: 'Medicamento salvo com sucesso.',
+        description: `${selectedMedNames.length} medicamento(s) salvo(s) com sucesso.`,
       });
 
       resetForm();

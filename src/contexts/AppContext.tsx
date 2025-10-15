@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserClinics, ConnectedClinic } from '@/hooks/useUserClinics';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AppData {
   // User data
@@ -27,6 +28,8 @@ interface AppData {
   updateReminders: (reminders: any[]) => void;
   logFeeling: (rating: number) => Promise<void>;
   refetchClinics: () => void;
+  refetchMedications: () => void;
+  refetchEvents: () => void;
 }
 
 const AppContext = createContext<AppData | undefined>(undefined);
@@ -35,45 +38,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const { user, profile, loading, updateProfile: updateUserProfile } = useAuth();
   const { clinics, loading: clinicsLoading, refetch: refetchClinics } = useUserClinics();
   
-  const [medications, setMedications] = useState([
-    {
-      id: '1',
-      name: 'Oxaliplatina',
-      dose: '85mg/m²',
-      frequency: 'A cada 21 dias',
-      instructions: 'Administração IV em 2-6 horas',
-      nextDose: '2025-01-20'
-    },
-    {
-      id: '2', 
-      name: '5-Fluoruracil',
-      dose: '400mg/m²',
-      frequency: '2x ao dia',
-      instructions: 'Via oral, com alimentos',
-      nextDose: '2025-01-15'
-    }
-  ]);
+  const [medications, setMedications] = useState<any[]>([]);
 
-  const [events, setEvents] = useState([
-    {
-      id: '1',
-      title: 'Consulta com Oncologista',
-      description: 'Avaliação mensal - Dr. Maria Santos',
-      event_type: 'appointment',
-      event_date: '2025-01-15',
-      event_time: '14:00',
-      severity: 1
-    },
-    {
-      id: '2',
-      title: 'Aplicação de Oxaliplatina',
-      description: 'Ciclo 3 - FOLFOX',
-      event_type: 'medication',
-      event_date: '2025-01-20',
-      event_time: '09:00',
-      severity: 2
-    }
-  ]);
+  const [events, setEvents] = useState<any[]>([]);
 
   const [reminders, setReminders] = useState([
     { 
@@ -100,22 +67,113 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     currentCycle: "3 de 12"
   });
 
-  const addEvent = (newEvent: any) => {
-    const event = {
-      ...newEvent,
-      id: Date.now().toString(),
-      event_date: new Date().toISOString().split('T')[0],
-      event_time: new Date().toTimeString().slice(0, 5)
-    };
-    setEvents(prev => [event, ...prev]);
+  // Load user medications from database
+  const loadMedications = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_medications')
+        .select(`
+          id,
+          dose,
+          frequency,
+          instructions,
+          scanned_at,
+          medication:medications (
+            id,
+            name,
+            concentration,
+            form,
+            route,
+            manufacturer,
+            batch_number,
+            expiry_date
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('scanned_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedMeds = (data || []).map((um: any) => ({
+        id: um.id,
+        name: um.medication?.name || 'Medicamento',
+        dose: um.dose,
+        frequency: um.frequency,
+        instructions: um.instructions,
+        concentration: um.medication?.concentration,
+        form: um.medication?.form,
+        route: um.medication?.route,
+        manufacturer: um.medication?.manufacturer,
+        batch_number: um.medication?.batch_number,
+        expiry_date: um.medication?.expiry_date,
+        scanned_at: um.scanned_at
+      }));
+
+      setMedications(formattedMeds);
+    } catch (error) {
+      console.error('Error loading medications:', error);
+    }
+  };
+
+  // Load user events from database
+  const loadEvents = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_events')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('event_date', { ascending: false })
+        .order('event_time', { ascending: false });
+
+      if (error) throw error;
+      setEvents(data || []);
+    } catch (error) {
+      console.error('Error loading events:', error);
+    }
+  };
+
+  // Load data when user changes
+  useEffect(() => {
+    if (user) {
+      loadMedications();
+      loadEvents();
+    }
+  }, [user]);
+
+  const addEvent = async (newEvent: any) => {
+    if (!user) return;
+
+    try {
+      const now = new Date();
+      const { data, error } = await supabase
+        .from('user_events')
+        .insert({
+          user_id: user.id,
+          event_type: newEvent.event_type,
+          title: newEvent.title,
+          description: newEvent.description,
+          event_date: now.toISOString().split('T')[0],
+          event_time: now.toTimeString().split(' ')[0],
+          severity: newEvent.severity || 3
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        setEvents(prev => [data, ...prev]);
+      }
+    } catch (error) {
+      console.error('Error adding event:', error);
+    }
   };
 
   const addMedication = (newMedication: any) => {
-    const medication = {
-      ...newMedication,
-      id: Date.now().toString()
-    };
-    setMedications(prev => [medication, ...prev]);
+    setMedications(prev => [newMedication, ...prev]);
   };
 
   const updateReminders = (newReminders: any[]) => {
@@ -123,6 +181,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const logFeeling = async (rating: number) => {
+    if (!user) return;
+
     const feelingLabels = {
       1: "Muito mal",
       2: "Mal", 
@@ -131,17 +191,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       5: "Muito bem"
     };
 
-    const event = {
-      id: Date.now().toString(),
-      title: `Sentindo-se ${feelingLabels[rating as keyof typeof feelingLabels]}`,
-      description: `Autoavaliação de humor - Nível ${rating}/5`,
-      event_type: 'mood',
-      severity: rating,
-      event_date: new Date().toISOString().split('T')[0],
-      event_time: new Date().toTimeString().slice(0, 5)
-    };
+    try {
+      const now = new Date();
+      const { data, error } = await supabase
+        .from('user_events')
+        .insert({
+          user_id: user.id,
+          title: `Sentindo-se ${feelingLabels[rating as keyof typeof feelingLabels]}`,
+          description: `Autoavaliação de humor - Nível ${rating}/5`,
+          event_type: 'mood',
+          severity: rating,
+          event_date: now.toISOString().split('T')[0],
+          event_time: now.toTimeString().split(' ')[0]
+        })
+        .select()
+        .single();
 
-    setEvents(prev => [event, ...prev]);
+      if (error) throw error;
+      if (data) {
+        setEvents(prev => [data, ...prev]);
+      }
+    } catch (error) {
+      console.error('Error logging feeling:', error);
+      throw error;
+    }
   };
 
   const updateProfile = async (data: any) => {
@@ -163,7 +236,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addMedication,
     updateReminders,
     logFeeling,
-    refetchClinics
+    refetchClinics,
+    refetchMedications: loadMedications,
+    refetchEvents: loadEvents
   };
 
   return (
