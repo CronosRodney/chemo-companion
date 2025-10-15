@@ -5,8 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Calendar, Clock, Plus, Trash2, Pencil } from "lucide-react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAppContext } from "@/contexts/AppContext";
 import { useToast } from "@/hooks/use-toast";
 import { EventEditDialog } from "@/components/EventEditDialog";
@@ -34,6 +34,7 @@ interface UserEvent {
 
 const Events = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { events, loading, addEvent, deleteEvent: deleteEventFromContext, updateEvent: updateEventFromContext } = useAppContext();
   const [isLoading, setIsLoading] = useState(false);
@@ -43,14 +44,24 @@ const Events = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<string | null>(null);
+  const defaultEventType = location.state?.defaultEventType;
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    event_type: 'general',
+    event_type: defaultEventType || 'general',
     severity: 1,
     event_date: new Date().toISOString().split('T')[0],
     event_time: new Date().toTimeString().slice(0, 5)
   });
+
+  useEffect(() => {
+    if (defaultEventType) {
+      setFormData(prev => ({
+        ...prev,
+        event_type: defaultEventType
+      }));
+    }
+  }, [defaultEventType]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {

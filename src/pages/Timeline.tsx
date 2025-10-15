@@ -144,6 +144,26 @@ const Timeline = () => {
     }
   };
 
+  const getAddButtonLabel = (currentFilter: string) => {
+    switch (currentFilter) {
+      case 'appointment': return 'Adicionar Nova Consulta';
+      case 'exam': return 'Adicionar Novo Exame';
+      case 'mood': return 'Adicionar Novo Evento';
+      case 'medication': return 'Adicionar Medicamento';
+      default: return 'Adicionar Novo Evento';
+    }
+  };
+
+  const getAddButtonIcon = (currentFilter: string) => {
+    switch (currentFilter) {
+      case 'appointment': return <Calendar className="h-4 w-4 mr-2" />;
+      case 'exam': return <FileText className="h-4 w-4 mr-2" />;
+      case 'mood': return <FileText className="h-4 w-4 mr-2" />;
+      case 'medication': return <Pill className="h-4 w-4 mr-2" />;
+      default: return <FileText className="h-4 w-4 mr-2" />;
+    }
+  };
+
   const handleDeleteClick = (eventId: string, fromUserEvents: boolean) => {
     setEventToDelete({ id: eventId, table: fromUserEvents ? 'user_events' : 'events' });
     setDeleteDialogOpen(true);
@@ -300,9 +320,9 @@ const Timeline = () => {
             Medicamentos
           </Button>
           <Button
-            variant={filter === 'consultation' ? 'default' : 'outline'}
+            variant={filter === 'appointment' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setFilter('consultation')}
+            onClick={() => setFilter('appointment')}
             className="whitespace-nowrap"
           >
             Consultas
@@ -538,12 +558,16 @@ const Timeline = () => {
         <Card className="luxury-card">
           <CardContent className="p-4">
             <Button 
-              onClick={() => navigate('/events')} 
+              onClick={() => navigate('/events', { 
+                state: { 
+                  defaultEventType: filter === 'all' || filter === 'date' ? undefined : filter 
+                } 
+              })} 
               className="w-full"
               size="lg"
             >
-              <FileText className="h-4 w-4 mr-2" />
-              Adicionar Novo Evento
+              {getAddButtonIcon(filter)}
+              {getAddButtonLabel(filter)}
             </Button>
           </CardContent>
         </Card>
