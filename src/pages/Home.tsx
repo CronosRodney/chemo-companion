@@ -223,33 +223,6 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Main Actions Premium */}
-        <div className="grid grid-cols-2 gap-4">
-          <Button
-            variant="outline" 
-            size="lg" 
-            className="h-24 flex-col gap-3 group glass-effect border-2 border-secondary/50 hover:bg-gradient-to-br hover:from-secondary/20 hover:to-secondary-accent/10 relative overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(var(--secondary-rgb),0.3)]"
-            onClick={() => navigate('/events')}
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center relative">
-              <Plus className="h-7 w-7 transition-transform group-hover:scale-125 text-secondary-accent relative z-10" />
-            </div>
-            <span className="text-sm font-bold relative z-10">Registrar</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            size="lg" 
-            className="h-24 flex-col gap-3 group glass-effect border-2 border-accent/50 hover:bg-gradient-to-br hover:from-accent/20 hover:to-accent/10 relative overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(var(--accent-rgb),0.3)]"
-            onClick={() => navigate('/timeline')}
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center relative">
-              <Clock className="h-7 w-7 transition-transform group-hover:scale-125 text-accent-foreground relative z-10" />
-            </div>
-            <span className="text-sm font-bold relative z-10">Timeline</span>
-          </Button>
-        </div>
         
         {/* Secondary Actions */}
         <div className="grid grid-cols-1 gap-4">
@@ -267,12 +240,24 @@ const Home = () => {
         {/* Emergency Alert */}
         <div className="luxury-card bg-destructive/5 border-2 border-destructive/30 p-6 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-destructive/5 to-destructive/10"></div>
-          <div className="relative flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
-              <AlertTriangle className="h-6 w-6 text-destructive" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-destructive text-lg flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <AlertTriangle className="h-6 w-6 text-destructive" />
+                </div>
+                Emergência 24h
+              </h3>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-destructive/30 hover:bg-destructive/10 text-destructive"
+                onClick={() => navigate('/editable-profile')}
+              >
+                Editar
+              </Button>
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-destructive text-lg mb-2">Emergência 24h</h3>
               <p className="text-sm text-destructive/80 mb-4">
                 Febre &gt; 38°C ou sintomas graves? Entre em contato imediatamente
               </p>
