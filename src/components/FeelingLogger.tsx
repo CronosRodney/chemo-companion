@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { FeelingDialog, FeelingData } from "./FeelingDialog";
+import { useAppContext } from "@/contexts/AppContext";
 
 interface FeelingLoggerProps {
   onFeelingLogged?: (rating: number) => void;
@@ -9,6 +10,7 @@ interface FeelingLoggerProps {
 
 export const FeelingLogger = ({ onFeelingLogged }: FeelingLoggerProps) => {
   const { toast } = useToast();
+  const { refetchEvents } = useAppContext();
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -42,6 +44,9 @@ export const FeelingLogger = ({ onFeelingLogged }: FeelingLoggerProps) => {
         });
 
       if (error) throw error;
+
+      // Atualizar lista de eventos
+      await refetchEvents();
 
       toast({
         title: "Sentimento registrado",
