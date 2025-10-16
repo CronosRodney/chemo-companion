@@ -130,6 +130,125 @@ export type Database = {
         }
         Relationships: []
       }
+      cycle_administrations: {
+        Row: {
+          actual_dose_mg: number | null
+          administered_by: string | null
+          administration_date: string
+          adverse_reactions: Json | null
+          batch_number: string | null
+          calculated_dose_mg: number
+          created_at: string | null
+          cycle_id: string
+          day_code: string
+          drug_id: string
+          end_time: string | null
+          expiry_date: string | null
+          id: string
+          notes: string | null
+          start_time: string | null
+          status: string | null
+        }
+        Insert: {
+          actual_dose_mg?: number | null
+          administered_by?: string | null
+          administration_date: string
+          adverse_reactions?: Json | null
+          batch_number?: string | null
+          calculated_dose_mg: number
+          created_at?: string | null
+          cycle_id: string
+          day_code: string
+          drug_id: string
+          end_time?: string | null
+          expiry_date?: string | null
+          id?: string
+          notes?: string | null
+          start_time?: string | null
+          status?: string | null
+        }
+        Update: {
+          actual_dose_mg?: number | null
+          administered_by?: string | null
+          administration_date?: string
+          adverse_reactions?: Json | null
+          batch_number?: string | null
+          calculated_dose_mg?: number
+          created_at?: string | null
+          cycle_id?: string
+          day_code?: string
+          drug_id?: string
+          end_time?: string | null
+          expiry_date?: string | null
+          id?: string
+          notes?: string | null
+          start_time?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cycle_administrations_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cycle_administrations_drug_id_fkey"
+            columns: ["drug_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_drugs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cycle_support_prescriptions: {
+        Row: {
+          alert_signs: string | null
+          category: string | null
+          created_at: string | null
+          cycle_id: string
+          dose: string
+          duration: string | null
+          frequency: string
+          id: string
+          instructions: string | null
+          medication_name: string
+        }
+        Insert: {
+          alert_signs?: string | null
+          category?: string | null
+          created_at?: string | null
+          cycle_id: string
+          dose: string
+          duration?: string | null
+          frequency: string
+          id?: string
+          instructions?: string | null
+          medication_name: string
+        }
+        Update: {
+          alert_signs?: string | null
+          category?: string | null
+          created_at?: string | null
+          cycle_id?: string
+          dose?: string
+          duration?: string | null
+          frequency?: string
+          id?: string
+          instructions?: string | null
+          medication_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cycle_support_prescriptions_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           created_at: string
@@ -373,6 +492,51 @@ export type Database = {
         }
         Relationships: []
       }
+      regimen_templates: {
+        Row: {
+          cancer_types: string[] | null
+          created_at: string | null
+          description: string | null
+          drugs_template: Json
+          full_name: string | null
+          id: string
+          line_of_therapy: string[] | null
+          name: string
+          typical_cycles: number | null
+          typical_periodicity_days: number | null
+          typical_support: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          cancer_types?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          drugs_template: Json
+          full_name?: string | null
+          id?: string
+          line_of_therapy?: string[] | null
+          name: string
+          typical_cycles?: number | null
+          typical_periodicity_days?: number | null
+          typical_support?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          cancer_types?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          drugs_template?: Json
+          full_name?: string | null
+          id?: string
+          line_of_therapy?: string[] | null
+          name?: string
+          typical_cycles?: number | null
+          typical_periodicity_days?: number | null
+          typical_support?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       reminders: {
         Row: {
           active: boolean | null
@@ -441,6 +605,226 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      treatment_cycles: {
+        Row: {
+          actual_date: string | null
+          alt_value: number | null
+          anc_value: number | null
+          ast_value: number | null
+          bilirubin_value: number | null
+          created_at: string | null
+          cycle_number: number
+          delay_reason: string | null
+          dose_adjustments: Json | null
+          id: string
+          plt_value: number | null
+          release_decision_at: string | null
+          release_decision_by: string | null
+          release_status: string
+          scheduled_date: string
+          scr_value: number | null
+          status: string | null
+          treatment_plan_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          actual_date?: string | null
+          alt_value?: number | null
+          anc_value?: number | null
+          ast_value?: number | null
+          bilirubin_value?: number | null
+          created_at?: string | null
+          cycle_number: number
+          delay_reason?: string | null
+          dose_adjustments?: Json | null
+          id?: string
+          plt_value?: number | null
+          release_decision_at?: string | null
+          release_decision_by?: string | null
+          release_status?: string
+          scheduled_date: string
+          scr_value?: number | null
+          status?: string | null
+          treatment_plan_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          actual_date?: string | null
+          alt_value?: number | null
+          anc_value?: number | null
+          ast_value?: number | null
+          bilirubin_value?: number | null
+          created_at?: string | null
+          cycle_number?: number
+          delay_reason?: string | null
+          dose_adjustments?: Json | null
+          id?: string
+          plt_value?: number | null
+          release_decision_at?: string | null
+          release_decision_by?: string | null
+          release_status?: string
+          scheduled_date?: string
+          scr_value?: number | null
+          status?: string | null
+          treatment_plan_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_cycles_treatment_plan_id_fkey"
+            columns: ["treatment_plan_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treatment_drugs: {
+        Row: {
+          created_at: string | null
+          day_codes: string[]
+          diluent: string | null
+          dose_unit: string
+          drug_name: string
+          id: string
+          infusion_time_min: number | null
+          oncology_med_id: string | null
+          reference_dose: number
+          route: string
+          sequence_order: number | null
+          treatment_plan_id: string
+          volume_ml: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          day_codes: string[]
+          diluent?: string | null
+          dose_unit: string
+          drug_name: string
+          id?: string
+          infusion_time_min?: number | null
+          oncology_med_id?: string | null
+          reference_dose: number
+          route: string
+          sequence_order?: number | null
+          treatment_plan_id: string
+          volume_ml?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          day_codes?: string[]
+          diluent?: string | null
+          dose_unit?: string
+          drug_name?: string
+          id?: string
+          infusion_time_min?: number | null
+          oncology_med_id?: string | null
+          reference_dose?: number
+          route?: string
+          sequence_order?: number | null
+          treatment_plan_id?: string
+          volume_ml?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_drugs_oncology_med_id_fkey"
+            columns: ["oncology_med_id"]
+            isOneToOne: false
+            referencedRelation: "oncology_meds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_drugs_treatment_plan_id_fkey"
+            columns: ["treatment_plan_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treatment_plans: {
+        Row: {
+          anc_min: number | null
+          ast_alt_max_xuln: number | null
+          bsa_m2: number | null
+          clinic_id: string | null
+          created_at: string | null
+          diagnosis_cid: string | null
+          end_date: string | null
+          height_cm: number | null
+          id: string
+          line_of_therapy: string
+          periodicity_days: number
+          planned_cycles: number
+          plt_min: number | null
+          prescriber_id: string | null
+          regimen_name: string
+          scr_max: number | null
+          start_date: string
+          status: string | null
+          treatment_intent: string
+          updated_at: string | null
+          user_id: string
+          weight_kg: number | null
+        }
+        Insert: {
+          anc_min?: number | null
+          ast_alt_max_xuln?: number | null
+          bsa_m2?: number | null
+          clinic_id?: string | null
+          created_at?: string | null
+          diagnosis_cid?: string | null
+          end_date?: string | null
+          height_cm?: number | null
+          id?: string
+          line_of_therapy: string
+          periodicity_days: number
+          planned_cycles: number
+          plt_min?: number | null
+          prescriber_id?: string | null
+          regimen_name: string
+          scr_max?: number | null
+          start_date: string
+          status?: string | null
+          treatment_intent: string
+          updated_at?: string | null
+          user_id: string
+          weight_kg?: number | null
+        }
+        Update: {
+          anc_min?: number | null
+          ast_alt_max_xuln?: number | null
+          bsa_m2?: number | null
+          clinic_id?: string | null
+          created_at?: string | null
+          diagnosis_cid?: string | null
+          end_date?: string | null
+          height_cm?: number | null
+          id?: string
+          line_of_therapy?: string
+          periodicity_days?: number
+          planned_cycles?: number
+          plt_min?: number | null
+          prescriber_id?: string | null
+          regimen_name?: string
+          scr_max?: number | null
+          start_date?: string
+          status?: string | null
+          treatment_intent?: string
+          updated_at?: string | null
+          user_id?: string
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_plans_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_clinic_connections: {
         Row: {

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Home, Pill, Calendar, User, Share2, LogOut, Building2 } from "lucide-react";
+import { Home, Pill, Calendar, User, Share2, LogOut, Building2, Activity } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../hooks/useAuth";
@@ -22,6 +22,7 @@ const Navigation = () => {
     { path: "/", icon: Home, label: "Início" },
     { path: "/medications", icon: Pill, label: "Medicamentos" },
     { path: "/scan/clinic", icon: Building2, label: "Clínica" },
+    { path: "/treatment", icon: Activity, label: "Tratamento" },
     { path: "/timeline", icon: Calendar, label: "Timeline" },
     { path: "/share", icon: Share2, label: "Compartilhar" },
     { path: "/profile", icon: User, label: "Perfil" },

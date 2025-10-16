@@ -19,6 +19,7 @@ import Share from "./pages/Share";
 import Events from "./pages/Events";
 import Auth from "./pages/Auth";
 import ImportMeds from "./pages/ImportMeds";
+import Treatment from "./pages/Treatment";
 import Navigation from "./components/Navigation";
 import NotFound from "./pages/NotFound";
 
@@ -67,6 +68,11 @@ const App = () => (
               <Route path="/medications" element={
                 <ProtectedRoute>
                   <Medications />
+                </ProtectedRoute>
+              } />
+              <Route path="/treatment" element={
+                <ProtectedRoute>
+                  <Treatment />
                 </ProtectedRoute>
               } />
               <Route path="/timeline" element={

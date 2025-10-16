@@ -23,6 +23,11 @@ interface AppData {
     currentCycle: string;
   };
   
+  // Treatment data
+  treatmentPlans: any[];
+  currentTreatmentPlan: any | null;
+  treatmentCycles: any[];
+  
   // Actions
   updateProfile: (data: any) => Promise<void>;
   addEvent: (event: any) => void;
@@ -39,6 +44,11 @@ interface AppData {
   addReminder: (reminder: any) => Promise<void>;
   updateReminder: (id: string, reminder: any) => Promise<void>;
   deleteReminder: (id: string) => Promise<void>;
+  
+  // Treatment actions
+  addTreatmentPlan: (plan: any) => Promise<void>;
+  updateTreatmentPlan: (id: string, data: any) => Promise<void>;
+  refetchTreatmentPlans: () => Promise<void>;
 }
 
 const AppContext = createContext<AppData | undefined>(undefined);
@@ -56,6 +66,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     nextAppointment: "Não agendada",
     currentCycle: "N/A"
   });
+  
+  // Treatment state
+  const [treatmentPlans, setTreatmentPlans] = useState<any[]>([]);
+  const [currentTreatmentPlan, setCurrentTreatmentPlan] = useState<any | null>(null);
+  const [treatmentCycles, setTreatmentCycles] = useState<any[]>([]);
 
   // Load user medications from database
   const loadMedications = async () => {
@@ -199,6 +214,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Load treatment plans
+  const loadTreatmentPlans = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('treatment_plans')
+        .select(`
+          *,
+          clinic:clinics(*),
+          drugs:treatment_drugs(*),
+          cycles:treatment_cycles(*)
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      setTreatmentPlans(data || []);
+      
+      // Set active plan as current
+      const activePlan = data?.find(p => p.status === 'active');
+      setCurrentTreatmentPlan(activePlan || null);
+    } catch (error) {
+      console.error('Error loading treatment plans:', error);
+    }
+  };
+
   // Load data when user changes
   useEffect(() => {
     if (user) {
@@ -206,6 +249,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       loadEventsFromEventsTable();
       loadReminders();
       loadStats();
+      loadTreatmentPlans();
     }
   }, [user]);
 
@@ -522,6 +566,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await updateUserProfile(data);
   };
 
+  // Treatment functions
+  const addTreatmentPlan = async (planData: any) => {
+    console.log('Adding treatment plan:', planData);
+    await loadTreatmentPlans();
+  };
+
+  const updateTreatmentPlan = async (id: string, data: any) => {
+    try {
+      const { error } = await supabase
+        .from('treatment_plans')
+        .update(data)
+        .eq('id', id);
+
+      if (error) throw error;
+      await loadTreatmentPlans();
+    } catch (error) {
+      console.error('Error updating treatment plan:', error);
+      throw error;
+    }
+  };
+
+  const refetchTreatmentPlans = async () => {
+    if (!user) return;
+    await loadTreatmentPlans();
+  };
+
   const value: AppData = {
     user,
     profile,
@@ -532,6 +602,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     clinics,
     clinicsLoading,
     stats,
+    treatmentPlans,
+    currentTreatmentPlan,
+    treatmentCycles,
     updateProfile,
     addEvent,
     addMedication,
@@ -546,7 +619,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     refetchAllData,
     addReminder,
     updateReminder,
-    deleteReminder
+    deleteReminder,
+    addTreatmentPlan,
+    updateTreatmentPlan,
+    refetchTreatmentPlans
   };
 
   return (
