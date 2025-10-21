@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Activity, Calendar as CalendarIcon, Clock } from "lucide-react";
+import { Plus, Activity, Calendar as CalendarIcon, Clock, CheckCircle2, AlertCircle, Beaker, Syringe } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useAppContext } from "@/contexts/AppContext";
 import TreatmentPlanDialog from "@/components/TreatmentPlanDialog";
-import { format } from "date-fns";
+import { format, isPast, isFuture, isToday, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Progress } from "@/components/ui/progress";
 
 export default function Treatment() {
   const [createPlanDialogOpen, setCreatePlanDialogOpen] = useState(false);
@@ -206,51 +207,433 @@ export default function Treatment() {
         </TabsContent>
 
         <TabsContent value="current">
-          <Card>
-            <CardHeader>
-              <CardTitle>Ciclo Atual</CardTitle>
-              <CardDescription>
-                Informações sobre o ciclo em andamento
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-center py-8">
-                Em desenvolvimento...
-              </p>
-            </CardContent>
-          </Card>
+          {(() => {
+            const activePlan = treatmentPlans?.find((p: any) => p.status === 'active');
+            
+            if (!activePlan) {
+              return (
+                <Card>
+                  <CardContent className="py-12">
+                    <div className="text-center">
+                      <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground">
+                        Nenhum tratamento ativo no momento
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            }
+
+            const currentCycle = activePlan.cycles?.find((c: any) => 
+              c.status === 'scheduled' || c.status === 'in_progress'
+            );
+
+            if (!currentCycle) {
+              return (
+                <Card>
+                  <CardContent className="py-12">
+                    <div className="text-center">
+                      <CheckCircle2 className="h-12 w-12 mx-auto text-green-500 mb-4" />
+                      <p className="text-muted-foreground">
+                        Todos os ciclos foram concluídos
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            }
+
+            const cycleDate = new Date(currentCycle.scheduled_date);
+            const daysUntil = differenceInDays(cycleDate, new Date());
+
+            return (
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-2xl">Ciclo {currentCycle.cycle_number} de {activePlan.planned_cycles}</CardTitle>
+                        <CardDescription>{activePlan.regimen_name}</CardDescription>
+                      </div>
+                      <Badge variant={daysUntil <= 0 ? "default" : "outline"} className="text-sm">
+                        {isToday(cycleDate) ? "Hoje" : daysUntil < 0 ? "Atrasado" : `${daysUntil} dias`}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Data Agendada</p>
+                        <p className="font-medium">{formatDate(currentCycle.scheduled_date)}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Status Liberação</p>
+                        <Badge variant={currentCycle.release_status === 'released' ? 'default' : 'secondary'}>
+                          {currentCycle.release_status === 'released' ? 'Liberado' : 
+                           currentCycle.release_status === 'delayed' ? 'Adiado' : 
+                           currentCycle.release_status === 'dose_adjusted' ? 'Dose Ajustada' : 'Pendente'}
+                        </Badge>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Peso / Altura</p>
+                        <p className="font-medium">
+                          {activePlan.weight_kg}kg / {activePlan.height_cm}cm
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">SC (BSA)</p>
+                        <p className="font-medium">{activePlan.bsa_m2?.toFixed(2)} m²</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <span className="text-sm font-medium">Progresso do Tratamento</span>
+                        <span className="text-sm text-muted-foreground">
+                          {Math.round((currentCycle.cycle_number / activePlan.planned_cycles) * 100)}%
+                        </span>
+                      </div>
+                      <Progress value={(currentCycle.cycle_number / activePlan.planned_cycles) * 100} />
+                    </div>
+
+                    {currentCycle.anc_value && (
+                      <div className="border rounded-lg p-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Beaker className="h-5 w-5 text-primary" />
+                          <h4 className="font-semibold">Exames Laboratoriais</h4>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                          {currentCycle.anc_value && (
+                            <div>
+                              <p className="text-xs text-muted-foreground">Neutrófilos (ANC)</p>
+                              <p className="font-medium">{currentCycle.anc_value}/mm³</p>
+                            </div>
+                          )}
+                          {currentCycle.plt_value && (
+                            <div>
+                              <p className="text-xs text-muted-foreground">Plaquetas</p>
+                              <p className="font-medium">{currentCycle.plt_value.toLocaleString()}/mm³</p>
+                            </div>
+                          )}
+                          {currentCycle.scr_value && (
+                            <div>
+                              <p className="text-xs text-muted-foreground">Creatinina</p>
+                              <p className="font-medium">{currentCycle.scr_value} mg/dL</p>
+                            </div>
+                          )}
+                          {currentCycle.ast_value && (
+                            <div>
+                              <p className="text-xs text-muted-foreground">AST (TGO)</p>
+                              <p className="font-medium">{currentCycle.ast_value} U/L</p>
+                            </div>
+                          )}
+                          {currentCycle.alt_value && (
+                            <div>
+                              <p className="text-xs text-muted-foreground">ALT (TGP)</p>
+                              <p className="font-medium">{currentCycle.alt_value} U/L</p>
+                            </div>
+                          )}
+                          {currentCycle.bilirubin_value && (
+                            <div>
+                              <p className="text-xs text-muted-foreground">Bilirrubina</p>
+                              <p className="font-medium">{currentCycle.bilirubin_value} mg/dL</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {activePlan.drugs && activePlan.drugs.length > 0 && (
+                      <div className="border rounded-lg p-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Syringe className="h-5 w-5 text-primary" />
+                          <h4 className="font-semibold">Medicamentos do Ciclo</h4>
+                        </div>
+                        <div className="space-y-2">
+                          {activePlan.drugs.map((drug: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded">
+                              <div>
+                                <p className="font-medium">{drug.drug_name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {drug.reference_dose} {drug.dose_unit} • {drug.route} • {drug.day_codes.join(', ')}
+                                </p>
+                              </div>
+                              {drug.infusion_time_min && (
+                                <Badge variant="outline" className="text-xs">
+                                  {drug.infusion_time_min}min
+                                </Badge>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {currentCycle.delay_reason && (
+                      <div className="border border-yellow-500/50 bg-yellow-500/10 rounded-lg p-4">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                          <div>
+                            <p className="font-semibold text-yellow-900 dark:text-yellow-100">Motivo do Adiamento</p>
+                            <p className="text-sm text-yellow-800 dark:text-yellow-200">{currentCycle.delay_reason}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })()}
         </TabsContent>
 
         <TabsContent value="schedule">
-          <Card>
-            <CardHeader>
-              <CardTitle>Cronograma de Ciclos</CardTitle>
-              <CardDescription>
-                Calendário completo do tratamento
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-center py-8">
-                Em desenvolvimento...
-              </p>
-            </CardContent>
-          </Card>
+          {(() => {
+            const activePlan = treatmentPlans?.find((p: any) => p.status === 'active');
+            
+            if (!activePlan) {
+              return (
+                <Card>
+                  <CardContent className="py-12">
+                    <div className="text-center">
+                      <CalendarIcon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground">
+                        Nenhum tratamento ativo para visualizar cronograma
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            }
+
+            const cycles = activePlan.cycles || [];
+            const sortedCycles = [...cycles].sort((a: any, b: any) => 
+              new Date(a.scheduled_date).getTime() - new Date(b.scheduled_date).getTime()
+            );
+
+            return (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Cronograma - {activePlan.regimen_name}</CardTitle>
+                  <CardDescription>
+                    {activePlan.planned_cycles} ciclos • A cada {activePlan.periodicity_days} dias
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {sortedCycles.map((cycle: any, idx: number) => {
+                      const cycleDate = new Date(cycle.scheduled_date);
+                      const isPastCycle = isPast(cycleDate) && !isToday(cycleDate);
+                      const isFutureCycle = isFuture(cycleDate);
+                      const isTodayCycle = isToday(cycleDate);
+
+                      return (
+                        <div
+                          key={cycle.id}
+                          className={`flex items-start gap-4 p-4 rounded-lg border-2 transition-colors ${
+                            isTodayCycle ? 'border-primary bg-primary/5' :
+                            cycle.status === 'completed' ? 'border-green-500/50 bg-green-500/5' :
+                            isPastCycle ? 'border-red-500/50 bg-red-500/5' :
+                            'border-border'
+                          }`}
+                        >
+                          <div className="flex-shrink-0 w-12 h-12 rounded-full bg-background border-2 flex items-center justify-center font-bold">
+                            {cycle.cycle_number}
+                          </div>
+                          
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <p className="font-semibold">Ciclo {cycle.cycle_number}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {formatDate(cycle.scheduled_date)}
+                                  {cycle.actual_date && cycle.actual_date !== cycle.scheduled_date && 
+                                    ` (realizado em ${formatDate(cycle.actual_date)})`
+                                  }
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <Badge variant={
+                                  cycle.status === 'completed' ? 'default' :
+                                  cycle.status === 'in_progress' ? 'secondary' :
+                                  isTodayCycle ? 'default' :
+                                  'outline'
+                                }>
+                                  {cycle.status === 'completed' ? 'Concluído' :
+                                   cycle.status === 'in_progress' ? 'Em Andamento' :
+                                   isTodayCycle ? 'Hoje' :
+                                   isPastCycle ? 'Atrasado' : 'Agendado'}
+                                </Badge>
+                                {cycle.release_status !== 'pending' && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {cycle.release_status === 'released' ? 'Liberado' :
+                                     cycle.release_status === 'delayed' ? 'Adiado' :
+                                     cycle.release_status === 'dose_adjusted' ? 'Ajustado' :
+                                     cycle.release_status === 'cancelled' ? 'Cancelado' : ''}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+
+                            {cycle.delay_reason && (
+                              <p className="text-xs text-yellow-700 dark:text-yellow-400 flex items-center gap-1">
+                                <AlertCircle className="h-3 w-3" />
+                                {cycle.delay_reason}
+                              </p>
+                            )}
+
+                            {(cycle.anc_value || cycle.plt_value) && (
+                              <div className="flex gap-4 text-xs">
+                                {cycle.anc_value && (
+                                  <span className="text-muted-foreground">
+                                    ANC: {cycle.anc_value}
+                                  </span>
+                                )}
+                                {cycle.plt_value && (
+                                  <span className="text-muted-foreground">
+                                    PLT: {cycle.plt_value.toLocaleString()}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
         </TabsContent>
 
         <TabsContent value="history">
-          <Card>
-            <CardHeader>
-              <CardTitle>Histórico de Ciclos</CardTitle>
-              <CardDescription>
-                Ciclos já realizados e suas informações
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-center py-8">
-                Em desenvolvimento...
-              </p>
-            </CardContent>
-          </Card>
+          {(() => {
+            const allCompletedCycles = treatmentPlans?.flatMap((plan: any) => 
+              (plan.cycles || [])
+                .filter((c: any) => c.status === 'completed')
+                .map((c: any) => ({ ...c, plan }))
+            ) || [];
+
+            const sortedCompleted = allCompletedCycles.sort((a: any, b: any) => 
+              new Date(b.actual_date || b.scheduled_date).getTime() - 
+              new Date(a.actual_date || a.scheduled_date).getTime()
+            );
+
+            if (sortedCompleted.length === 0) {
+              return (
+                <Card>
+                  <CardContent className="py-12">
+                    <div className="text-center">
+                      <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground">
+                        Nenhum ciclo concluído ainda
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            }
+
+            return (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Histórico de Ciclos Realizados</CardTitle>
+                  <CardDescription>
+                    {sortedCompleted.length} {sortedCompleted.length === 1 ? 'ciclo concluído' : 'ciclos concluídos'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {sortedCompleted.map((cycle: any) => (
+                      <div
+                        key={cycle.id}
+                        className="border rounded-lg p-4 space-y-3 bg-green-500/5 border-green-500/30"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <CheckCircle2 className="h-5 w-5 text-green-600" />
+                              <h4 className="font-semibold">
+                                {cycle.plan.regimen_name} - Ciclo {cycle.cycle_number}
+                              </h4>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              Realizado em {formatDate(cycle.actual_date || cycle.scheduled_date)}
+                            </p>
+                            {cycle.actual_date && cycle.actual_date !== cycle.scheduled_date && (
+                              <p className="text-xs text-muted-foreground">
+                                (Agendado para {formatDate(cycle.scheduled_date)})
+                              </p>
+                            )}
+                          </div>
+                          <Badge variant="default" className="bg-green-600">
+                            Concluído
+                          </Badge>
+                        </div>
+
+                        {(cycle.anc_value || cycle.plt_value || cycle.scr_value) && (
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-3 bg-background rounded border">
+                            {cycle.anc_value && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">Neutrófilos</p>
+                                <p className="text-sm font-medium">{cycle.anc_value}/mm³</p>
+                              </div>
+                            )}
+                            {cycle.plt_value && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">Plaquetas</p>
+                                <p className="text-sm font-medium">{cycle.plt_value.toLocaleString()}/mm³</p>
+                              </div>
+                            )}
+                            {cycle.scr_value && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">Creatinina</p>
+                                <p className="text-sm font-medium">{cycle.scr_value} mg/dL</p>
+                              </div>
+                            )}
+                            {cycle.ast_value && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">AST</p>
+                                <p className="text-sm font-medium">{cycle.ast_value} U/L</p>
+                              </div>
+                            )}
+                            {cycle.alt_value && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">ALT</p>
+                                <p className="text-sm font-medium">{cycle.alt_value} U/L</p>
+                              </div>
+                            )}
+                            {cycle.bilirubin_value && (
+                              <div>
+                                <p className="text-xs text-muted-foreground">Bilirrubina</p>
+                                <p className="text-sm font-medium">{cycle.bilirubin_value} mg/dL</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {cycle.dose_adjustments && (
+                          <div className="text-xs p-2 bg-yellow-500/10 border border-yellow-500/30 rounded">
+                            <p className="font-medium text-yellow-900 dark:text-yellow-100">
+                              Ajustes de dose aplicados
+                            </p>
+                          </div>
+                        )}
+
+                        {cycle.release_decision_at && (
+                          <p className="text-xs text-muted-foreground">
+                            Liberado em {format(new Date(cycle.release_decision_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
         </TabsContent>
       </Tabs>
 
