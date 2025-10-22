@@ -20,6 +20,7 @@ import Events from "./pages/Events";
 import Auth from "./pages/Auth";
 import ImportMeds from "./pages/ImportMeds";
 import Treatment from "./pages/Treatment";
+import Labs from "./pages/Labs";
 import Navigation from "./components/Navigation";
 import NotFound from "./pages/NotFound";
 
@@ -73,6 +74,11 @@ const App = () => (
               <Route path="/treatment" element={
                 <ProtectedRoute>
                   <Treatment />
+                </ProtectedRoute>
+              } />
+              <Route path="/labs" element={
+                <ProtectedRoute>
+                  <Labs />
                 </ProtectedRoute>
               } />
               <Route path="/timeline" element={

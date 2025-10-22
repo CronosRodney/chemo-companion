@@ -1,11 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, QrCode, Plus, Share2, Pill, Calendar, AlertTriangle, Clock, Building2, MapPin } from "lucide-react";
+import { Bell, QrCode, Plus, Share2, Pill, Calendar, AlertTriangle, Clock, Building2, MapPin, Beaker } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ReminderManager } from "@/components/ReminderManager";
 import { FeelingLogger } from "@/components/FeelingLogger";
+import { TreatmentProgressWidget } from "@/components/TreatmentProgressWidget";
 import { useAppContext } from "@/contexts/AppContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,6 +20,7 @@ const Home = () => {
     stats, 
     clinics,
     clinicsLoading,
+    treatmentPlans,
     updateReminders,
     logFeeling: contextLogFeeling 
   } = useAppContext();
@@ -148,6 +150,9 @@ const Home = () => {
           </div>
         </div>
 
+        {/* Treatment Progress Widget */}
+        <TreatmentProgressWidget treatmentPlans={treatmentPlans || []} />
+
         {/* Connected Clinics */}
         {!clinicsLoading && clinics.length > 0 && (
           <div className="luxury-card p-6 space-y-4 border-2 border-secondary/20">
@@ -196,8 +201,11 @@ const Home = () => {
         )}
 
         {/* Quick Stats Premium */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="luxury-card p-5 text-center relative overflow-hidden border-2 border-success/30 group hover:scale-105 transition-transform">
+        <div className="grid grid-cols-2 gap-3">
+          <div 
+            className="luxury-card p-5 text-center relative overflow-hidden border-2 border-success/30 group hover:scale-105 transition-transform cursor-pointer"
+            onClick={() => navigate('/medications')}
+          >
             <div className="absolute inset-0 bg-gradient-to-br from-success/10 via-success/5 to-transparent"></div>
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-success/20 rounded-full blur-2xl group-hover:blur-3xl transition-all"></div>
             <div className="relative">
@@ -205,15 +213,10 @@ const Home = () => {
               <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">Adesão</div>
             </div>
           </div>
-          <div className="luxury-card p-5 text-center relative overflow-hidden border-2 border-primary/30 group hover:scale-105 transition-transform">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary-glow/5 to-transparent"></div>
-            <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/20 rounded-full blur-2xl group-hover:blur-3xl transition-all"></div>
-            <div className="relative">
-              <div className="text-2xl font-bold bg-gradient-to-br from-primary to-primary-glow bg-clip-text text-transparent mb-2 text-shadow">{stats.currentCycle}</div>
-              <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">Ciclos</div>
-            </div>
-          </div>
-          <div className="luxury-card p-5 text-center relative overflow-hidden border-2 border-secondary/30 group hover:scale-105 transition-transform">
+          <div 
+            className="luxury-card p-5 text-center relative overflow-hidden border-2 border-secondary/30 group hover:scale-105 transition-transform cursor-pointer"
+            onClick={() => navigate('/events')}
+          >
             <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 via-secondary-accent/5 to-transparent"></div>
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-secondary/20 rounded-full blur-2xl group-hover:blur-3xl transition-all"></div>
             <div className="relative">
@@ -222,6 +225,30 @@ const Home = () => {
             </div>
           </div>
         </div>
+
+        {/* Lab Results Quick Access */}
+        {treatmentPlans && treatmentPlans.length > 0 && (
+          <div 
+            className="luxury-card p-6 border-2 border-accent/30 relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer"
+            onClick={() => navigate('/labs')}
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent"></div>
+            <div className="relative flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center">
+                  <Beaker className="h-6 w-6 text-accent-foreground" />
+                </div>
+                <div>
+                  <p className="font-bold text-lg">Exames Laboratoriais</p>
+                  <p className="text-sm text-muted-foreground">Ver histórico e tendências</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm">
+                Ver
+              </Button>
+            </div>
+          </div>
+        )}
 
 
         {/* Emergency Alert */}
