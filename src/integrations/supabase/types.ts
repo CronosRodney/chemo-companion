@@ -972,6 +972,145 @@ export type Database = {
         }
         Relationships: []
       }
+      wearable_alerts: {
+        Row: {
+          acknowledged: boolean
+          acknowledged_at: string | null
+          actual_value: number
+          alert_type: string
+          created_at: string
+          id: string
+          message: string
+          metric_id: string | null
+          severity: string
+          threshold_value: number | null
+          user_id: string
+        }
+        Insert: {
+          acknowledged?: boolean
+          acknowledged_at?: string | null
+          actual_value: number
+          alert_type: string
+          created_at?: string
+          id?: string
+          message: string
+          metric_id?: string | null
+          severity: string
+          threshold_value?: number | null
+          user_id: string
+        }
+        Update: {
+          acknowledged?: boolean
+          acknowledged_at?: string | null
+          actual_value?: number
+          alert_type?: string
+          created_at?: string
+          id?: string
+          message?: string
+          metric_id?: string | null
+          severity?: string
+          threshold_value?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wearable_alerts_metric_id_fkey"
+            columns: ["metric_id"]
+            isOneToOne: false
+            referencedRelation: "wearable_metrics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wearable_connections: {
+        Row: {
+          access_token_encrypted: string | null
+          connected_at: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_sync_at: string | null
+          provider: string
+          refresh_token_encrypted: string | null
+          sync_frequency_hours: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          connected_at?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          provider: string
+          refresh_token_encrypted?: string | null
+          sync_frequency_hours?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          connected_at?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          provider?: string
+          refresh_token_encrypted?: string | null
+          sync_frequency_hours?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wearable_metrics: {
+        Row: {
+          connection_id: string
+          created_at: string
+          id: string
+          metric_date: string
+          metric_time: string | null
+          metric_type: string
+          source_device: string | null
+          unit: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string
+          id?: string
+          metric_date: string
+          metric_time?: string | null
+          metric_type: string
+          source_device?: string | null
+          unit: string
+          user_id: string
+          value: number
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string
+          id?: string
+          metric_date?: string
+          metric_time?: string | null
+          metric_type?: string
+          source_device?: string | null
+          unit?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wearable_metrics_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "wearable_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

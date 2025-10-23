@@ -21,6 +21,7 @@ import Auth from "./pages/Auth";
 import ImportMeds from "./pages/ImportMeds";
 import Treatment from "./pages/Treatment";
 import Labs from "./pages/Labs";
+import Health from "./pages/Health";
 import Navigation from "./components/Navigation";
 import NotFound from "./pages/NotFound";
 
@@ -79,6 +80,11 @@ const App = () => (
               <Route path="/labs" element={
                 <ProtectedRoute>
                   <Labs />
+                </ProtectedRoute>
+              } />
+              <Route path="/health" element={
+                <ProtectedRoute>
+                  <Health />
                 </ProtectedRoute>
               } />
               <Route path="/timeline" element={
