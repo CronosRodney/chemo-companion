@@ -1,5 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getUserFromRequest } from '../_shared/auth.ts';
+import { checkRateLimit } from '../_shared/rateLimiter.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,6 +23,29 @@ serve(async (req) => {
   }
 
   try {
+    // Verificar autenticação
+    const { userId, error: authError } = await getUserFromRequest(req);
+    if (authError || !userId) {
+      console.log('❌ Autenticação falhou:', authError);
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Autenticação necessária'
+      }), { headers: corsHeaders, status: 401 });
+    }
+
+    // Verificar rate limit (15 req/min - screenshots são mais rápidos)
+    const rateLimitResult = checkRateLimit(userId, { maxRequests: 15, windowMs: 60000 });
+    if (!rateLimitResult.allowed) {
+      console.log('⚠️ Rate limit excedido para usuário:', userId);
+      const resetIn = Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000);
+      return new Response(JSON.stringify({
+        success: false,
+        error: `Limite de requisições excedido. Tente novamente em ${resetIn} segundos.`
+      }), { headers: corsHeaders, status: 429 });
+    }
+
+    console.log(`✅ Usuário autenticado: ${userId} (${rateLimitResult.remaining} requisições restantes)`);
+
     const { url } = await req.json();
     console.log('Processing screenshot for URL:', url);
 
@@ -73,11 +98,11 @@ serve(async (req) => {
     throw new Error(`All screenshot services failed. Last error: ${lastError}`);
 
   } catch (error) {
-    console.error('Error in screenshot function:', error);
+    console.error('[Internal]', error); // Log detalhado apenas no servidor
     
     const errorResult: ScreenshotResult = {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred'
+      error: 'Erro ao processar screenshot'
     };
 
     return new Response(JSON.stringify(errorResult), {

@@ -1,5 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getUserFromRequest } from '../_shared/auth.ts';
+import { checkRateLimit } from '../_shared/rateLimiter.ts';
 
 // ESTRATÉGIA: Download e análise de arquivos de medicamento
 
@@ -39,6 +41,29 @@ serve(async (req) => {
   }
 
   try {
+    // Verificar autenticação
+    const { userId, error: authError } = await getUserFromRequest(req);
+    if (authError || !userId) {
+      console.log('❌ Autenticação falhou:', authError);
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Autenticação necessária'
+      }), { headers, status: 401 });
+    }
+
+    // Verificar rate limit (10 req/min por usuário)
+    const rateLimitResult = checkRateLimit(userId, { maxRequests: 10, windowMs: 60000 });
+    if (!rateLimitResult.allowed) {
+      console.log('⚠️ Rate limit excedido para usuário:', userId);
+      const resetIn = Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000);
+      return new Response(JSON.stringify({
+        success: false,
+        error: `Limite de requisições excedido. Tente novamente em ${resetIn} segundos.`
+      }), { headers, status: 429 });
+    }
+
+    console.log(`✅ Usuário autenticado: ${userId} (${rateLimitResult.remaining} requisições restantes)`);
+
     const body = await req.json();
     const url = body.url;
     
@@ -69,12 +94,11 @@ serve(async (req) => {
     return new Response(JSON.stringify(result), { headers });
     
   } catch (error) {
-    console.log('💥 ERRO GERAL:', error.message);
-    console.log('📍 Stack trace:', error.stack);
+    console.error('[Internal]', error); // Log detalhado apenas no servidor
     
     return new Response(JSON.stringify({
       success: false,
-      error: error.message
+      error: 'Erro ao processar extração de medicamento'
     }), { headers, status: 500 });
   }
 });
