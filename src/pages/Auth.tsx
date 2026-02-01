@@ -13,17 +13,7 @@ import { ArrowLeft, Mail, Lock, User, AlertCircle, CheckCircle, Stethoscope, Use
 import { z } from 'zod';
 import { useToast } from '../hooks/use-toast';
 
-// Modo teste - credenciais de acesso rápido
-const TEST_ACCOUNTS = {
-  patient: {
-    email: 'rodney.r3digital@gmail.com',
-    password: 'teste123'
-  },
-  doctor: {
-    email: 'rodney_r3digital@gmail.com', 
-    password: 'Maitrennnb@32'
-  }
-};
+// Modo teste - usa Edge Function dev-login para autenticação segura
 
 const patientSchema = z.object({
   email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
@@ -283,34 +273,50 @@ export default function Auth() {
     resetForm();
   };
 
-  // Quick login for test mode
+  // Quick login via Edge Function (dev-login) - sem senha fixa
   const handleQuickLogin = async (type: 'patient' | 'doctor') => {
     setIsLoading(true);
     setMessage(null);
     
     try {
-      const credentials = TEST_ACCOUNTS[type];
-      const { error } = await supabase.auth.signInWithPassword({
-        email: credentials.email,
-        password: credentials.password,
+      console.log(`[Quick Login] Invoking dev-login for role: ${type}`);
+      
+      const { data, error } = await supabase.functions.invoke('dev-login', {
+        body: { role: type }
       });
 
       if (error) {
-        setMessage({
-          type: 'error',
-          text: `Erro no login de teste: ${error.message}`
+        console.error('[Quick Login] Function error:', error);
+        throw error;
+      }
+
+      if (data?.access_token && data?.refresh_token) {
+        console.log('[Quick Login] Session received, setting...');
+        
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token
         });
-      } else {
+
+        if (sessionError) {
+          console.error('[Quick Login] Session error:', sessionError);
+          throw sessionError;
+        }
+
         toast({
           title: "Login de teste!",
           description: type === 'doctor' ? "Entrando como médico..." : "Entrando como paciente...",
         });
+        
         navigate(type === 'doctor' ? '/doctor' : '/');
+      } else {
+        throw new Error(data?.error || 'Falha no login de teste');
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[Quick Login] Error:', error);
       setMessage({
         type: 'error',
-        text: 'Erro no login de teste.'
+        text: error.message || 'Erro no login de teste. Verifique se ENABLE_DEV_LOGIN está configurado.'
       });
     } finally {
       setIsLoading(false);

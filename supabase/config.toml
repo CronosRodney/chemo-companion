@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.import-oncology-meds]
 verify_jwt = true
+
+[functions.dev-login]
+verify_jwt = false
