@@ -1,28 +1,34 @@
 project_id = "xpxsdlvicmlqpcaldyyz"
 
 [functions.extract-medication-ai]
-verify_jwt = true
+verify_jwt = false
 
 [functions.screenshot-medication]
-verify_jwt = true
+verify_jwt = false
 
 [functions.extract-medication-batch]
-verify_jwt = true
+verify_jwt = false
 
 [functions.analyze-symptoms]
-verify_jwt = true
+verify_jwt = false
 
 [functions.search-pharmacies]
-verify_jwt = true
+verify_jwt = false
 
 [functions.user-backup]
-verify_jwt = true
+verify_jwt = false
 
 [functions.register-doctor]
 verify_jwt = false
 
 [functions.import-oncology-meds]
-verify_jwt = true
+verify_jwt = false
 
 [functions.dev-login]
+verify_jwt = false
+
+[functions.accept-doctor-invite]
+verify_jwt = false
+
+[functions.reject-doctor-invite]
 verify_jwt = false
