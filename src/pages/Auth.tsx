@@ -248,6 +248,14 @@ export default function Auth() {
                 >
                   {isLoading ? 'Entrando...' : 'Entrar'}
                 </Button>
+
+                <Button 
+                  variant="outline"
+                  onClick={() => navigate('/doctor/register')}
+                  className="w-full mt-3"
+                >
+                  Médico
+                </Button>
               </TabsContent>
 
               <TabsContent value="signup" className="space-y-4 mt-6">
@@ -326,16 +334,6 @@ export default function Auth() {
 
         <p className="text-center text-sm text-muted-foreground">
           Precisa de ajuda? Entre em contato conosco.
-        </p>
-
-        <p className="text-center text-xs text-muted-foreground">
-          <button
-            type="button"
-            onClick={() => navigate('/doctor/register')}
-            className="text-primary hover:underline"
-          >
-            Sou profissional de saúde
-          </button>
         </p>
       </div>
     </div>
