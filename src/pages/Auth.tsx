@@ -6,25 +6,67 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Label } from '../components/ui/label';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { ArrowLeft, Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, User, AlertCircle, CheckCircle, Stethoscope, UserRound } from 'lucide-react';
 import { z } from 'zod';
 import { useToast } from '../hooks/use-toast';
 
-const authSchema = z.object({
+const patientSchema = z.object({
   email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
-  firstName: z.string().min(1, 'Nome é obrigatório').optional(),
+  firstName: z.string().min(1, 'Nome é obrigatório'),
 });
+
+const doctorSchema = z.object({
+  email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
+  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+  firstName: z.string().min(1, 'Nome é obrigatório'),
+  lastName: z.string().min(1, 'Sobrenome é obrigatório'),
+  crm: z.string().min(1, 'CRM é obrigatório'),
+  crm_uf: z.string().min(2, 'UF é obrigatória'),
+  specialty: z.string().min(1, 'Especialidade é obrigatória'),
+});
+
+const loginSchema = z.object({
+  email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
+  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+});
+
+const BRAZILIAN_STATES = [
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
+  'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
+  'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+];
+
+const SPECIALTIES = [
+  'Oncologia Clínica',
+  'Hematologia',
+  'Oncologia Pediátrica',
+  'Radioterapia',
+  'Cirurgia Oncológica',
+  'Mastologia',
+  'Urologia Oncológica',
+  'Ginecologia Oncológica',
+  'Oncologia Torácica',
+  'Neuro-oncologia',
+  'Oncologia Gastrointestinal',
+  'Outra'
+];
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
+  const [userType, setUserType] = useState<'patient' | 'doctor' | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    firstName: ''
+    firstName: '',
+    lastName: '',
+    crm: '',
+    crm_uf: '',
+    specialty: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
@@ -33,17 +75,28 @@ export default function Auth() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Redirect if already authenticated
     if (user) {
       navigate('/');
     }
   }, [user, navigate]);
 
-  const validateForm = (isSignUp = false) => {
+  // Reset userType when switching to login tab
+  useEffect(() => {
+    if (activeTab === 'login') {
+      setUserType(null);
+    }
+  }, [activeTab]);
+
+  const validateForm = (type: 'login' | 'patient' | 'doctor') => {
     try {
-      const schema = isSignUp 
-        ? authSchema.extend({ firstName: z.string().min(1, 'Nome é obrigatório') })
-        : authSchema.omit({ firstName: true });
+      let schema;
+      if (type === 'login') {
+        schema = loginSchema;
+      } else if (type === 'patient') {
+        schema = patientSchema;
+      } else {
+        schema = doctorSchema;
+      }
       
       schema.parse(formData);
       setErrors({});
@@ -63,7 +116,8 @@ export default function Auth() {
   };
 
   const handleSignUp = async () => {
-    if (!validateForm(true)) return;
+    if (!userType) return;
+    if (!validateForm(userType)) return;
     
     setIsLoading(true);
     setMessage(null);
@@ -71,7 +125,7 @@ export default function Auth() {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
@@ -94,15 +148,50 @@ export default function Auth() {
             text: error.message
           });
         }
-      } else {
+        return;
+      }
+
+      // If doctor, create healthcare_professionals record
+      if (userType === 'doctor' && data.user) {
+        const { error: profileError } = await supabase
+          .from('healthcare_professionals')
+          .insert({
+            user_id: data.user.id,
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            crm: formData.crm,
+            crm_uf: formData.crm_uf,
+            specialty: formData.specialty,
+            is_verified: false
+          });
+
+        if (profileError) {
+          console.error('Error creating doctor profile:', profileError);
+          setMessage({
+            type: 'error',
+            text: 'Conta criada, mas houve erro ao salvar dados profissionais. Entre em contato com suporte.'
+          });
+          return;
+        }
+
+        toast({
+          title: "Cadastro realizado!",
+          description: "Verifique seu email para confirmar sua conta.",
+        });
+
         setMessage({
           type: 'success',
-          text: 'Conta criada com sucesso! Verifique seu email para confirmar.'
+          text: 'Cadastro realizado! Verifique seu email para confirmar sua conta.'
         });
-        
+      } else {
         toast({
           title: "Conta criada!",
           description: "Verifique seu email para confirmar sua conta.",
+        });
+
+        setMessage({
+          type: 'success',
+          text: 'Conta criada com sucesso! Verifique seu email para confirmar.'
         });
       }
     } catch (error) {
@@ -116,7 +205,7 @@ export default function Auth() {
   };
 
   const handleSignIn = async () => {
-    if (!validateForm()) return;
+    if (!validateForm('login')) return;
     
     setIsLoading(true);
     setMessage(null);
@@ -158,15 +247,321 @@ export default function Auth() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      email: '',
+      password: '',
+      firstName: '',
+      lastName: '',
+      crm: '',
+      crm_uf: '',
+      specialty: ''
+    });
+    setErrors({});
+    setMessage(null);
+  };
+
+  const handleBackToSelection = () => {
+    setUserType(null);
+    resetForm();
+  };
+
   if (user) {
-    return null; // Will redirect via useEffect
+    return null;
   }
+
+  const renderUserTypeSelection = () => (
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium text-center text-foreground mb-6">
+        Quem é você?
+      </h3>
+      
+      <button
+        onClick={() => setUserType('patient')}
+        className="w-full p-4 border-2 border-border rounded-lg hover:border-primary hover:bg-primary/5 transition-all text-left group"
+      >
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+            <UserRound className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="font-semibold text-foreground">Sou Paciente</p>
+            <p className="text-sm text-muted-foreground">Acompanhe seu tratamento</p>
+          </div>
+        </div>
+      </button>
+
+      <button
+        onClick={() => setUserType('doctor')}
+        className="w-full p-4 border-2 border-border rounded-lg hover:border-primary hover:bg-primary/5 transition-all text-left group"
+      >
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+            <Stethoscope className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="font-semibold text-foreground">Sou Profissional de Saúde</p>
+            <p className="text-sm text-muted-foreground">Monitore seus pacientes</p>
+          </div>
+        </div>
+      </button>
+    </div>
+  );
+
+  const renderPatientForm = () => (
+    <div className="space-y-4">
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        onClick={handleBackToSelection}
+        className="mb-2 -ml-2"
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Voltar
+      </Button>
+
+      <h3 className="text-lg font-medium text-foreground">
+        Cadastro de Paciente
+      </h3>
+
+      <div className="space-y-2">
+        <Label htmlFor="firstName">Nome</Label>
+        <div className="relative">
+          <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="firstName"
+            type="text"
+            placeholder="Seu nome"
+            value={formData.firstName}
+            onChange={(e) => handleInputChange('firstName', e.target.value)}
+            className="pl-10"
+            disabled={isLoading}
+          />
+        </div>
+        {errors.firstName && (
+          <p className="text-sm text-destructive">{errors.firstName}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="signup-email">Email</Label>
+        <div className="relative">
+          <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="signup-email"
+            type="email"
+            placeholder="seu@email.com"
+            value={formData.email}
+            onChange={(e) => handleInputChange('email', e.target.value)}
+            className="pl-10"
+            disabled={isLoading}
+          />
+        </div>
+        {errors.email && (
+          <p className="text-sm text-destructive">{errors.email}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="signup-password">Senha</Label>
+        <div className="relative">
+          <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="signup-password"
+            type="password"
+            placeholder="Mínimo 6 caracteres"
+            value={formData.password}
+            onChange={(e) => handleInputChange('password', e.target.value)}
+            className="pl-10"
+            disabled={isLoading}
+          />
+        </div>
+        {errors.password && (
+          <p className="text-sm text-destructive">{errors.password}</p>
+        )}
+      </div>
+
+      <Button 
+        onClick={handleSignUp} 
+        disabled={isLoading}
+        className="w-full"
+      >
+        {isLoading ? 'Criando conta...' : 'Criar Conta'}
+      </Button>
+
+      <p className="text-xs text-muted-foreground text-center">
+        Ao criar uma conta, você concorda com nossos termos de serviço
+      </p>
+    </div>
+  );
+
+  const renderDoctorForm = () => (
+    <div className="space-y-4">
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        onClick={handleBackToSelection}
+        className="mb-2 -ml-2"
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Voltar
+      </Button>
+
+      <h3 className="text-lg font-medium text-foreground">
+        Cadastro de Profissional
+      </h3>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label htmlFor="firstName">Nome</Label>
+          <Input
+            id="firstName"
+            type="text"
+            placeholder="Nome"
+            value={formData.firstName}
+            onChange={(e) => handleInputChange('firstName', e.target.value)}
+            disabled={isLoading}
+          />
+          {errors.firstName && (
+            <p className="text-sm text-destructive">{errors.firstName}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="lastName">Sobrenome</Label>
+          <Input
+            id="lastName"
+            type="text"
+            placeholder="Sobrenome"
+            value={formData.lastName}
+            onChange={(e) => handleInputChange('lastName', e.target.value)}
+            disabled={isLoading}
+          />
+          {errors.lastName && (
+            <p className="text-sm text-destructive">{errors.lastName}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="doctor-email">Email</Label>
+        <div className="relative">
+          <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="doctor-email"
+            type="email"
+            placeholder="seu@email.com"
+            value={formData.email}
+            onChange={(e) => handleInputChange('email', e.target.value)}
+            className="pl-10"
+            disabled={isLoading}
+          />
+        </div>
+        {errors.email && (
+          <p className="text-sm text-destructive">{errors.email}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="doctor-password">Senha</Label>
+        <div className="relative">
+          <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="doctor-password"
+            type="password"
+            placeholder="Mínimo 6 caracteres"
+            value={formData.password}
+            onChange={(e) => handleInputChange('password', e.target.value)}
+            className="pl-10"
+            disabled={isLoading}
+          />
+        </div>
+        {errors.password && (
+          <p className="text-sm text-destructive">{errors.password}</p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label htmlFor="crm">CRM</Label>
+          <Input
+            id="crm"
+            type="text"
+            placeholder="123456"
+            value={formData.crm}
+            onChange={(e) => handleInputChange('crm', e.target.value)}
+            disabled={isLoading}
+          />
+          {errors.crm && (
+            <p className="text-sm text-destructive">{errors.crm}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="crm_uf">UF</Label>
+          <Select
+            value={formData.crm_uf}
+            onValueChange={(value) => handleInputChange('crm_uf', value)}
+            disabled={isLoading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="UF" />
+            </SelectTrigger>
+            <SelectContent>
+              {BRAZILIAN_STATES.map((state) => (
+                <SelectItem key={state} value={state}>
+                  {state}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.crm_uf && (
+            <p className="text-sm text-destructive">{errors.crm_uf}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="specialty">Especialidade</Label>
+        <Select
+          value={formData.specialty}
+          onValueChange={(value) => handleInputChange('specialty', value)}
+          disabled={isLoading}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione sua especialidade" />
+          </SelectTrigger>
+          <SelectContent>
+            {SPECIALTIES.map((specialty) => (
+              <SelectItem key={specialty} value={specialty}>
+                {specialty}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {errors.specialty && (
+          <p className="text-sm text-destructive">{errors.specialty}</p>
+        )}
+      </div>
+
+      <Button 
+        onClick={handleSignUp} 
+        disabled={isLoading}
+        className="w-full"
+      >
+        {isLoading ? 'Cadastrando...' : 'Cadastrar'}
+      </Button>
+
+      <p className="text-xs text-muted-foreground text-center">
+        Ao criar uma conta, você concorda com nossos termos de serviço
+      </p>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
@@ -248,85 +643,12 @@ export default function Auth() {
                 >
                   {isLoading ? 'Entrando...' : 'Entrar'}
                 </Button>
-
-                <Button 
-                  variant="outline"
-                  onClick={() => navigate('/doctor/register')}
-                  className="w-full mt-3"
-                >
-                  Médico
-                </Button>
               </TabsContent>
 
-              <TabsContent value="signup" className="space-y-4 mt-6">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">Nome</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="firstName"
-                      type="text"
-                      placeholder="Seu nome"
-                      value={formData.firstName}
-                      onChange={(e) => handleInputChange('firstName', e.target.value)}
-                      className="pl-10"
-                      disabled={isLoading}
-                    />
-                  </div>
-                  {errors.firstName && (
-                    <p className="text-sm text-destructive">{errors.firstName}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      className="pl-10"
-                      disabled={isLoading}
-                    />
-                  </div>
-                  {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Senha</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="Mínimo 6 caracteres"
-                      value={formData.password}
-                      onChange={(e) => handleInputChange('password', e.target.value)}
-                      className="pl-10"
-                      disabled={isLoading}
-                    />
-                  </div>
-                  {errors.password && (
-                    <p className="text-sm text-destructive">{errors.password}</p>
-                  )}
-                </div>
-
-                <Button 
-                  onClick={handleSignUp} 
-                  disabled={isLoading}
-                  className="w-full"
-                >
-                  {isLoading ? 'Criando conta...' : 'Criar Conta'}
-                </Button>
-
-                <p className="text-xs text-muted-foreground text-center">
-                  Ao criar uma conta, você concorda com nossos termos de serviço
-                </p>
+              <TabsContent value="signup" className="mt-6">
+                {userType === null && renderUserTypeSelection()}
+                {userType === 'patient' && renderPatientForm()}
+                {userType === 'doctor' && renderDoctorForm()}
               </TabsContent>
             </Tabs>
           </CardContent>
