@@ -151,8 +151,24 @@ export default function Auth() {
         return;
       }
 
-      // If doctor, create healthcare_professionals record
+      // If doctor, do automatic login first to establish session for RLS
       if (userType === 'doctor' && data.user) {
+        // Login to establish session (so auth.uid() works in RLS)
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (signInError) {
+          console.error('Auto-login error:', signInError);
+          setMessage({
+            type: 'error',
+            text: 'Conta criada, mas erro ao fazer login automático. Tente fazer login manualmente.'
+          });
+          return;
+        }
+
+        // Now insert healthcare_professionals record with active session
         const { error: profileError } = await supabase
           .from('healthcare_professionals')
           .insert({
@@ -176,13 +192,12 @@ export default function Auth() {
 
         toast({
           title: "Cadastro realizado!",
-          description: "Verifique seu email para confirmar sua conta.",
+          description: "Bem-vindo! Redirecionando para seu dashboard...",
         });
 
-        setMessage({
-          type: 'success',
-          text: 'Cadastro realizado! Verifique seu email para confirmar sua conta.'
-        });
+        // Redirect to doctor dashboard
+        navigate('/doctor');
+        return;
       } else {
         toast({
           title: "Conta criada!",
