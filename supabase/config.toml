@@ -17,3 +17,9 @@ verify_jwt = true
 
 [functions.user-backup]
 verify_jwt = true
+
+[functions.register-doctor]
+verify_jwt = false
+
+[functions.import-oncology-meds]
+verify_jwt = true
