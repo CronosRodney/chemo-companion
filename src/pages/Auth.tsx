@@ -20,8 +20,8 @@ const TEST_ACCOUNTS = {
     password: 'teste123'
   },
   doctor: {
-    email: 'rodney.r3digital@gmail.com', 
-    password: 'teste123'
+    email: 'rodney_r3digital@gmail.com', 
+    password: 'Maitrennnb@32'
   }
 };
 
