@@ -9,10 +9,13 @@ import { FeelingLogger } from "@/components/FeelingLogger";
 import { TreatmentProgressWidget } from "@/components/TreatmentProgressWidget";
 import { useAppContext } from "@/contexts/AppContext";
 import { useToast } from "@/hooks/use-toast";
+import { useDoctorAuth } from "@/hooks/useDoctorAuth";
+import { MyDoctorsCard } from "@/components/MyDoctorsCard";
 
 const Home = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isDoctor } = useDoctorAuth();
   const { 
     profile, 
     loading, 
@@ -272,27 +275,32 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Doctor Portal Access */}
-        <div 
-          className="luxury-card p-6 border-2 border-primary/30 relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer"
-          onClick={() => navigate('/doctor')}
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent"></div>
-          <div className="relative flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                <Stethoscope className="h-6 w-6 text-primary" />
+        {/* My Doctors Section - For Patients */}
+        <MyDoctorsCard />
+
+        {/* Doctor Portal Access - Only for users who are already doctors */}
+        {isDoctor && (
+          <div 
+            className="luxury-card p-6 border-2 border-primary/30 relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer"
+            onClick={() => navigate('/doctor')}
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent"></div>
+            <div className="relative flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Stethoscope className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="font-bold text-lg">Portal do Médico</p>
+                  <p className="text-sm text-muted-foreground">Acesse o painel de acompanhamento</p>
+                </div>
               </div>
-              <div>
-                <p className="font-bold text-lg">Portal do Médico</p>
-                <p className="text-sm text-muted-foreground">Acesse o painel de acompanhamento</p>
-              </div>
+              <Button variant="ghost" size="sm">
+                Acessar
+              </Button>
             </div>
-            <Button variant="ghost" size="sm">
-              Acessar
-            </Button>
           </div>
-        </div>
+        )}
 
         {/* Emergency Alert */}
         <div className="luxury-card bg-destructive/5 border-2 border-destructive/30 p-6 relative overflow-hidden">
