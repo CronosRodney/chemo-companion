@@ -1,117 +1,108 @@
 
+# Plano: Corrigir Erro de RLS no Cadastro de Médico
 
-# Plano: Unificar Fluxo de Cadastro (Médico vs Paciente)
+## Problema Identificado
 
-## Problema Atual
+Quando um médico cria conta:
+1. `supabase.auth.signUp()` cria a conta com sucesso
+2. O código tenta imediatamente inserir em `healthcare_professionals`
+3. Mas o usuário ainda não está "logado" na sessão
+4. `auth.uid()` retorna `null`
+5. A policy RLS falha: `auth.uid() = user_id` → `null = 'uuid'` → FALSO
 
-O fluxo está confuso:
-- Na aba "Criar Conta", o usuário preenche nome/email/senha sem saber se é cadastro de paciente
-- O botão "Médico" está embaixo do botão "Entrar" (aba de login), o que não faz sentido
-- Médico é levado para outra página separada para criar conta
+## Solução
 
-## Novo Fluxo Proposto
+Fazer **login automático** após o signup, antes de tentar inserir os dados profissionais.
 
-Na aba **"Criar Conta"**, ANTES de mostrar os campos de email/senha:
+## Mudança no Código
 
-1. **Primeiro**: Mostrar opção de escolha do tipo de usuário
-   - Botão "Sou Paciente" 
-   - Botão "Sou Profissional de Saúde"
+**Arquivo: `src/pages/Auth.tsx`**
 
-2. **Se escolher Paciente**: 
-   - Mostrar formulário simples (Nome, Email, Senha)
-   - Criar conta de paciente
+Após o `signUp` bem-sucedido, chamar `signInWithPassword` para estabelecer a sessão:
 
-3. **Se escolher Médico**: 
-   - Mostrar formulário completo (Nome, Sobrenome, Email, Senha, CRM, UF, Especialidade)
-   - Criar conta + perfil de médico em um único passo
+```typescript
+// 1. Criar conta
+const { data, error } = await supabase.auth.signUp({
+  email: formData.email,
+  password: formData.password,
+  // ...
+});
 
-## Mudanças Visuais
+if (error) { /* handle error */ return; }
 
-### Estado Inicial da aba "Criar Conta"
+// 2. Se for médico, fazer login automático primeiro
+if (userType === 'doctor' && data.user) {
+  // Login para estabelecer sessão (auth.uid() vai funcionar)
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: formData.email,
+    password: formData.password,
+  });
+
+  if (signInError) {
+    setMessage({
+      type: 'error',
+      text: 'Conta criada, mas erro ao fazer login automático. Tente fazer login manualmente.'
+    });
+    return;
+  }
+
+  // 3. Agora sim, inserir dados profissionais
+  const { error: profileError } = await supabase
+    .from('healthcare_professionals')
+    .insert({
+      user_id: data.user.id,
+      first_name: formData.firstName,
+      last_name: formData.lastName,
+      crm: formData.crm,
+      crm_uf: formData.crm_uf,
+      specialty: formData.specialty,
+      is_verified: false
+    });
+    
+  // ...
+}
 ```
-┌─────────────────────────────────────┐
-│     Quem é você?                    │
-│                                     │
-│  ┌───────────────────────────────┐  │
-│  │  👤 Sou Paciente              │  │
-│  │  Acompanhe seu tratamento     │  │
-│  └───────────────────────────────┘  │
-│                                     │
-│  ┌───────────────────────────────┐  │
-│  │  🩺 Sou Profissional de Saúde │  │
-│  │  Monitore seus pacientes      │  │
-│  └───────────────────────────────┘  │
-└─────────────────────────────────────┘
+
+## Fluxo Corrigido
+
+```
+Médico preenche formulário
+         │
+         ▼
+   signUp() - Cria conta
+         │
+         ▼
+   signInWithPassword() - Login automático
+         │
+         ▼
+   auth.uid() agora retorna o ID correto!
+         │
+         ▼
+   INSERT em healthcare_professionals
+         │
+         ▼
+   Trigger adiciona role 'doctor'
+         │
+         ▼
+   Sucesso! Redireciona para /doctor
 ```
 
-### Após escolher "Paciente"
-```
-┌─────────────────────────────────────┐
-│  ← Voltar                           │
-│                                     │
-│  Cadastro de Paciente               │
-│                                     │
-│  Nome: [________________]           │
-│  Email: [________________]          │
-│  Senha: [________________]          │
-│                                     │
-│  [    Criar Conta    ]              │
-└─────────────────────────────────────┘
-```
+## Observação sobre Confirmação de Email
 
-### Após escolher "Médico"
-```
-┌─────────────────────────────────────┐
-│  ← Voltar                           │
-│                                     │
-│  Cadastro de Profissional           │
-│                                     │
-│  Nome: [________] Sobrenome: [____] │
-│  Email: [________________]          │
-│  Senha: [________________]          │
-│  CRM: [________] UF: [___]          │
-│  Especialidade: [▼ Selecione]       │
-│                                     │
-│  [    Cadastrar    ]                │
-└─────────────────────────────────────┘
-```
+Se o projeto exigir confirmação de email antes de permitir login:
+- O `signInWithPassword` pode falhar com "Email not confirmed"
+- Nesse caso, podemos usar uma **Edge Function** com service role para criar o registro
+
+Porém, pela configuração padrão do Supabase, o login funciona mesmo sem confirmação (a confirmação só é obrigatória para certas operações).
 
 ## Arquivos a Modificar
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/pages/Auth.tsx` | Adicionar estado `userType` (null, 'patient', 'doctor') e lógica condicional na aba "Criar Conta". Remover botão "Médico" da aba de login. Integrar campos de CRM/especialidade. |
-| `src/pages/doctor/DoctorRegistration.tsx` | Pode ser removido ou mantido como fallback para URL direta |
-
-## Detalhes Técnicos
-
-### Novo estado no Auth.tsx
-```typescript
-const [userType, setUserType] = useState<'patient' | 'doctor' | null>(null);
-
-// Campos adicionais para médico
-const [doctorData, setDoctorData] = useState({
-  lastName: '',
-  crm: '',
-  crm_uf: '',
-  specialty: ''
-});
-```
-
-### Lógica de cadastro
-- Se `userType === 'patient'`: Usa `supabase.auth.signUp` normal
-- Se `userType === 'doctor'`: Usa `supabase.auth.signUp` + insere em `healthcare_professionals`
-
-### Fluxo após criar conta de médico
-1. Cria conta no Supabase Auth
-2. Insere dados em `healthcare_professionals` 
-3. Trigger existente adiciona role `doctor`
-4. Redireciona para `/doctor`
+| `src/pages/Auth.tsx` | Adicionar `signInWithPassword` após `signUp` para médicos |
 
 ## Resultado Esperado
 
-- Usuário escolhe claramente se é paciente ou médico ANTES de preencher dados
-- Tudo acontece na mesma página, sem redirecionamentos confusos
-- Experiência mais intuitiva e profissional
-- Botão "Médico" removido da aba de login (não faz sentido lá)
-
+- Médico consegue criar conta e ter dados profissionais salvos em um único fluxo
+- Sem erros de RLS
+- Redirecionamento automático para o dashboard do médico
