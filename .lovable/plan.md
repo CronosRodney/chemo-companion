@@ -1,85 +1,103 @@
 
-# Plano: Separar UX Paciente vs Médico
+# Plano: Corrigir Fluxo de Cadastro do Médico
 
-## Problema Identificado
+## Problema Atual
 
-O app **OncoTrack** foi desenvolvido para **pacientes oncológicos**. O Dashboard Médico foi implementado como uma funcionalidade adicional para que **profissionais de saúde** possam monitorar seus pacientes remotamente.
+O botão "Médico" na tela de login leva para `/doctor/register`, mas essa página **exige que o usuário já esteja logado**. Isso cria um loop onde:
 
-Porém, atualmente:
-- O botão "Portal do Médico" aparece na tela Home de **todos os usuários**
-- Qualquer paciente pode clicar e tentar se registrar como médico
-- Isso é confuso e não faz sentido para o usuário final (paciente)
+1. Médico clica "Médico" → vai para `/doctor/register`
+2. Página detecta que não está logado → redireciona para `/auth`
+3. Médico fica confuso sem saber o que fazer
 
 ## Solução Proposta
 
-### 1. Remover acesso direto do Portal Médico da Home do Paciente
+Modificar a página `DoctorRegistration.tsx` para permitir que médicos **criem conta E se registrem** em um único fluxo.
 
-- **Remover** o card "Portal do Médico" da página `Home.tsx`
-- Pacientes **não devem ver** essa opção
+### Mudanças Técnicas
 
-### 2. Mostrar apenas para usuários que já são médicos
+**Arquivo: `src/pages/doctor/DoctorRegistration.tsx`**
 
-O botão "Portal do Médico" só aparecerá se o usuário **já tiver** o papel de médico no sistema (tabela `user_roles`).
+Adicionar duas etapas no formulário:
 
-### 3. Criar entrada separada para médicos
+1. **Etapa 1 (se não logado)**: Criar conta
+   - Email
+   - Senha
+   - Nome completo
 
-Médicos acessarão o portal através de:
-- **Opção A**: URL direta (`/doctor`) - Se não estiver cadastrado, vai para `/doctor/register`
-- **Opção B**: Adicionar link discreto na tela de login/auth ("Sou profissional de saúde")
+2. **Etapa 2 (após login)**: Dados profissionais
+   - CRM e UF
+   - Especialidade
 
-### 4. Adicionar seção "Meus Médicos" para pacientes
+### Lógica do Fluxo
 
-Em vez do botão para virar médico, o paciente verá:
-- Lista de médicos conectados a ele
-- Convites pendentes de médicos
-- Opção de desconectar de um médico
+```
+Usuário acessa /doctor/register
+       │
+       ▼
+   Está logado?
+       │
+   ┌───┴───┐
+   │       │
+  SIM     NÃO
+   │       │
+   ▼       ▼
+Mostrar   Mostrar
+Etapa 2   Etapa 1
+(dados    (criar
+ CRM)     conta)
+   │       │
+   │       ▼
+   │    Cria conta
+   │    (Supabase Auth)
+   │       │
+   │       ▼
+   │    Login automático
+   │       │
+   └───────┤
+           ▼
+    Preenche dados CRM
+           │
+           ▼
+    Salva em healthcare_professionals
+           │
+           ▼
+    Trigger adiciona role 'doctor'
+           │
+           ▼
+    Redireciona para /doctor
+```
 
-## Arquivos a Modificar
+### Componente Atualizado
+
+O formulário terá:
+- **Estado `step`**: 1 (criar conta) ou 2 (dados profissionais)
+- **Se `user` existe**: Pula direto para step 2
+- **Se `user` não existe**: Mostra formulário de criação de conta
+
+### Campos do Formulário
+
+**Step 1 - Criar Conta:**
+- Email (obrigatório)
+- Senha (mínimo 6 caracteres)
+- Confirmar senha
+
+**Step 2 - Dados Profissionais:**
+- Nome (obrigatório)
+- Sobrenome (obrigatório)
+- CRM (obrigatório)
+- UF do CRM (obrigatório)
+- Especialidade (obrigatório)
+
+### Arquivos a Modificar
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/pages/Home.tsx` | Remover card "Portal do Médico", adicionar seção "Meus Médicos Conectados" |
-| `src/pages/Auth.tsx` | Adicionar link discreto "Sou profissional de saúde" |
-| `src/hooks/useDoctorAuth.ts` | Manter como está (já funciona corretamente) |
-| `src/hooks/useMyDoctors.ts` | Novo hook para pacientes verem seus médicos |
-| `src/components/MyDoctorsCard.tsx` | Novo componente para exibir médicos conectados |
+| `src/pages/doctor/DoctorRegistration.tsx` | Adicionar step 1 com criação de conta, usar stepper visual |
 
-## Fluxo de Usuários
+### Resultado Esperado
 
-### Paciente (usuário normal)
-```
-1. Login → Home (sem botão "Portal do Médico")
-2. Vê seção "Meus Médicos" (se houver conexões)
-3. Pode aceitar/recusar convites de médicos
-4. Pode se desconectar de um médico
-```
-
-### Médico (profissional de saúde)
-```
-1. Login → Home (vê botão "Portal do Médico" apenas se já for médico)
-   OU
-   Login → Clica "Sou profissional de saúde" → /doctor/register
-2. Cadastra CRM, especialidade
-3. Acessa Dashboard do Médico
-4. Convida pacientes
-```
-
-## Detalhes Técnicos
-
-### Nova seção "Meus Médicos" na Home (para pacientes)
-
-Mostrará:
-- Nome do médico conectado
-- Especialidade e CRM
-- Status da conexão (ativo/pendente)
-- Botão para remover conexão
-
-### Verificação de papel para exibir Portal Médico
-
-Utilizaremos o hook `useDoctorAuth` já existente para verificar se o usuário tem papel de médico antes de exibir o card.
-
-## Resultado Esperado
-
-- **Pacientes**: Veem app focado no tratamento, sem opção confusa de "virar médico"
-- **Médicos**: Têm entrada dedicada pelo link na tela de login ou URL direta
-- **Experiência**: Mais clara e intuitiva para cada tipo de usuário
+1. Médico clica "Médico" na tela de login
+2. Vê formulário para criar conta (email/senha)
+3. Cria conta e faz login automaticamente
+4. Vê formulário para dados profissionais (CRM)
+5. Completa cadastro e acessa dashboard médico
