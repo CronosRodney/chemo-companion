@@ -91,66 +91,64 @@ export const usePendingInvites = () => {
     }
   };
 
-  const acceptInvite = async (invite: PendingInvite) => {
+  const acceptInvite = async (invite: PendingInvite): Promise<boolean> => {
     if (!user) return false;
 
     try {
-      // Create connection with active status
-      const { error: connError } = await supabase
-        .from('patient_doctor_connections')
-        .insert({
-          patient_user_id: user.id,
-          doctor_user_id: invite.doctor_user_id,
-          status: 'active',
-          connected_at: new Date().toISOString()
-        });
+      console.log('[usePendingInvites] Calling accept-doctor-invite for invite:', invite.id);
+      
+      const { data, error } = await supabase.functions.invoke('accept-doctor-invite', {
+        body: { invite_id: invite.id }
+      });
 
-      if (connError) throw connError;
+      if (error) {
+        console.error('[usePendingInvites] Edge function error:', error);
+        return false;
+      }
 
-      // Update invite status
-      const { error: updateError } = await supabase
-        .from('connection_invites')
-        .update({ status: 'accepted' })
-        .eq('id', invite.id);
+      if (!data?.success) {
+        console.error('[usePendingInvites] Accept failed:', data?.error);
+        return false;
+      }
 
-      if (updateError) throw updateError;
-
+      console.log('[usePendingInvites] Accept successful:', data);
+      
       // Refresh invites list
       await fetchPendingInvites();
       return true;
     } catch (err) {
-      console.error('Error accepting invite:', err);
+      console.error('[usePendingInvites] Error accepting invite:', err);
       return false;
     }
   };
 
-  const rejectInvite = async (invite: PendingInvite) => {
+  const rejectInvite = async (invite: PendingInvite): Promise<boolean> => {
     if (!user) return false;
 
     try {
-      // Update invite status to rejected
-      const { error: updateError } = await supabase
-        .from('connection_invites')
-        .update({ status: 'rejected' })
-        .eq('id', invite.id);
+      console.log('[usePendingInvites] Calling reject-doctor-invite for invite:', invite.id);
+      
+      const { data, error } = await supabase.functions.invoke('reject-doctor-invite', {
+        body: { invite_id: invite.id }
+      });
 
-      if (updateError) throw updateError;
+      if (error) {
+        console.error('[usePendingInvites] Edge function error:', error);
+        return false;
+      }
 
-      // Create a rejected connection record (for history/spam prevention)
-      await supabase
-        .from('patient_doctor_connections')
-        .insert({
-          patient_user_id: user.id,
-          doctor_user_id: invite.doctor_user_id,
-          status: 'rejected',
-          connected_at: null
-        });
+      if (!data?.success) {
+        console.error('[usePendingInvites] Reject failed:', data?.error);
+        return false;
+      }
 
+      console.log('[usePendingInvites] Reject successful:', data);
+      
       // Refresh invites list
       await fetchPendingInvites();
       return true;
     } catch (err) {
-      console.error('Error rejecting invite:', err);
+      console.error('[usePendingInvites] Error rejecting invite:', err);
       return false;
     }
   };
