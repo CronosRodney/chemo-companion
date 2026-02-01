@@ -56,6 +56,32 @@ export const useAuth = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Real-time listener for profile changes
+  useEffect(() => {
+    if (!user) return;
+
+    const profileChannel = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Profile updated in real-time:', payload.new);
+          setProfile(payload.new as UserProfile);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(profileChannel);
+    };
+  }, [user]);
+
   const loadProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
