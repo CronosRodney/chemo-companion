@@ -130,6 +130,36 @@ export type Database = {
         }
         Relationships: []
       }
+      connection_invites: {
+        Row: {
+          created_at: string | null
+          doctor_user_id: string
+          expires_at: string | null
+          id: string
+          invite_code: string
+          patient_email: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          doctor_user_id: string
+          expires_at?: string | null
+          id?: string
+          invite_code?: string
+          patient_email: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          doctor_user_id?: string
+          expires_at?: string | null
+          id?: string
+          invite_code?: string
+          patient_email?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
       cycle_administrations: {
         Row: {
           actual_dose_mg: number | null
@@ -249,6 +279,50 @@ export type Database = {
           },
         ]
       }
+      doctor_notes: {
+        Row: {
+          connection_id: string | null
+          created_at: string | null
+          doctor_user_id: string
+          id: string
+          is_private: boolean | null
+          note: string
+          note_type: string | null
+          patient_user_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          connection_id?: string | null
+          created_at?: string | null
+          doctor_user_id: string
+          id?: string
+          is_private?: boolean | null
+          note: string
+          note_type?: string | null
+          patient_user_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          connection_id?: string | null
+          created_at?: string | null
+          doctor_user_id?: string
+          id?: string
+          is_private?: boolean | null
+          note?: string
+          note_type?: string | null
+          patient_user_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_notes_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "patient_doctor_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           created_at: string
@@ -287,6 +361,59 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      healthcare_professionals: {
+        Row: {
+          clinic_id: string | null
+          created_at: string | null
+          crm: string | null
+          crm_uf: string | null
+          first_name: string
+          id: string
+          is_verified: boolean | null
+          last_name: string
+          specialty: string | null
+          updated_at: string | null
+          user_id: string
+          verification_document_url: string | null
+        }
+        Insert: {
+          clinic_id?: string | null
+          created_at?: string | null
+          crm?: string | null
+          crm_uf?: string | null
+          first_name: string
+          id?: string
+          is_verified?: boolean | null
+          last_name: string
+          specialty?: string | null
+          updated_at?: string | null
+          user_id: string
+          verification_document_url?: string | null
+        }
+        Update: {
+          clinic_id?: string | null
+          created_at?: string | null
+          crm?: string | null
+          crm_uf?: string | null
+          first_name?: string
+          id?: string
+          is_verified?: boolean | null
+          last_name?: string
+          specialty?: string | null
+          updated_at?: string | null
+          user_id?: string
+          verification_document_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "healthcare_professionals_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       medications: {
         Row: {
@@ -419,6 +546,36 @@ export type Database = {
           status_brazil_anvisa?: string | null
           strengths?: string[] | null
           synonyms_brand_generic?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      patient_doctor_connections: {
+        Row: {
+          connected_at: string | null
+          created_at: string | null
+          doctor_user_id: string
+          id: string
+          patient_user_id: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          connected_at?: string | null
+          created_at?: string | null
+          doctor_user_id: string
+          id?: string
+          patient_user_id: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          connected_at?: string | null
+          created_at?: string | null
+          doctor_user_id?: string
+          id?: string
+          patient_user_id?: string
+          status?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -942,6 +1099,27 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_stats: {
         Row: {
           adherence_percentage: number | null
@@ -1116,10 +1294,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      doctor_has_patient_access: {
+        Args: { _doctor_id: string; _patient_id: string }
+        Returns: boolean
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "doctor" | "patient"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1246,6 +1434,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "doctor", "patient"],
+    },
   },
 } as const

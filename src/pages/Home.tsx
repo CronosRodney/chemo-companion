@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, QrCode, Plus, Share2, Pill, Calendar, AlertTriangle, Clock, Building2, MapPin, Beaker, Activity } from "lucide-react";
+import { Bell, QrCode, Plus, Share2, Pill, Calendar, AlertTriangle, Clock, Building2, MapPin, Beaker, Activity, Stethoscope } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ReminderManager } from "@/components/ReminderManager";
@@ -268,6 +268,28 @@ const Home = () => {
             </div>
             <Button variant="ghost" size="sm">
               Ver
+            </Button>
+          </div>
+        </div>
+
+        {/* Doctor Portal Access */}
+        <div 
+          className="luxury-card p-6 border-2 border-primary/30 relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer"
+          onClick={() => navigate('/doctor')}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent"></div>
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                <Stethoscope className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <p className="font-bold text-lg">Portal do Médico</p>
+                <p className="text-sm text-muted-foreground">Acesse o painel de acompanhamento</p>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm">
+              Acessar
             </Button>
           </div>
         </div>
