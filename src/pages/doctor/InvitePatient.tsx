@@ -10,10 +10,12 @@ import { useDoctorAuth } from '@/hooks/useDoctorAuth';
 import { 
   UserPlus, 
   Mail, 
-  Copy, 
   Check,
-  Share2,
-  ArrowLeft
+  MessageCircle,
+  ArrowLeft,
+  Send,
+  Bell,
+  CheckCircle2
 } from 'lucide-react';
 import DoctorNavigation from '@/components/doctor/DoctorNavigation';
 
@@ -23,8 +25,9 @@ const InvitePatient = () => {
   const { user, doctorProfile } = useDoctorAuth();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [requestSent, setRequestSent] = useState(false);
+  const [sentEmail, setSentEmail] = useState('');
   const [inviteCode, setInviteCode] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   const handleCreateInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,16 +55,19 @@ const InvitePatient = () => {
 
       if (error) throw error;
 
+      // Store for optional sharing
       setInviteCode(data.invite_code);
+      setSentEmail(email);
+      setRequestSent(true);
       
       toast({
-        title: "Convite criado!",
-        description: "Compartilhe o código com seu paciente"
+        title: "Solicitação enviada!",
+        description: "O paciente receberá a notificação no app"
       });
     } catch (error: any) {
       console.error('Error creating invite:', error);
       toast({
-        title: "Erro ao criar convite",
+        title: "Erro ao enviar solicitação",
         description: error.message || "Tente novamente",
         variant: "destructive"
       });
@@ -70,46 +76,20 @@ const InvitePatient = () => {
     }
   };
 
-  const copyInviteLink = async () => {
-    if (!inviteCode) return;
-    
-    const link = `${window.location.origin}/accept-invite/${inviteCode}`;
-    await navigator.clipboard.writeText(link);
-    setCopied(true);
-    
-    toast({
-      title: "Link copiado!",
-      description: "Cole o link e envie para seu paciente"
-    });
-    
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const shareInvite = async () => {
+  const shareViaWhatsApp = () => {
     if (!inviteCode || !doctorProfile) return;
     
     const link = `${window.location.origin}/accept-invite/${inviteCode}`;
-    const message = `Dr. ${doctorProfile.first_name} ${doctorProfile.last_name} está convidando você para acompanhar seu tratamento no OncoTrack. Acesse: ${link}`;
+    const message = `Olá! Sou Dr. ${doctorProfile.first_name} ${doctorProfile.last_name}. Enviei uma solicitação para acompanhar seu tratamento no OncoTrack. Abra o app para aceitar: ${link}`;
     
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Convite OncoTrack',
-          text: message,
-          url: link
-        });
-      } catch (err) {
-        // User cancelled share
-      }
-    } else {
-      copyInviteLink();
-    }
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   const resetForm = () => {
     setEmail('');
+    setRequestSent(false);
+    setSentEmail('');
     setInviteCode(null);
-    setCopied(false);
   };
 
   return (
@@ -121,24 +101,24 @@ const InvitePatient = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
-          <h1 className="text-xl font-bold">Convidar Paciente</h1>
+          <h1 className="text-xl font-bold">Solicitar Acesso</h1>
           <p className="text-sm text-muted-foreground">
-            Crie um convite para conectar com seu paciente
+            Envie uma solicitação para conectar com seu paciente
           </p>
         </div>
       </div>
 
       {/* Content */}
       <div className="max-w-lg mx-auto p-4">
-        {!inviteCode ? (
+        {!requestSent ? (
           <Card>
             <CardHeader>
               <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-2">
                 <UserPlus className="h-8 w-8 text-primary" />
               </div>
-              <CardTitle className="text-center">Novo Convite</CardTitle>
+              <CardTitle className="text-center">Nova Solicitação</CardTitle>
               <CardDescription className="text-center">
-                Informe o email do paciente para criar um convite de conexão
+                Informe o email do paciente para solicitar acesso ao tratamento
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -159,7 +139,14 @@ const InvitePatient = () => {
                 </div>
 
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Criando...' : 'Criar Convite'}
+                  {loading ? (
+                    'Enviando...'
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Solicitar Acesso
+                    </>
+                  )}
                 </Button>
               </form>
             </CardContent>
@@ -170,47 +157,65 @@ const InvitePatient = () => {
               <div className="mx-auto w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-2">
                 <Check className="h-8 w-8 text-green-500" />
               </div>
-              <CardTitle className="text-center">Convite Criado!</CardTitle>
+              <CardTitle className="text-center">Solicitação Enviada!</CardTitle>
               <CardDescription className="text-center">
-                Compartilhe o link abaixo com seu paciente
+                O paciente receberá uma notificação no app OncoTrack
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="p-4 bg-muted rounded-lg">
-                <p className="text-sm text-muted-foreground mb-2">Código do convite:</p>
-                <p className="font-mono font-bold text-lg break-all">{inviteCode}</p>
+              {/* Email confirmation */}
+              <div className="p-4 bg-muted rounded-lg text-center">
+                <p className="text-sm text-muted-foreground mb-1">Solicitação enviada para:</p>
+                <p className="font-medium">{sentEmail}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Next steps */}
+              <div className="space-y-3 p-4 bg-secondary/30 rounded-lg">
+                <p className="font-medium text-sm">Próximos passos:</p>
+                <div className="flex gap-3 text-sm">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-bold text-primary">1</span>
+                  </div>
+                  <p className="text-muted-foreground">Paciente abre o app OncoTrack</p>
+                </div>
+                <div className="flex gap-3 text-sm">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-bold text-primary">2</span>
+                  </div>
+                  <p className="text-muted-foreground">Vê a notificação na tela inicial</p>
+                </div>
+                <div className="flex gap-3 text-sm">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-bold text-primary">3</span>
+                  </div>
+                  <p className="text-muted-foreground">Aceita ou recusa a conexão</p>
+                </div>
+              </div>
+
+              {/* Optional: WhatsApp sharing */}
+              <div className="pt-4 border-t">
+                <p className="text-sm text-muted-foreground text-center mb-3">
+                  Opcional: avise o paciente por WhatsApp
+                </p>
                 <Button 
                   variant="outline" 
-                  onClick={copyInviteLink}
-                  className="flex items-center gap-2"
+                  onClick={shareViaWhatsApp}
+                  className="w-full flex items-center gap-2"
                 >
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  {copied ? 'Copiado!' : 'Copiar Link'}
-                </Button>
-                <Button 
-                  onClick={shareInvite}
-                  className="flex items-center gap-2"
-                >
-                  <Share2 className="h-4 w-4" />
-                  Compartilhar
+                  <MessageCircle className="h-4 w-4" />
+                  Enviar lembrete por WhatsApp
                 </Button>
               </div>
 
-              <div className="pt-4 border-t">
-                <p className="text-sm text-muted-foreground mb-3">
-                  O convite expira em 7 dias. Após o paciente aceitar, você poderá visualizar os dados de tratamento dele.
-                </p>
-                <Button variant="link" onClick={resetForm} className="w-full">
-                  Criar outro convite
-                </Button>
-              </div>
+              {/* New request button */}
+              <Button variant="link" onClick={resetForm} className="w-full">
+                Enviar outra solicitação
+              </Button>
             </CardContent>
           </Card>
         )}
 
+        {/* How it works - Updated */}
         <Card className="mt-4">
           <CardHeader>
             <CardTitle className="text-base">Como funciona?</CardTitle>
@@ -218,27 +223,27 @@ const InvitePatient = () => {
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <div className="flex gap-3">
               <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-xs font-bold text-primary">1</span>
+                <Send className="h-3 w-3 text-primary" />
               </div>
-              <p>Você cria um convite com o email do paciente</p>
+              <p>Você solicita acesso informando o email do paciente</p>
             </div>
             <div className="flex gap-3">
               <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-xs font-bold text-primary">2</span>
+                <Bell className="h-3 w-3 text-primary" />
               </div>
-              <p>Compartilhe o link do convite com o paciente</p>
+              <p>Paciente vê a notificação ao abrir o app</p>
             </div>
             <div className="flex gap-3">
               <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-xs font-bold text-primary">3</span>
+                <CheckCircle2 className="h-3 w-3 text-primary" />
               </div>
-              <p>O paciente aceita o convite no app dele</p>
+              <p>Paciente aceita ou recusa <strong>conscientemente</strong></p>
             </div>
             <div className="flex gap-3">
               <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-xs font-bold text-primary">4</span>
+                <UserPlus className="h-3 w-3 text-primary" />
               </div>
-              <p>Você passa a visualizar os dados de tratamento</p>
+              <p>Após aceite, você visualiza os dados de tratamento</p>
             </div>
           </CardContent>
         </Card>
