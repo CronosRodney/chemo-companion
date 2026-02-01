@@ -1,0 +1,182 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "optional": "Optional",
+    "required": "Required"
+  },
+  "auth": {
+    "login": "Sign In",
+    "signup": "Sign Up",
+    "logout": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "forgotPassword": "Forgot password?",
+    "welcomeBack": "Welcome back!",
+    "createAccount": "Create your account",
+    "invalidCredentials": "Invalid email or password",
+    "accountCreated": "Account created successfully!",
+    "checkEmail": "Check your email to confirm"
+  },
+  "nav": {
+    "home": "Home",
+    "treatment": "Treatment",
+    "medications": "Medications",
+    "events": "Events",
+    "health": "Health",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "home": {
+    "greeting": "Hello",
+    "howAreYou": "How are you feeling today?",
+    "upcomingReminders": "Upcoming Reminders",
+    "recentEvents": "Recent Events",
+    "treatmentProgress": "Treatment Progress",
+    "noReminders": "No pending reminders",
+    "noEvents": "No recent events"
+  },
+  "treatment": {
+    "title": "Treatment",
+    "newPlan": "New Plan",
+    "currentCycle": "Current Cycle",
+    "nextCycle": "Next Cycle",
+    "adherence": "Adherence",
+    "protocol": "Protocol",
+    "line": "Line",
+    "intent": "Intent",
+    "cycles": "Cycles",
+    "periodicity": "Periodicity",
+    "drugs": "Drugs",
+    "startDate": "Start Date",
+    "curative": "Curative",
+    "neoadjuvant": "Neoadjuvant",
+    "adjuvant": "Adjuvant",
+    "palliative": "Palliative"
+  },
+  "medications": {
+    "title": "Medications",
+    "add": "Add Medication",
+    "scan": "Scan QR Code",
+    "manual": "Manual Entry",
+    "name": "Name",
+    "dose": "Dose",
+    "frequency": "Frequency",
+    "instructions": "Instructions",
+    "batch": "Batch",
+    "expiry": "Expiry"
+  },
+  "events": {
+    "title": "Events",
+    "add": "New Event",
+    "type": "Type",
+    "date": "Date",
+    "time": "Time",
+    "severity": "Severity",
+    "description": "Description",
+    "types": {
+      "general": "General",
+      "appointment": "Appointment",
+      "exam": "Exam",
+      "medication": "Medication",
+      "mood": "Mood",
+      "adverse_event": "Adverse Event"
+    }
+  },
+  "health": {
+    "title": "Health",
+    "devices": "Devices",
+    "alerts": "Alerts",
+    "overview": "Overview",
+    "steps": "Steps",
+    "heartRate": "Heart Rate",
+    "sleep": "Sleep",
+    "temperature": "Temperature",
+    "calories": "Calories",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "sync": "Sync",
+    "lastSync": "Last sync"
+  },
+  "profile": {
+    "title": "Profile",
+    "personalInfo": "Personal Information",
+    "medicalInfo": "Medical Information",
+    "emergencyContact": "Emergency Contact",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "phone": "Phone",
+    "birthDate": "Birth Date",
+    "clinic": "Clinic",
+    "privacy": "Privacy",
+    "exportData": "Export Data"
+  },
+  "reminders": {
+    "title": "Reminders",
+    "add": "New Reminder",
+    "medication": "Medication",
+    "time": "Time",
+    "type": "Type",
+    "urgent": "Urgent",
+    "cycle": "Cycle"
+  },
+  "reports": {
+    "title": "Reports",
+    "export": "Export PDF",
+    "treatmentHistory": "Treatment History",
+    "medicationHistory": "Medication History",
+    "eventHistory": "Event History",
+    "labResults": "Lab Results"
+  },
+  "teleconsultation": {
+    "title": "Teleconsultation",
+    "schedule": "Schedule Appointment",
+    "join": "Join Consultation",
+    "doctor": "Doctor",
+    "specialty": "Specialty",
+    "scheduledFor": "Scheduled for",
+    "reason": "Reason"
+  },
+  "ai": {
+    "symptomAnalysis": "Symptom Analysis",
+    "describe": "Describe your symptoms",
+    "analyzing": "Analyzing...",
+    "suggestions": "Suggestions"
+  },
+  "pharmacy": {
+    "title": "Pharmacies",
+    "search": "Search Medication",
+    "nearMe": "Near me",
+    "price": "Price",
+    "availability": "Availability",
+    "distance": "Distance"
+  },
+  "errors": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email",
+    "minLength": "Minimum {{count}} characters",
+    "maxLength": "Maximum {{count}} characters",
+    "networkError": "Connection error",
+    "serverError": "Server error",
+    "unauthorized": "Unauthorized"
+  },
+  "offline": {
+    "title": "Offline",
+    "message": "You are offline. Some features may be limited.",
+    "retry": "Try again"
+  }
+}

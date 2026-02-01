@@ -8,3 +8,12 @@ verify_jwt = true
 
 [functions.extract-medication-batch]
 verify_jwt = true
+
+[functions.analyze-symptoms]
+verify_jwt = true
+
+[functions.search-pharmacies]
+verify_jwt = true
+
+[functions.user-backup]
+verify_jwt = true
