@@ -9,9 +9,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { ArrowLeft, Mail, Lock, User, AlertCircle, CheckCircle, Stethoscope, UserRound } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, User, AlertCircle, CheckCircle, Stethoscope, UserRound, Zap } from 'lucide-react';
 import { z } from 'zod';
 import { useToast } from '../hooks/use-toast';
+
+// Modo teste - credenciais de acesso rápido
+const TEST_ACCOUNTS = {
+  patient: {
+    email: 'rodney.r3digital@gmail.com',
+    password: 'teste123'
+  },
+  doctor: {
+    email: 'rodney.r3digital@gmail.com', 
+    password: 'teste123'
+  }
+};
 
 const patientSchema = z.object({
   email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
@@ -269,6 +281,40 @@ export default function Auth() {
   const handleBackToSelection = () => {
     setUserType(null);
     resetForm();
+  };
+
+  // Quick login for test mode
+  const handleQuickLogin = async (type: 'patient' | 'doctor') => {
+    setIsLoading(true);
+    setMessage(null);
+    
+    try {
+      const credentials = TEST_ACCOUNTS[type];
+      const { error } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password,
+      });
+
+      if (error) {
+        setMessage({
+          type: 'error',
+          text: `Erro no login de teste: ${error.message}`
+        });
+      } else {
+        toast({
+          title: "Login de teste!",
+          description: type === 'doctor' ? "Entrando como médico..." : "Entrando como paciente...",
+        });
+        navigate(type === 'doctor' ? '/doctor' : '/');
+      }
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: 'Erro no login de teste.'
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (user) {
@@ -643,6 +689,37 @@ export default function Auth() {
                 >
                   {isLoading ? 'Entrando...' : 'Entrar'}
                 </Button>
+
+                {/* Modo Teste - Acesso Rápido */}
+                <div className="mt-6 pt-4 border-t border-border">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Zap className="h-4 w-4 text-amber-500" />
+                    <span className="text-sm font-medium text-muted-foreground">Modo Teste</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button 
+                      variant="outline"
+                      onClick={() => handleQuickLogin('patient')}
+                      disabled={isLoading}
+                      className="border-primary/30 hover:bg-primary/10"
+                    >
+                      <UserRound className="h-4 w-4 mr-2" />
+                      Paciente
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => handleQuickLogin('doctor')}
+                      disabled={isLoading}
+                      className="border-primary/30 hover:bg-primary/10"
+                    >
+                      <Stethoscope className="h-4 w-4 mr-2" />
+                      Médico
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center mt-2">
+                    Acesso rápido para desenvolvimento
+                  </p>
+                </div>
               </TabsContent>
 
               <TabsContent value="signup" className="mt-6">
