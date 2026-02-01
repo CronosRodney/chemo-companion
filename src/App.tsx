@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider } from "./contexts/AppContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { DoctorProtectedRoute } from "./components/doctor/DoctorProtectedRoute";
 import { OfflineBanner } from "./components/OfflineBanner";
 import Home from "./pages/Home";
 import QRScanner from "./pages/QRScanner";
@@ -26,6 +27,14 @@ import Health from "./pages/Health";
 import Teleconsultation from "./pages/Teleconsultation";
 import Navigation from "./components/Navigation";
 import NotFound from "./pages/NotFound";
+// Doctor pages
+import DoctorDashboard from "./pages/doctor/DoctorDashboard";
+import DoctorRegistration from "./pages/doctor/DoctorRegistration";
+import PatientsList from "./pages/doctor/PatientsList";
+import PatientDetails from "./pages/doctor/PatientDetails";
+import InvitePatient from "./pages/doctor/InvitePatient";
+import DoctorAlerts from "./pages/doctor/DoctorAlerts";
+import AcceptInvite from "./pages/AcceptInvite";
 
 const queryClient = new QueryClient();
 
@@ -124,6 +133,39 @@ const App = () => (
                   <Teleconsultation />
                 </ProtectedRoute>
               } />
+              {/* Doctor Routes */}
+              <Route path="/doctor/register" element={
+                <ProtectedRoute>
+                  <DoctorRegistration />
+                </ProtectedRoute>
+              } />
+              <Route path="/doctor" element={
+                <DoctorProtectedRoute>
+                  <DoctorDashboard />
+                </DoctorProtectedRoute>
+              } />
+              <Route path="/doctor/patients" element={
+                <DoctorProtectedRoute>
+                  <PatientsList />
+                </DoctorProtectedRoute>
+              } />
+              <Route path="/doctor/patients/:patientId" element={
+                <DoctorProtectedRoute>
+                  <PatientDetails />
+                </DoctorProtectedRoute>
+              } />
+              <Route path="/doctor/invite" element={
+                <DoctorProtectedRoute>
+                  <InvitePatient />
+                </DoctorProtectedRoute>
+              } />
+              <Route path="/doctor/alerts" element={
+                <DoctorProtectedRoute>
+                  <DoctorAlerts />
+                </DoctorProtectedRoute>
+              } />
+              {/* Accept invite route (public) */}
+              <Route path="/accept-invite/:inviteCode" element={<AcceptInvite />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Navigation />
