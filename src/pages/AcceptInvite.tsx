@@ -131,8 +131,49 @@ const AcceptInvite = () => {
     }
   };
 
-  const handleDecline = () => {
-    navigate('/');
+  const handleDecline = async () => {
+    if (!invite) {
+      navigate('/');
+      return;
+    }
+
+    try {
+      setProcessing(true);
+
+      // Update invite status to rejected
+      await supabase
+        .from('connection_invites')
+        .update({ status: 'rejected' })
+        .eq('id', invite.id);
+
+      // If user is logged in, create a rejected connection record
+      if (user) {
+        await supabase
+          .from('patient_doctor_connections')
+          .insert({
+            patient_user_id: user.id,
+            doctor_user_id: invite.doctor_user_id,
+            status: 'rejected',
+            connected_at: null
+          });
+      }
+
+      toast({
+        title: "Solicitação recusada",
+        description: "O médico não terá acesso aos seus dados"
+      });
+
+      navigate('/');
+    } catch (error: any) {
+      console.error('Error rejecting invite:', error);
+      toast({
+        title: "Erro ao recusar",
+        description: "Tente novamente",
+        variant: "destructive"
+      });
+    } finally {
+      setProcessing(false);
+    }
   };
 
   if (loading || authLoading) {

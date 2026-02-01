@@ -63,9 +63,47 @@ const PatientDetails = () => {
 
   useEffect(() => {
     if (patientId && user) {
-      loadPatientData();
+      verifyAccessAndLoadData();
     }
   }, [patientId, user]);
+
+  const verifyAccessAndLoadData = async () => {
+    if (!patientId || !user) return;
+
+    try {
+      setLoading(true);
+
+      // First verify that doctor has active connection with this patient
+      const { data: connection, error: connError } = await supabase
+        .from('patient_doctor_connections')
+        .select('id')
+        .eq('doctor_user_id', user.id)
+        .eq('patient_user_id', patientId)
+        .eq('status', 'active')
+        .single();
+
+      if (connError || !connection) {
+        toast({
+          title: "Acesso negado",
+          description: "Você não tem vínculo ativo com este paciente",
+          variant: "destructive"
+        });
+        navigate('/doctor/patients');
+        return;
+      }
+
+      // If access verified, load patient data
+      await loadPatientData();
+    } catch (error: any) {
+      console.error('Error verifying access:', error);
+      toast({
+        title: "Erro ao verificar acesso",
+        description: "Não foi possível verificar seu acesso a este paciente",
+        variant: "destructive"
+      });
+      navigate('/doctor/patients');
+    }
+  };
 
   const loadPatientData = async () => {
     if (!patientId || !user) return;
