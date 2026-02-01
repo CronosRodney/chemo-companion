@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Activity, Calendar as CalendarIcon, Clock, CheckCircle2, AlertCircle, Beaker, Syringe } from "lucide-react";
+import { Plus, Activity, Calendar as CalendarIcon, Clock, CheckCircle2, AlertCircle, Beaker, Syringe, Eye } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useAppContext } from "@/contexts/AppContext";
@@ -9,11 +9,13 @@ import TreatmentPlanDialog from "@/components/TreatmentPlanDialog";
 import { format, isPast, isFuture, isToday, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Progress } from "@/components/ui/progress";
+import { usePermissions } from "@/hooks/usePermissions";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function Treatment() {
   const [createPlanDialogOpen, setCreatePlanDialogOpen] = useState(false);
   const { treatmentPlans, refetchTreatmentPlans } = useAppContext();
-
+  const { canEdit, isDoctor } = usePermissions();
   const getStatusVariant = (status: string) => {
     switch (status) {
       case 'active':
@@ -67,14 +69,33 @@ export default function Treatment() {
     return Math.min(completedCycles + 1, plan.planned_cycles);
   };
 
+  const canEditTreatment = canEdit('treatment');
+
   return (
     <div className="container max-w-7xl mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Tratamento</h1>
-        <p className="text-muted-foreground">
-          Gerencie seus planos de tratamento oncológico
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold">Tratamento</h1>
+          <p className="text-muted-foreground">
+            {isDoctor ? 'Gerencie os planos de tratamento do paciente' : 'Acompanhe seus planos de tratamento oncológico'}
+          </p>
+        </div>
+        {!canEditTreatment && (
+          <Badge variant="outline" className="flex items-center gap-1">
+            <Eye className="h-3 w-3" />
+            Somente visualização
+          </Badge>
+        )}
       </div>
+
+      {!canEditTreatment && (
+        <Alert>
+          <Eye className="h-4 w-4" />
+          <AlertDescription>
+            Esta página é somente para visualização. Alterações devem ser feitas pelo seu médico.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Tabs defaultValue="plans" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
@@ -92,10 +113,12 @@ export default function Treatment() {
                   <CardTitle>Meus Planos de Tratamento</CardTitle>
                   <CardDescription>Protocolos ativos e concluídos</CardDescription>
                 </div>
-                <Button onClick={() => setCreatePlanDialogOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Novo Plano
-                </Button>
+                {canEditTreatment && (
+                  <Button onClick={() => setCreatePlanDialogOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Novo Plano
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent>
@@ -105,10 +128,12 @@ export default function Treatment() {
                   <p className="text-muted-foreground mb-4">
                     Nenhum plano de tratamento cadastrado ainda.
                   </p>
-                  <Button onClick={() => setCreatePlanDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Criar Primeiro Plano
-                  </Button>
+                  {canEditTreatment && (
+                    <Button onClick={() => setCreatePlanDialogOpen(true)}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Criar Primeiro Plano
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -191,7 +216,7 @@ export default function Treatment() {
                           <Button size="sm" variant="outline" className="flex-1">
                             Ver Ciclos
                           </Button>
-                          {plan.status === 'active' && (
+                          {canEditTreatment && plan.status === 'active' && (
                             <Button size="sm" className="flex-1">
                               Gerenciar
                             </Button>
