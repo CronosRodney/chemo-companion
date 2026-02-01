@@ -151,35 +151,18 @@ export default function Auth() {
         return;
       }
 
-      // If doctor, do automatic login first to establish session for RLS
+      // If doctor, use edge function to create profile (bypasses RLS)
       if (userType === 'doctor' && data.user) {
-        // Login to establish session (so auth.uid() works in RLS)
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password,
-        });
-
-        if (signInError) {
-          console.error('Auto-login error:', signInError);
-          setMessage({
-            type: 'error',
-            text: 'Conta criada, mas erro ao fazer login automático. Tente fazer login manualmente.'
-          });
-          return;
-        }
-
-        // Now insert healthcare_professionals record with active session
-        const { error: profileError } = await supabase
-          .from('healthcare_professionals')
-          .insert({
+        const { error: profileError } = await supabase.functions.invoke('register-doctor', {
+          body: {
             user_id: data.user.id,
             first_name: formData.firstName,
             last_name: formData.lastName,
             crm: formData.crm,
             crm_uf: formData.crm_uf,
-            specialty: formData.specialty,
-            is_verified: false
-          });
+            specialty: formData.specialty
+          }
+        });
 
         if (profileError) {
           console.error('Error creating doctor profile:', profileError);
@@ -192,11 +175,13 @@ export default function Auth() {
 
         toast({
           title: "Cadastro realizado!",
-          description: "Bem-vindo! Redirecionando para seu dashboard...",
+          description: "Verifique seu email para confirmar sua conta.",
         });
 
-        // Redirect to doctor dashboard
-        navigate('/doctor');
+        setMessage({
+          type: 'success',
+          text: 'Cadastro realizado! Verifique seu email para confirmar sua conta e fazer login.'
+        });
         return;
       } else {
         toast({
