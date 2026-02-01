@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider } from "./contexts/AppContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { OfflineBanner } from "./components/OfflineBanner";
 import Home from "./pages/Home";
 import QRScanner from "./pages/QRScanner";
 import ScanMed from "./pages/ScanMed";
@@ -22,6 +23,7 @@ import ImportMeds from "./pages/ImportMeds";
 import Treatment from "./pages/Treatment";
 import Labs from "./pages/Labs";
 import Health from "./pages/Health";
+import Teleconsultation from "./pages/Teleconsultation";
 import Navigation from "./components/Navigation";
 import NotFound from "./pages/NotFound";
 
@@ -117,9 +119,15 @@ const App = () => (
                   <ImportMeds />
                 </ProtectedRoute>
               } />
+              <Route path="/teleconsultation" element={
+                <ProtectedRoute>
+                  <Teleconsultation />
+                </ProtectedRoute>
+              } />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Navigation />
+            <OfflineBanner />
           </div>
         </AppProvider>
       </BrowserRouter>

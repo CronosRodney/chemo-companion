@@ -1,0 +1,182 @@
+{
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "add": "Agregar",
+    "search": "Buscar",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "confirm": "Confirmar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "close": "Cerrar",
+    "yes": "Sí",
+    "no": "No",
+    "optional": "Opcional",
+    "required": "Requerido"
+  },
+  "auth": {
+    "login": "Iniciar Sesión",
+    "signup": "Crear Cuenta",
+    "logout": "Cerrar Sesión",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "name": "Nombre",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "welcomeBack": "¡Bienvenido de vuelta!",
+    "createAccount": "Crea tu cuenta",
+    "invalidCredentials": "Correo o contraseña incorrectos",
+    "accountCreated": "¡Cuenta creada exitosamente!",
+    "checkEmail": "Revisa tu correo para confirmar"
+  },
+  "nav": {
+    "home": "Inicio",
+    "treatment": "Tratamiento",
+    "medications": "Medicamentos",
+    "events": "Eventos",
+    "health": "Salud",
+    "profile": "Perfil",
+    "settings": "Configuración"
+  },
+  "home": {
+    "greeting": "Hola",
+    "howAreYou": "¿Cómo te sientes hoy?",
+    "upcomingReminders": "Próximos Recordatorios",
+    "recentEvents": "Eventos Recientes",
+    "treatmentProgress": "Progreso del Tratamiento",
+    "noReminders": "Sin recordatorios pendientes",
+    "noEvents": "Sin eventos recientes"
+  },
+  "treatment": {
+    "title": "Tratamiento",
+    "newPlan": "Nuevo Plan",
+    "currentCycle": "Ciclo Actual",
+    "nextCycle": "Próximo Ciclo",
+    "adherence": "Adherencia",
+    "protocol": "Protocolo",
+    "line": "Línea",
+    "intent": "Intención",
+    "cycles": "Ciclos",
+    "periodicity": "Periodicidad",
+    "drugs": "Medicamentos",
+    "startDate": "Fecha de Inicio",
+    "curative": "Curativo",
+    "neoadjuvant": "Neoadyuvante",
+    "adjuvant": "Adyuvante",
+    "palliative": "Paliativo"
+  },
+  "medications": {
+    "title": "Medicamentos",
+    "add": "Agregar Medicamento",
+    "scan": "Escanear Código QR",
+    "manual": "Entrada Manual",
+    "name": "Nombre",
+    "dose": "Dosis",
+    "frequency": "Frecuencia",
+    "instructions": "Instrucciones",
+    "batch": "Lote",
+    "expiry": "Vencimiento"
+  },
+  "events": {
+    "title": "Eventos",
+    "add": "Nuevo Evento",
+    "type": "Tipo",
+    "date": "Fecha",
+    "time": "Hora",
+    "severity": "Severidad",
+    "description": "Descripción",
+    "types": {
+      "general": "General",
+      "appointment": "Consulta",
+      "exam": "Examen",
+      "medication": "Medicamento",
+      "mood": "Estado de ánimo",
+      "adverse_event": "Evento Adverso"
+    }
+  },
+  "health": {
+    "title": "Salud",
+    "devices": "Dispositivos",
+    "alerts": "Alertas",
+    "overview": "Resumen",
+    "steps": "Pasos",
+    "heartRate": "Frecuencia Cardíaca",
+    "sleep": "Sueño",
+    "temperature": "Temperatura",
+    "calories": "Calorías",
+    "connect": "Conectar",
+    "disconnect": "Desconectar",
+    "sync": "Sincronizar",
+    "lastSync": "Última sincronización"
+  },
+  "profile": {
+    "title": "Perfil",
+    "personalInfo": "Información Personal",
+    "medicalInfo": "Información Médica",
+    "emergencyContact": "Contacto de Emergencia",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "phone": "Teléfono",
+    "birthDate": "Fecha de Nacimiento",
+    "clinic": "Clínica",
+    "privacy": "Privacidad",
+    "exportData": "Exportar Datos"
+  },
+  "reminders": {
+    "title": "Recordatorios",
+    "add": "Nuevo Recordatorio",
+    "medication": "Medicamento",
+    "time": "Hora",
+    "type": "Tipo",
+    "urgent": "Urgente",
+    "cycle": "Ciclo"
+  },
+  "reports": {
+    "title": "Informes",
+    "export": "Exportar PDF",
+    "treatmentHistory": "Historial de Tratamiento",
+    "medicationHistory": "Historial de Medicamentos",
+    "eventHistory": "Historial de Eventos",
+    "labResults": "Resultados de Laboratorio"
+  },
+  "teleconsultation": {
+    "title": "Teleconsulta",
+    "schedule": "Agendar Consulta",
+    "join": "Unirse a la Consulta",
+    "doctor": "Médico",
+    "specialty": "Especialidad",
+    "scheduledFor": "Programada para",
+    "reason": "Motivo"
+  },
+  "ai": {
+    "symptomAnalysis": "Análisis de Síntomas",
+    "describe": "Describe tus síntomas",
+    "analyzing": "Analizando...",
+    "suggestions": "Sugerencias"
+  },
+  "pharmacy": {
+    "title": "Farmacias",
+    "search": "Buscar Medicamento",
+    "nearMe": "Cerca de mí",
+    "price": "Precio",
+    "availability": "Disponibilidad",
+    "distance": "Distancia"
+  },
+  "errors": {
+    "required": "Este campo es requerido",
+    "invalidEmail": "Correo inválido",
+    "minLength": "Mínimo {{count}} caracteres",
+    "maxLength": "Máximo {{count}} caracteres",
+    "networkError": "Error de conexión",
+    "serverError": "Error del servidor",
+    "unauthorized": "No autorizado"
+  },
+  "offline": {
+    "title": "Sin conexión",
+    "message": "Estás sin conexión. Algunas funciones pueden estar limitadas.",
+    "retry": "Intentar de nuevo"
+  }
+}

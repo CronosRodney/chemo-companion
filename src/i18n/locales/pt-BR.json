@@ -1,0 +1,182 @@
+{
+  "common": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "add": "Adicionar",
+    "search": "Buscar",
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso",
+    "confirm": "Confirmar",
+    "back": "Voltar",
+    "next": "Próximo",
+    "close": "Fechar",
+    "yes": "Sim",
+    "no": "Não",
+    "optional": "Opcional",
+    "required": "Obrigatório"
+  },
+  "auth": {
+    "login": "Entrar",
+    "signup": "Criar Conta",
+    "logout": "Sair",
+    "email": "Email",
+    "password": "Senha",
+    "name": "Nome",
+    "forgotPassword": "Esqueceu a senha?",
+    "welcomeBack": "Bem-vindo de volta!",
+    "createAccount": "Crie sua conta",
+    "invalidCredentials": "Email ou senha incorretos",
+    "accountCreated": "Conta criada com sucesso!",
+    "checkEmail": "Verifique seu email para confirmar"
+  },
+  "nav": {
+    "home": "Início",
+    "treatment": "Tratamento",
+    "medications": "Medicamentos",
+    "events": "Eventos",
+    "health": "Saúde",
+    "profile": "Perfil",
+    "settings": "Configurações"
+  },
+  "home": {
+    "greeting": "Olá",
+    "howAreYou": "Como você está hoje?",
+    "upcomingReminders": "Próximos Lembretes",
+    "recentEvents": "Eventos Recentes",
+    "treatmentProgress": "Progresso do Tratamento",
+    "noReminders": "Nenhum lembrete pendente",
+    "noEvents": "Nenhum evento recente"
+  },
+  "treatment": {
+    "title": "Tratamento",
+    "newPlan": "Novo Plano",
+    "currentCycle": "Ciclo Atual",
+    "nextCycle": "Próximo Ciclo",
+    "adherence": "Aderência",
+    "protocol": "Protocolo",
+    "line": "Linha",
+    "intent": "Intenção",
+    "cycles": "Ciclos",
+    "periodicity": "Periodicidade",
+    "drugs": "Medicamentos",
+    "startDate": "Data de Início",
+    "curative": "Curativo",
+    "neoadjuvant": "Neoadjuvante",
+    "adjuvant": "Adjuvante",
+    "palliative": "Paliativo"
+  },
+  "medications": {
+    "title": "Medicamentos",
+    "add": "Adicionar Medicamento",
+    "scan": "Escanear QR Code",
+    "manual": "Entrada Manual",
+    "name": "Nome",
+    "dose": "Dose",
+    "frequency": "Frequência",
+    "instructions": "Instruções",
+    "batch": "Lote",
+    "expiry": "Validade"
+  },
+  "events": {
+    "title": "Eventos",
+    "add": "Novo Evento",
+    "type": "Tipo",
+    "date": "Data",
+    "time": "Hora",
+    "severity": "Severidade",
+    "description": "Descrição",
+    "types": {
+      "general": "Geral",
+      "appointment": "Consulta",
+      "exam": "Exame",
+      "medication": "Medicamento",
+      "mood": "Humor",
+      "adverse_event": "Evento Adverso"
+    }
+  },
+  "health": {
+    "title": "Saúde",
+    "devices": "Dispositivos",
+    "alerts": "Alertas",
+    "overview": "Visão Geral",
+    "steps": "Passos",
+    "heartRate": "Frequência Cardíaca",
+    "sleep": "Sono",
+    "temperature": "Temperatura",
+    "calories": "Calorias",
+    "connect": "Conectar",
+    "disconnect": "Desconectar",
+    "sync": "Sincronizar",
+    "lastSync": "Última sincronização"
+  },
+  "profile": {
+    "title": "Perfil",
+    "personalInfo": "Informações Pessoais",
+    "medicalInfo": "Informações Médicas",
+    "emergencyContact": "Contato de Emergência",
+    "firstName": "Nome",
+    "lastName": "Sobrenome",
+    "phone": "Telefone",
+    "birthDate": "Data de Nascimento",
+    "clinic": "Clínica",
+    "privacy": "Privacidade",
+    "exportData": "Exportar Dados"
+  },
+  "reminders": {
+    "title": "Lembretes",
+    "add": "Novo Lembrete",
+    "medication": "Medicamento",
+    "time": "Horário",
+    "type": "Tipo",
+    "urgent": "Urgente",
+    "cycle": "Ciclo"
+  },
+  "reports": {
+    "title": "Relatórios",
+    "export": "Exportar PDF",
+    "treatmentHistory": "Histórico de Tratamento",
+    "medicationHistory": "Histórico de Medicamentos",
+    "eventHistory": "Histórico de Eventos",
+    "labResults": "Resultados de Exames"
+  },
+  "teleconsultation": {
+    "title": "Teleconsulta",
+    "schedule": "Agendar Consulta",
+    "join": "Entrar na Consulta",
+    "doctor": "Médico",
+    "specialty": "Especialidade",
+    "scheduledFor": "Agendada para",
+    "reason": "Motivo"
+  },
+  "ai": {
+    "symptomAnalysis": "Análise de Sintomas",
+    "describe": "Descreva seus sintomas",
+    "analyzing": "Analisando...",
+    "suggestions": "Sugestões"
+  },
+  "pharmacy": {
+    "title": "Farmácias",
+    "search": "Buscar Medicamento",
+    "nearMe": "Próximas de mim",
+    "price": "Preço",
+    "availability": "Disponibilidade",
+    "distance": "Distância"
+  },
+  "errors": {
+    "required": "Este campo é obrigatório",
+    "invalidEmail": "Email inválido",
+    "minLength": "Mínimo de {{count}} caracteres",
+    "maxLength": "Máximo de {{count}} caracteres",
+    "networkError": "Erro de conexão",
+    "serverError": "Erro no servidor",
+    "unauthorized": "Não autorizado"
+  },
+  "offline": {
+    "title": "Sem conexão",
+    "message": "Você está offline. Algumas funcionalidades podem estar limitadas.",
+    "retry": "Tentar novamente"
+  }
+}
