@@ -1,103 +1,117 @@
 
-# Plano: Corrigir Fluxo de Cadastro do Médico
+
+# Plano: Unificar Fluxo de Cadastro (Médico vs Paciente)
 
 ## Problema Atual
 
-O botão "Médico" na tela de login leva para `/doctor/register`, mas essa página **exige que o usuário já esteja logado**. Isso cria um loop onde:
+O fluxo está confuso:
+- Na aba "Criar Conta", o usuário preenche nome/email/senha sem saber se é cadastro de paciente
+- O botão "Médico" está embaixo do botão "Entrar" (aba de login), o que não faz sentido
+- Médico é levado para outra página separada para criar conta
 
-1. Médico clica "Médico" → vai para `/doctor/register`
-2. Página detecta que não está logado → redireciona para `/auth`
-3. Médico fica confuso sem saber o que fazer
+## Novo Fluxo Proposto
 
-## Solução Proposta
+Na aba **"Criar Conta"**, ANTES de mostrar os campos de email/senha:
 
-Modificar a página `DoctorRegistration.tsx` para permitir que médicos **criem conta E se registrem** em um único fluxo.
+1. **Primeiro**: Mostrar opção de escolha do tipo de usuário
+   - Botão "Sou Paciente" 
+   - Botão "Sou Profissional de Saúde"
 
-### Mudanças Técnicas
+2. **Se escolher Paciente**: 
+   - Mostrar formulário simples (Nome, Email, Senha)
+   - Criar conta de paciente
 
-**Arquivo: `src/pages/doctor/DoctorRegistration.tsx`**
+3. **Se escolher Médico**: 
+   - Mostrar formulário completo (Nome, Sobrenome, Email, Senha, CRM, UF, Especialidade)
+   - Criar conta + perfil de médico em um único passo
 
-Adicionar duas etapas no formulário:
+## Mudanças Visuais
 
-1. **Etapa 1 (se não logado)**: Criar conta
-   - Email
-   - Senha
-   - Nome completo
-
-2. **Etapa 2 (após login)**: Dados profissionais
-   - CRM e UF
-   - Especialidade
-
-### Lógica do Fluxo
-
+### Estado Inicial da aba "Criar Conta"
 ```
-Usuário acessa /doctor/register
-       │
-       ▼
-   Está logado?
-       │
-   ┌───┴───┐
-   │       │
-  SIM     NÃO
-   │       │
-   ▼       ▼
-Mostrar   Mostrar
-Etapa 2   Etapa 1
-(dados    (criar
- CRM)     conta)
-   │       │
-   │       ▼
-   │    Cria conta
-   │    (Supabase Auth)
-   │       │
-   │       ▼
-   │    Login automático
-   │       │
-   └───────┤
-           ▼
-    Preenche dados CRM
-           │
-           ▼
-    Salva em healthcare_professionals
-           │
-           ▼
-    Trigger adiciona role 'doctor'
-           │
-           ▼
-    Redireciona para /doctor
+┌─────────────────────────────────────┐
+│     Quem é você?                    │
+│                                     │
+│  ┌───────────────────────────────┐  │
+│  │  👤 Sou Paciente              │  │
+│  │  Acompanhe seu tratamento     │  │
+│  └───────────────────────────────┘  │
+│                                     │
+│  ┌───────────────────────────────┐  │
+│  │  🩺 Sou Profissional de Saúde │  │
+│  │  Monitore seus pacientes      │  │
+│  └───────────────────────────────┘  │
+└─────────────────────────────────────┘
 ```
 
-### Componente Atualizado
+### Após escolher "Paciente"
+```
+┌─────────────────────────────────────┐
+│  ← Voltar                           │
+│                                     │
+│  Cadastro de Paciente               │
+│                                     │
+│  Nome: [________________]           │
+│  Email: [________________]          │
+│  Senha: [________________]          │
+│                                     │
+│  [    Criar Conta    ]              │
+└─────────────────────────────────────┘
+```
 
-O formulário terá:
-- **Estado `step`**: 1 (criar conta) ou 2 (dados profissionais)
-- **Se `user` existe**: Pula direto para step 2
-- **Se `user` não existe**: Mostra formulário de criação de conta
+### Após escolher "Médico"
+```
+┌─────────────────────────────────────┐
+│  ← Voltar                           │
+│                                     │
+│  Cadastro de Profissional           │
+│                                     │
+│  Nome: [________] Sobrenome: [____] │
+│  Email: [________________]          │
+│  Senha: [________________]          │
+│  CRM: [________] UF: [___]          │
+│  Especialidade: [▼ Selecione]       │
+│                                     │
+│  [    Cadastrar    ]                │
+└─────────────────────────────────────┘
+```
 
-### Campos do Formulário
-
-**Step 1 - Criar Conta:**
-- Email (obrigatório)
-- Senha (mínimo 6 caracteres)
-- Confirmar senha
-
-**Step 2 - Dados Profissionais:**
-- Nome (obrigatório)
-- Sobrenome (obrigatório)
-- CRM (obrigatório)
-- UF do CRM (obrigatório)
-- Especialidade (obrigatório)
-
-### Arquivos a Modificar
+## Arquivos a Modificar
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/pages/doctor/DoctorRegistration.tsx` | Adicionar step 1 com criação de conta, usar stepper visual |
+| `src/pages/Auth.tsx` | Adicionar estado `userType` (null, 'patient', 'doctor') e lógica condicional na aba "Criar Conta". Remover botão "Médico" da aba de login. Integrar campos de CRM/especialidade. |
+| `src/pages/doctor/DoctorRegistration.tsx` | Pode ser removido ou mantido como fallback para URL direta |
 
-### Resultado Esperado
+## Detalhes Técnicos
 
-1. Médico clica "Médico" na tela de login
-2. Vê formulário para criar conta (email/senha)
-3. Cria conta e faz login automaticamente
-4. Vê formulário para dados profissionais (CRM)
-5. Completa cadastro e acessa dashboard médico
+### Novo estado no Auth.tsx
+```typescript
+const [userType, setUserType] = useState<'patient' | 'doctor' | null>(null);
+
+// Campos adicionais para médico
+const [doctorData, setDoctorData] = useState({
+  lastName: '',
+  crm: '',
+  crm_uf: '',
+  specialty: ''
+});
+```
+
+### Lógica de cadastro
+- Se `userType === 'patient'`: Usa `supabase.auth.signUp` normal
+- Se `userType === 'doctor'`: Usa `supabase.auth.signUp` + insere em `healthcare_professionals`
+
+### Fluxo após criar conta de médico
+1. Cria conta no Supabase Auth
+2. Insere dados em `healthcare_professionals` 
+3. Trigger existente adiciona role `doctor`
+4. Redireciona para `/doctor`
+
+## Resultado Esperado
+
+- Usuário escolhe claramente se é paciente ou médico ANTES de preencher dados
+- Tudo acontece na mesma página, sem redirecionamentos confusos
+- Experiência mais intuitiva e profissional
+- Botão "Médico" removido da aba de login (não faz sentido lá)
+
