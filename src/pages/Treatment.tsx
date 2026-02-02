@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Activity, Calendar as CalendarIcon, Clock, CheckCircle2, AlertCircle, Beaker, Syringe, Eye } from "lucide-react";
+import { Plus, Activity, Calendar as CalendarIcon, Clock, CheckCircle2, AlertCircle, Beaker, Syringe, Eye, Stethoscope } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useAppContext } from "@/contexts/AppContext";
@@ -11,11 +11,16 @@ import { ptBR } from "date-fns/locale";
 import { Progress } from "@/components/ui/progress";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Treatment() {
   const [createPlanDialogOpen, setCreatePlanDialogOpen] = useState(false);
-  const { treatmentPlans, refetchTreatmentPlans } = useAppContext();
+  const { treatmentPlans, refetchTreatmentPlans, doctors, doctorsLoading } = useAppContext();
   const { canEdit, isDoctor } = usePermissions();
+  
+  // Filter only active doctors
+  const activeDoctors = doctors.filter(d => d.status === 'active');
+  const primaryDoctor = activeDoctors.length > 0 ? activeDoctors[0] : null;
   const getStatusVariant = (status: string) => {
     switch (status) {
       case 'active':
@@ -74,11 +79,32 @@ export default function Treatment() {
   return (
     <div className="container max-w-7xl mx-auto p-6 space-y-6">
       <div className="flex justify-between items-start">
-        <div>
+        <div className="space-y-2">
           <h1 className="text-3xl font-bold">Tratamento</h1>
           <p className="text-muted-foreground">
             {isDoctor ? 'Gerencie os planos de tratamento do paciente' : 'Acompanhe seus planos de tratamento oncológico'}
           </p>
+          
+          {/* Responsible Doctor Badge */}
+          {!isDoctor && (
+            doctorsLoading ? (
+              <div className="flex items-center gap-2 mt-2">
+                <Skeleton className="h-4 w-4 rounded-full" />
+                <Skeleton className="h-4 w-40" />
+              </div>
+            ) : primaryDoctor ? (
+              <div className="flex items-center gap-2 p-2 bg-primary/10 rounded-lg mt-2">
+                <Stethoscope className="h-4 w-4 text-primary" />
+                <div className="text-sm">
+                  <span className="font-medium">Dr. {primaryDoctor.first_name} {primaryDoctor.last_name}</span>
+                  {primaryDoctor.specialty && (
+                    <span className="text-muted-foreground"> · {primaryDoctor.specialty}</span>
+                  )}
+                  <span className="text-muted-foreground"> · Médico responsável</span>
+                </div>
+              </div>
+            ) : null
+          )}
         </div>
         {!canEditTreatment && (
           <Badge variant="outline" className="flex items-center gap-1">

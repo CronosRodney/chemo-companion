@@ -10,14 +10,20 @@ import {
   Phone, 
   AlertCircle,
   Building2,
-  Calendar
+  Calendar,
+  Stethoscope,
+  CheckCircle2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/contexts/AppContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { profile, stats, loading, clinics, clinicsLoading } = useAppContext();
+  const { profile, stats, loading, clinics, clinicsLoading, doctors, doctorsLoading } = useAppContext();
+  
+  // Filter only active doctors
+  const activeDoctors = doctors.filter(d => d.status === 'active');
 
   if (loading) {
     return (
@@ -95,6 +101,49 @@ const Profile = () => {
                 <>
                   <p className="font-medium text-sm">Nenhuma clínica conectada</p>
                   <p className="text-xs text-muted-foreground">Escaneie um QR code para conectar</p>
+                </>
+              )}
+            </div>
+
+            {/* Responsible Doctor Section */}
+            <div className="p-3 bg-secondary/10 rounded-lg border border-secondary/30">
+              <div className="flex items-center gap-2 mb-2">
+                <Stethoscope className="h-4 w-4 text-secondary-foreground" />
+                <p className="text-xs text-muted-foreground">Médico Responsável</p>
+              </div>
+              {doctorsLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              ) : activeDoctors.length > 0 ? (
+                <div className="space-y-2">
+                  {activeDoctors.map((doctor) => (
+                    <div key={doctor.id} className="space-y-1">
+                      <p className="font-medium text-sm">
+                        Dr. {doctor.first_name} {doctor.last_name}
+                      </p>
+                      {(doctor.crm && doctor.crm_uf) && (
+                        <p className="text-xs text-muted-foreground">
+                          CRM {doctor.crm}/{doctor.crm_uf}
+                        </p>
+                      )}
+                      {doctor.specialty && (
+                        <p className="text-xs text-muted-foreground">{doctor.specialty}</p>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3 text-success" />
+                        <span className="text-xs text-success font-medium">Ativo</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <p className="font-medium text-sm">Nenhum médico vinculado</p>
+                  <p className="text-xs text-muted-foreground">
+                    Quando um médico solicitar acesso, você poderá aceitar na tela inicial
+                  </p>
                 </>
               )}
             </div>
