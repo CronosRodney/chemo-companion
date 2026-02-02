@@ -415,6 +415,78 @@ export type Database = {
           },
         ]
       }
+      lab_results: {
+        Row: {
+          alt_value: number | null
+          anc_value: number | null
+          ast_value: number | null
+          bilirubin_value: number | null
+          created_at: string
+          created_by_id: string
+          created_by_role: string
+          exam_name: string
+          exam_type: string
+          hemoglobin_value: number | null
+          id: string
+          notes: string | null
+          patient_id: string
+          plt_value: number | null
+          result_at: string | null
+          results: Json | null
+          scheduled_at: string | null
+          scr_value: number | null
+          status: string
+          updated_at: string
+          wbc_value: number | null
+        }
+        Insert: {
+          alt_value?: number | null
+          anc_value?: number | null
+          ast_value?: number | null
+          bilirubin_value?: number | null
+          created_at?: string
+          created_by_id: string
+          created_by_role: string
+          exam_name: string
+          exam_type: string
+          hemoglobin_value?: number | null
+          id?: string
+          notes?: string | null
+          patient_id: string
+          plt_value?: number | null
+          result_at?: string | null
+          results?: Json | null
+          scheduled_at?: string | null
+          scr_value?: number | null
+          status?: string
+          updated_at?: string
+          wbc_value?: number | null
+        }
+        Update: {
+          alt_value?: number | null
+          anc_value?: number | null
+          ast_value?: number | null
+          bilirubin_value?: number | null
+          created_at?: string
+          created_by_id?: string
+          created_by_role?: string
+          exam_name?: string
+          exam_type?: string
+          hemoglobin_value?: number | null
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          plt_value?: number | null
+          result_at?: string | null
+          results?: Json | null
+          scheduled_at?: string | null
+          scr_value?: number | null
+          status?: string
+          updated_at?: string
+          wbc_value?: number | null
+        }
+        Relationships: []
+      }
       medications: {
         Row: {
           active_ingredient: string | null

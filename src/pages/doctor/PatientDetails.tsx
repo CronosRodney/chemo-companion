@@ -24,6 +24,7 @@ import { useDoctorAuth } from '@/hooks/useDoctorAuth';
 import { useToast } from '@/hooks/use-toast';
 import DoctorNavigation from '@/components/doctor/DoctorNavigation';
 import Treatment from '@/pages/Treatment';
+import Labs from '@/pages/Labs';
 
 interface PatientProfile {
   first_name: string;
@@ -411,59 +412,9 @@ const PatientDetails = () => {
             />
           </TabsContent>
 
-          {/* Exames Tab - EDITÁVEL */}
-          <TabsContent value="labs" className="space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-semibold flex items-center gap-2">
-                <TestTube className="h-5 w-5" />
-                Exames Laboratoriais
-              </h3>
-              <Badge className="bg-green-500/10 text-green-600 border-green-500/30">
-                <Edit className="h-3 w-3 mr-1" />
-                Editável
-              </Badge>
-            </div>
-
-            <Card>
-              <CardContent className="py-6">
-                <div className="text-center mb-4">
-                  <TrendingUp className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                  <p className="text-muted-foreground">
-                    Resultados laboratoriais do paciente
-                  </p>
-                </div>
-                <Button className="w-full" variant="outline">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar Resultado de Exame
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Placeholder for lab results - would show real data */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Hemograma Recente</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Hemoglobina</p>
-                    <p className="font-medium">12.5 g/dL</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Leucócitos</p>
-                    <p className="font-medium">5.800 /mm³</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Plaquetas</p>
-                    <p className="font-medium">185.000 /mm³</p>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-3">
-                  * Dados ilustrativos - integração pendente
-                </p>
-              </CardContent>
-            </Card>
+          {/* Exames Tab - Usa componente compartilhado Labs */}
+          <TabsContent value="labs">
+            <Labs patientId={patientId} />
           </TabsContent>
 
           {/* Saúde Tab - SOMENTE LEITURA */}

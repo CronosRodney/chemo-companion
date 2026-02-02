@@ -5,12 +5,24 @@ import { Beaker, TrendingUp, TrendingDown, Minus, AlertTriangle, CheckCircle2, A
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "@/contexts/AppContext";
 import { LabTrendsChart } from "@/components/LabTrendsChart";
+import { LabResultsManager } from "@/components/LabResultsManager";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useAuth } from "@/hooks/useAuth";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const Labs = () => {
+interface LabsProps {
+  patientId?: string; // Se fornecido, usa esse ID (contexto médico)
+}
+
+const Labs = ({ patientId }: LabsProps) => {
   const navigate = useNavigate();
   const { treatmentPlans } = useAppContext();
+  const { user } = useAuth();
+
+  // Determina o ID do paciente (próprio usuário ou paciente selecionado pelo médico)
+  const effectivePatientId = patientId || user?.id;
+  const userRole = patientId ? 'doctor' : 'patient';
 
   // Get active plan
   const activePlan = treatmentPlans?.find(plan => plan.status === 'active');
@@ -54,28 +66,41 @@ const Labs = () => {
     { key: 'bilirubin', label: 'Bilirrubina', unit: 'mg/dL', max: 1.2, color: 'hsl(var(--destructive))' }
   ];
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5 p-4 pb-20">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4 pt-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-              Exames Laboratoriais
-            </h1>
-            <p className="text-muted-foreground">Histórico e tendências dos seus exames</p>
-          </div>
-        </div>
+  // Se está no contexto do PatientDetails (tem patientId), não mostra header próprio
+  const isEmbedded = !!patientId;
 
+  if (!effectivePatientId || !user) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  const content = (
+    <Tabs defaultValue="exams" className="space-y-4">
+      <TabsList className="grid grid-cols-2 w-full">
+        <TabsTrigger value="exams">Exames</TabsTrigger>
+        <TabsTrigger value="trends">Tendências</TabsTrigger>
+      </TabsList>
+
+      {/* Aba de Exames - CRUD completo */}
+      <TabsContent value="exams">
+        <LabResultsManager 
+          patientId={effectivePatientId}
+          userId={user.id}
+          userRole={userRole as 'doctor' | 'patient'}
+        />
+      </TabsContent>
+
+      {/* Aba de Tendências - visualização dos dados de ciclos */}
+      <TabsContent value="trends" className="space-y-4">
         {!activePlan && (
           <Card className="border-2 border-warning/30 bg-warning/5">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3 text-warning">
                 <AlertTriangle className="h-5 w-5" />
-                <p>Nenhum plano de tratamento ativo encontrado.</p>
+                <p>Nenhum plano de tratamento ativo para mostrar tendências.</p>
               </div>
             </CardContent>
           </Card>
@@ -83,7 +108,7 @@ const Labs = () => {
 
         {activePlan && (
           <>
-            {/* Latest Results */}
+            {/* Latest Results from Cycles */}
             {latestCycle && (
               <Card className="luxury-card border-2 border-primary/20">
                 <CardHeader>
@@ -92,7 +117,7 @@ const Labs = () => {
                       <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                         <Beaker className="h-5 w-5 text-primary" />
                       </div>
-                      Resultados Mais Recentes
+                      Resultados do Tratamento
                     </CardTitle>
                     <Badge variant="outline">
                       Ciclo {latestCycle.cycle_number} - {format(new Date(latestCycle.scheduled_date), "dd 'de' MMMM", { locale: ptBR })}
@@ -134,7 +159,7 @@ const Labs = () => {
             {/* Trend Charts */}
             {cyclesWithLabs.length > 1 && (
               <div className="space-y-4">
-                <h2 className="text-2xl font-bold">Tendências ao Longo do Tratamento</h2>
+                <h2 className="text-xl font-bold">Tendências ao Longo do Tratamento</h2>
                 
                 <div className="grid grid-cols-1 gap-4">
                   {labParams.map(param => (
@@ -157,7 +182,7 @@ const Labs = () => {
             {cyclesWithLabs.length > 0 && (
               <Card className="border-2 border-secondary/20">
                 <CardHeader>
-                  <CardTitle>Histórico Completo</CardTitle>
+                  <CardTitle>Histórico de Ciclos</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
@@ -189,6 +214,33 @@ const Labs = () => {
             )}
           </>
         )}
+      </TabsContent>
+    </Tabs>
+  );
+
+  // Se embedded (no PatientDetails), retorna apenas o conteúdo
+  if (isEmbedded) {
+    return content;
+  }
+
+  // Se standalone, mostra com header
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5 p-4 pb-20">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4 pt-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+              Exames Laboratoriais
+            </h1>
+            <p className="text-muted-foreground">Histórico e tendências dos seus exames</p>
+          </div>
+        </div>
+
+        {content}
       </div>
     </div>
   );
