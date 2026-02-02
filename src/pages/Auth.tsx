@@ -447,7 +447,10 @@ export default function Auth() {
       </Button>
 
       <p className="text-xs text-muted-foreground text-center">
-        Ao criar uma conta, você concorda com nossos termos de serviço
+        Ao criar uma conta, você concorda com nossos{' '}
+        <a href="/terms-of-use" className="text-primary underline hover:text-primary/80">Termos de Uso</a>
+        {' '}e{' '}
+        <a href="/privacy-policy" className="text-primary underline hover:text-primary/80">Política de Privacidade</a>
       </p>
     </div>
   );

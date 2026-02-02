@@ -1,9 +1,9 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
+import { getUserFromRequest } from '../_shared/auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 interface PharmacySearchParams {
@@ -31,6 +31,15 @@ serve(async (req) => {
   }
 
   try {
+    // Authentication check
+    const { userId, error: authError } = await getUserFromRequest(req);
+    if (authError || !userId) {
+      return new Response(
+        JSON.stringify({ error: 'Autenticação necessária' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const params: PharmacySearchParams = await req.json();
 
     if (!params.medication_name) {
@@ -90,7 +99,7 @@ serve(async (req) => {
       .filter(r => !params.radius_km || (r.distance_km && r.distance_km <= params.radius_km))
       .sort((a, b) => (a.distance_km || 0) - (b.distance_km || 0));
 
-    console.log(`Pharmacy search for "${params.medication_name}": ${filteredResults.length} results`);
+    console.log(`Pharmacy search for "${params.medication_name}" by user ${userId}: ${filteredResults.length} results`);
 
     return new Response(
       JSON.stringify({

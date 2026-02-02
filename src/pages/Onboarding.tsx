@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, Heart, Clock, QrCode, Pill, ArrowRight } from "lucide-react";
+import { Shield, Heart, Clock, QrCode, Pill, ArrowRight, Info } from "lucide-react";
 import { useState } from "react";
 
 const Onboarding = () => {
@@ -26,10 +26,16 @@ const Onboarding = () => {
       color: "text-success"
     },
     {
+      icon: Info,
+      title: "Importante",
+      description: "O OncoTrack é uma ferramenta de apoio ao tratamento. Decisões médicas devem ser tomadas exclusivamente com seu profissional de saúde.",
+      color: "text-warning"
+    },
+    {
       icon: Shield,
       title: "Privacidade Total",
-      description: "Seus dados são criptografados e você controla todo o compartilhamento",
-      color: "text-warning"
+      description: "Seus dados são criptografados e protegidos conforme LGPD. Você controla todo o compartilhamento.",
+      color: "text-primary"
     }
   ];
 
@@ -120,14 +126,14 @@ const Onboarding = () => {
             <div className="flex items-start gap-3">
               <Shield className="h-5 w-5 text-white mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-white">Certificado LGPD</p>
-                <p className="text-xs text-white/80">
-                  Desenvolvido seguindo as melhores práticas de segurança para dados de saúde
-                </p>
-              </div>
+              <p className="text-sm font-medium text-white">Certificado LGPD</p>
+              <p className="text-xs text-white/80">
+                Este app não realiza diagnósticos e não substitui consultas médicas.
+              </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
       </div>
     </div>
   );

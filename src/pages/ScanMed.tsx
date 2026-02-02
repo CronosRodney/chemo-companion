@@ -371,7 +371,7 @@ export default function ScanMed() {
         <Button 
           variant="outline" 
           size="icon"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/scanner')}
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>

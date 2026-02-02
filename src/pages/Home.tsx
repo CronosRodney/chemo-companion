@@ -385,6 +385,11 @@ const Home = () => {
             </div>
           </div>
         </div>
+
+        {/* Health App Disclaimer */}
+        <p className="text-xs text-muted-foreground text-center px-4 mt-4 pb-4">
+          Este aplicativo auxilia no acompanhamento do tratamento e não substitui orientação médica profissional.
+        </p>
       </div>
     </div>
   );

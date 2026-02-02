@@ -347,7 +347,7 @@ const QRScanner = () => {
     <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 p-4">
       <div className="mx-auto max-w-md space-y-6 pt-8">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-semibold">Escanear QR Code</h1>

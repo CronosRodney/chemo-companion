@@ -1,9 +1,10 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
+import { checkRateLimit } from '../_shared/rateLimiter.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 interface BackupRequest {
@@ -41,10 +42,20 @@ serve(async (req) => {
       );
     }
 
+    // Rate limit (5 backups/min to prevent abuse)
+    const rateLimitResult = checkRateLimit(user.id, { maxRequests: 5, windowMs: 60000 });
+    if (!rateLimitResult.allowed) {
+      const resetIn = Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000);
+      return new Response(
+        JSON.stringify({ error: `Limite de backups excedido. Tente novamente em ${resetIn}s` }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { action, backup_id }: BackupRequest = await req.json();
 
     if (action === 'create') {
-      // Fetch all user data
+      // Fetch all user data - ALWAYS filtered by user.id for security
       const [
         { data: profile },
         { data: events },

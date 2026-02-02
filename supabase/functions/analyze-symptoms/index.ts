@@ -1,9 +1,10 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
+import { getUserFromRequest } from '../_shared/auth.ts';
+import { checkRateLimit } from '../_shared/rateLimiter.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 interface SymptomData {
@@ -23,6 +24,25 @@ serve(async (req) => {
   }
 
   try {
+    // Authentication check
+    const { userId, error: authError } = await getUserFromRequest(req);
+    if (authError || !userId) {
+      return new Response(
+        JSON.stringify({ error: 'Autenticação necessária' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Rate limit (10 req/min for OpenAI calls)
+    const rateLimitResult = checkRateLimit(userId, { maxRequests: 10, windowMs: 60000 });
+    if (!rateLimitResult.allowed) {
+      const resetIn = Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000);
+      return new Response(
+        JSON.stringify({ error: `Limite de requisições excedido. Tente novamente em ${resetIn}s` }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openaiApiKey) {
       throw new Error('OpenAI API key not configured');
@@ -135,7 +155,7 @@ Responda APENAS em formato JSON válido, seguindo exatamente esta estrutura:
       };
     }
 
-    console.log('Symptom analysis completed:', { severity: analysis.severity_assessment });
+    console.log('Symptom analysis completed for user:', userId);
 
     return new Response(
       JSON.stringify(analysis),
