@@ -64,6 +64,60 @@ const Home = () => {
     );
   }
 
+  // Doctor Home - Simplified entry point
+  if (isDoctor) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5 p-4 pb-20">
+        <div className="max-w-md mx-auto space-y-6">
+          {/* Header for Doctor */}
+          <div className="text-center pt-8 pb-4">
+            <div className="luxury-card p-10 space-y-5 relative overflow-hidden border-2 border-primary/20">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary-glow/5 to-transparent"></div>
+              <div className="absolute -top-20 -right-20 w-64 h-64 bg-primary/20 rounded-full blur-3xl"></div>
+              <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-secondary/20 rounded-full blur-3xl"></div>
+              
+              <div className="relative">
+                <div className="w-20 h-20 mx-auto rounded-full medical-gradient flex items-center justify-center mb-5 shadow-[0_0_40px_rgba(var(--primary-rgb),0.4)]">
+                  <Stethoscope className="h-10 w-10 text-white" />
+                </div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-glow to-secondary bg-clip-text text-transparent mb-3">
+                  {getGreeting()}, Dr. {profile?.first_name || 'Médico'}
+                </h1>
+                <p className="text-muted-foreground text-lg font-medium">
+                  Acesse o painel para acompanhar seus pacientes
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Doctor Portal Access Card */}
+          <div 
+            className="luxury-card p-8 border-2 border-primary/30 relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer"
+            onClick={() => navigate('/doctor')}
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent"></div>
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/20 rounded-full blur-2xl group-hover:blur-3xl transition-all"></div>
+            <div className="relative flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Stethoscope className="h-7 w-7 text-primary" />
+                </div>
+                <div>
+                  <p className="font-bold text-xl">Portal do Médico</p>
+                  <p className="text-sm text-muted-foreground">Acessar painel de acompanhamento</p>
+                </div>
+              </div>
+              <Button variant="default" size="lg" className="font-semibold">
+                Acessar
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Patient Home - Full experience
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5 p-4 pb-20">
       <div className="max-w-md mx-auto space-y-6">
@@ -276,31 +330,7 @@ const Home = () => {
         </div>
 
         {/* Pending Doctor Invites - For Patients */}
-        {!isDoctor && <PendingInvitesNotification />}
-
-        {/* Doctor Portal Access - Only for users who are already doctors */}
-        {isDoctor && (
-          <div 
-            className="luxury-card p-6 border-2 border-primary/30 relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer"
-            onClick={() => navigate('/doctor')}
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent"></div>
-            <div className="relative flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Stethoscope className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <p className="font-bold text-lg">Portal do Médico</p>
-                  <p className="text-sm text-muted-foreground">Acesse o painel de acompanhamento</p>
-                </div>
-              </div>
-              <Button variant="ghost" size="sm">
-                Acessar
-              </Button>
-            </div>
-          </div>
-        )}
+        <PendingInvitesNotification />
 
         {/* Emergency Alert */}
         <div className="luxury-card bg-destructive/5 border-2 border-destructive/30 p-6 relative overflow-hidden">
