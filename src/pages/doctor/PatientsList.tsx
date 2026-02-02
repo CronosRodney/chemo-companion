@@ -10,7 +10,8 @@ import {
   ChevronRight,
   AlertTriangle,
   Activity,
-  Filter
+  Filter,
+  ArrowLeft
 } from 'lucide-react';
 import { usePatients } from '@/hooks/usePatients';
 import DoctorNavigation from '@/components/doctor/DoctorNavigation';
@@ -37,7 +38,16 @@ const PatientsList = () => {
       {/* Header */}
       <div className="bg-card border-b sticky top-0 z-10">
         <div className="max-w-4xl mx-auto p-4">
-          <h1 className="text-xl font-bold mb-4">Meus Pacientes</h1>
+          <div className="flex items-center gap-3 mb-4">
+            <button
+              onClick={() => navigate("/doctor")}
+              className="p-2 rounded-full hover:bg-muted transition"
+              aria-label="Voltar"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <h1 className="text-xl font-bold">Meus Pacientes</h1>
+          </div>
           
           <div className="flex gap-2">
             <div className="relative flex-1">
