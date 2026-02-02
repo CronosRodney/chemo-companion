@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserClinics, ConnectedClinic } from '@/hooks/useUserClinics';
+import { useMyDoctors, ConnectedDoctor } from '@/hooks/useMyDoctors';
 import { supabase } from '@/integrations/supabase/client';
 import { loadUserStats, UserStats } from '@/services/statsService';
 import { toast } from '@/hooks/use-toast';
@@ -17,6 +18,8 @@ interface AppData {
   reminders: any[];
   clinics: ConnectedClinic[];
   clinicsLoading: boolean;
+  doctors: ConnectedDoctor[];
+  doctorsLoading: boolean;
   stats: {
     adherence: number;
     nextAppointment: string;
@@ -37,6 +40,7 @@ interface AppData {
   deleteEvent: (eventId: string, tableName: 'events' | 'user_events') => Promise<void>;
   updateEvent: (eventId: string, tableName: 'events' | 'user_events', data: any) => Promise<void>;
   refetchClinics: () => void;
+  refetchDoctors: () => void;
   refetchMedications: () => void;
   refetchEvents: () => void;
   refetchStats: () => Promise<void>;
@@ -56,6 +60,7 @@ const AppContext = createContext<AppData | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, profile, loading, updateProfile: updateUserProfile } = useAuth();
   const { clinics, loading: clinicsLoading, refetch: refetchClinics } = useUserClinics();
+  const { doctors, loading: doctorsLoading, refetch: refetchDoctors } = useMyDoctors();
   
   const [medications, setMedications] = useState<any[]>([]);
 
@@ -482,7 +487,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       loadEventsFromEventsTable(),
       loadReminders(),
       loadStats(),
-      refetchClinics()
+      refetchClinics(),
+      refetchDoctors()
     ]);
   };
 
@@ -601,6 +607,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     reminders,
     clinics,
     clinicsLoading,
+    doctors,
+    doctorsLoading,
     stats,
     treatmentPlans,
     currentTreatmentPlan,
@@ -613,6 +621,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     deleteEvent,
     updateEvent,
     refetchClinics,
+    refetchDoctors,
     refetchMedications: loadMedications,
     refetchEvents: loadEventsFromEventsTable,
     refetchStats,
