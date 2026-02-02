@@ -1,172 +1,166 @@
 
 
-# Plano: Exibir Médico Responsável no App do Paciente
+# Plano: Correção de Contexto Médico/Paciente e Edge Functions
 
-## Resumo
+## Diagnóstico Técnico
 
-Expor de forma clara e consistente o médico responsável nas telas de Tratamento e Perfil do paciente, usando como fonte de verdade a tabela `patient_doctor_connections` com `status = 'active'`.
+### Problema 1 - Edge Functions com Método Inexistente
 
-## Arquitetura da Solução
-
-```text
-┌──────────────────────────────────────────────────────────────────────┐
-│                        Fonte de Dados                                 │
-├──────────────────────────────────────────────────────────────────────┤
-│                                                                       │
-│  patient_doctor_connections                                          │
-│  ├── patient_user_id (current user)                                  │
-│  ├── doctor_user_id                                                  │
-│  └── status = 'active'                                               │
-│           │                                                          │
-│           ▼                                                          │
-│  healthcare_professionals                                            │
-│  ├── first_name, last_name                                           │
-│  ├── specialty                                                       │
-│  └── crm, crm_uf                                                     │
-│                                                                       │
-└──────────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│                      Componentes Atualizados                         │
-├──────────────────────────────────────────────────────────────────────┤
-│                                                                       │
-│  1. AppContext.tsx                                                   │
-│     └── Adicionar: doctors, doctorsLoading (do useMyDoctors)         │
-│                                                                       │
-│  2. Treatment.tsx (Header)                                           │
-│     ┌────────────────────────────────────────────────────────────┐   │
-│     │  Tratamento                                                │   │
-│     │  Acompanhe seus planos de tratamento oncológico            │   │
-│     │                                                            │   │
-│     │  🩺 Dr. João Silva                                         │   │
-│     │     Oncologia Clínica · Médico responsável                 │   │
-│     └────────────────────────────────────────────────────────────┘   │
-│                                                                       │
-│  3. Profile.tsx (Novo bloco abaixo de "Clínica Atual")               │
-│     ┌────────────────────────────────────────────────────────────┐   │
-│     │  🩺 Médico Responsável                                     │   │
-│     │                                                            │   │
-│     │     Dr. João Silva                                         │   │
-│     │     CRM 12345/SP                                           │   │
-│     │     Oncologia Clínica                                      │   │
-│     │     Status: Ativo                                          │   │
-│     └────────────────────────────────────────────────────────────┘   │
-│                                                                       │
-└──────────────────────────────────────────────────────────────────────┘
+As edge functions `accept-doctor-invite` e `reject-doctor-invite` usam:
+```typescript
+await userClient.auth.getClaims(token);
 ```
+
+Este método **não existe** no SDK do Supabase. Isso causa erro 500 silencioso e o aceite falha.
+
+**Solução:** Refatorar para usar o padrão correto `auth.getUser()` que já existe em `_shared/auth.ts`.
+
+### Problema 2 - Upsert sem Constraint
+
+A edge function tenta fazer upsert com:
+```typescript
+onConflict: 'patient_user_id,doctor_user_id'
+```
+
+Mas se não existir uma constraint UNIQUE nessas colunas, o upsert falhará.
+
+**Solução:** Alterar para insert com verificação de existência prévia, ou criar constraint única.
+
+### Problema 3 - Portal do Médico mostrando UI simplificada
+
+O `PatientDetails.tsx` atual já é um painel clínico, mas:
+- A aba Tratamento mostra apenas lista, sem ações de edição
+- A aba Saúde está vazia com placeholder
+- Falta indicação visual clara de que é contexto médico
+
+**Solução:** Melhorar a UX do portal médico com:
+- Badge indicando "Visualização Médica"
+- Adicionar ações de edição nas abas permitidas
+- Integrar dados reais de exames na aba Saúde
+
+---
 
 ## Implementação Detalhada
 
-### 1. Estender AppContext
+### 1. Corrigir Edge Functions (Prioridade Alta)
 
-**Arquivo:** `src/contexts/AppContext.tsx`
-
-**Mudanças:**
-- Importar `useMyDoctors` hook
-- Adicionar `doctors` e `doctorsLoading` ao contexto
-- Expor no valor do provider
-
-Isso permite que qualquer componente acesse os médicos conectados sem fazer novas chamadas à API.
-
-### 2. Atualizar Tela de Tratamento
-
-**Arquivo:** `src/pages/Treatment.tsx`
+**Arquivos:**
+- `supabase/functions/accept-doctor-invite/index.ts`
+- `supabase/functions/reject-doctor-invite/index.ts`
 
 **Mudanças:**
-- Consumir `doctors` e `doctorsLoading` do AppContext
-- Filtrar apenas médicos com `status === 'active'`
-- Exibir no header abaixo do subtítulo
 
-**Design do componente:**
+1. Substituir `auth.getClaims()` por `auth.getUser()`
+2. Adicionar verificação de existência antes do upsert
+3. Buscar email do usuário via tabela `profiles` (pois `getUser()` retorna dados da tabela auth)
+
+**Fluxo corrigido:**
+
 ```text
-┌───────────────────────────────────────────────────────┐
-│  Tratamento                                           │
-│  Acompanhe seus planos de tratamento oncológico       │
-│                                                       │
-│  ┌─────────────────────────────────────────────────┐  │
-│  │  🩺  Dr. João Silva                             │  │
-│  │      Oncologia Clínica · Médico responsável     │  │
-│  └─────────────────────────────────────────────────┘  │
-└───────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                    ACCEPT-DOCTOR-INVITE                         │
+├─────────────────────────────────────────────────────────────────┤
+│  1. Validar Authorization header                                │
+│  2. Chamar auth.getUser() (NÃO getClaims)                       │
+│  3. Buscar email do usuário via profiles                        │
+│  4. Validar que email == invite.patient_email                   │
+│  5. Verificar se conexão já existe                              │
+│  6. UPDATE connection_invites.status = 'accepted'               │
+│  7. INSERT ou UPDATE patient_doctor_connections                 │
+│  8. Retornar sucesso                                            │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-**Comportamento:**
-- Se múltiplos médicos ativos: exibir o primeiro (por data de conexão)
-- Se nenhum médico ativo: não exibir nada (sem quebra de layout)
-- Loading: skeleton inline discreto
+### 2. Adicionar Constraint Única (Banco de Dados)
 
-### 3. Atualizar Tela de Perfil
+**Migração SQL:**
+```sql
+ALTER TABLE patient_doctor_connections 
+ADD CONSTRAINT unique_patient_doctor 
+UNIQUE (patient_user_id, doctor_user_id);
+```
 
-**Arquivo:** `src/pages/Profile.tsx`
+Isso permitirá que o upsert funcione corretamente.
+
+### 3. Melhorar Portal do Médico
+
+**Arquivo:** `src/pages/doctor/PatientDetails.tsx`
 
 **Mudanças:**
-- Consumir `doctors` e `doctorsLoading` do AppContext
-- Adicionar novo Card "Médico Responsável" após "Clínica Atual"
-- Estilo consistente com os outros cards
+- Adicionar badge "Painel Clínico" no header
+- Adicionar aba "Exames" funcional
+- Integrar botões de ação na aba Tratamento (editar plano, liberar ciclo)
+- Mostrar dados reais de wearables na aba Saúde
 
-**Design do componente:**
+**Nova estrutura de abas:**
+
 ```text
-┌───────────────────────────────────────────────────────┐
-│  🩺 Médico Responsável                                │
-├───────────────────────────────────────────────────────┤
-│                                                       │
-│  ┌─────────────────────────────────────────────────┐  │
-│  │  Dr. João Silva                                 │  │
-│  │  CRM 12345/SP                                   │  │
-│  │  Oncologia Clínica                              │  │
-│  │  Status: ✓ Ativo                                │  │
-│  └─────────────────────────────────────────────────┘  │
-│                                                       │
-│  (Se houver mais médicos, lista todos)                │
-│                                                       │
-└───────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│  🏥 Painel Clínico                              [Visualização]   │
+├──────────────────────────────────────────────────────────────────┤
+│  [Resumo] [Tratamento*] [Exames*] [Saúde] [Notas]                │
+│                        * = editável                              │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Aba Tratamento:                                                 │
+│  - Lista de planos com botão "Editar"                            │
+│  - Botão "Liberar Próximo Ciclo"                                 │
+│  - Histórico de ajustes de dose                                  │
+│                                                                  │
+│  Aba Exames:                                                     │
+│  - Lista de exames laboratoriais do paciente                     │
+│  - Botão "Adicionar Resultado"                                   │
+│  - Gráficos de tendência                                         │
+│                                                                  │
+│  Aba Saúde:                                                      │
+│  - Métricas de wearables (se conectados)                         │
+│  - Alertas de saúde                                              │
+│  - Sem edição (somente leitura)                                  │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-**Fallback (sem médico ativo):**
-```text
-┌───────────────────────────────────────────────────────┐
-│  🩺 Médico Responsável                                │
-├───────────────────────────────────────────────────────┤
-│                                                       │
-│  Nenhum médico vinculado                              │
-│  Quando um médico solicitar acesso, você poderá       │
-│  aceitar aqui.                                        │
-│                                                       │
-└───────────────────────────────────────────────────────┘
-```
+---
 
 ## Arquivos a Modificar
 
-| Arquivo | Ação | Descrição |
-|---------|------|-----------|
-| `src/contexts/AppContext.tsx` | Modificar | Adicionar doctors e doctorsLoading do hook useMyDoctors |
-| `src/pages/Treatment.tsx` | Modificar | Exibir médico responsável no header |
-| `src/pages/Profile.tsx` | Modificar | Adicionar bloco "Médico Responsável" |
+| Arquivo | Ação | Prioridade |
+|---------|------|------------|
+| `supabase/functions/accept-doctor-invite/index.ts` | Modificar | Crítica |
+| `supabase/functions/reject-doctor-invite/index.ts` | Modificar | Crítica |
+| `src/pages/doctor/PatientDetails.tsx` | Modificar | Alta |
+| Migração SQL (constraint única) | Criar | Alta |
+
+---
 
 ## O que NÃO será alterado
 
 | Item | Motivo |
 |------|--------|
-| `useMyDoctors.ts` | Já implementado e funcional |
-| `MyDoctorsCard.tsx` | Continua funcionando na Home |
-| Tabelas do banco | Estrutura já adequada |
-| RLS policies | Já protegem corretamente |
+| `usePendingInvites.ts` | Query já filtra corretamente por `status = 'pending'` |
+| `PendingInvitesNotification.tsx` | Componente funciona corretamente |
+| `Home.tsx` | `MyDoctorsCard` já foi removido |
+| `Profile.tsx` | Médico responsável já está implementado corretamente |
+| `Treatment.tsx` | Badge do médico já está implementado |
 
-## Critérios de Aceite
+---
 
-- Header da tela Tratamento mostra o médico responsável (nome + especialidade)
-- Tela Perfil exibe bloco "Médico Responsável" com CRM e status
-- Apenas médicos com `status = 'active'` são exibidos
-- Não quebra caso não exista médico ativo (exibe fallback elegante)
-- Dados vêm sempre do backend (nunca hardcoded)
+## Sequência de Implementação
 
-## Checklist de Segurança
+1. **Migração SQL**: Criar constraint única em `patient_doctor_connections`
+2. **Edge Functions**: Corrigir `accept-doctor-invite` e `reject-doctor-invite`
+3. **Portal Médico**: Melhorar `PatientDetails.tsx` com funcionalidades clínicas
 
-| Requisito | Status |
-|-----------|--------|
-| Dados via patient_doctor_connections | Garantido |
-| Apenas status = active exibidos | Garantido |
-| Sem exposição de dados sensíveis | Garantido |
-| Fallback para ausência de médico | Implementado |
+---
+
+## Verificação Pós-Implementação
+
+| Teste | Resultado Esperado |
+|-------|-------------------|
+| Paciente clica "Aceitar" | Conexão criada com sucesso |
+| Paciente atualiza Home | Solicitação desaparece |
+| Médico abre portal | Painel clínico (não dashboard paciente) |
+| Médico edita tratamento | Edição funciona |
+| Paciente vê Tratamento | Badge do médico visível |
+| Paciente vê Perfil | Bloco médico responsável visível |
 
