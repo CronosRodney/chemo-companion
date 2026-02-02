@@ -16,10 +16,7 @@ import {
   Stethoscope,
   Eye,
   Edit,
-  Edit2,
   Trash2,
-  Check,
-  X,
   TestTube,
   TrendingUp
 } from 'lucide-react';
@@ -71,9 +68,8 @@ const PatientDetails = () => {
   const [newNote, setNewNote] = useState('');
   const [savingNote, setSavingNote] = useState(false);
   
-  // Estados para edição de notas
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
-  const [editNoteText, setEditNoteText] = useState('');
+  // Notas clínicas são IMUTÁVEIS após criação (compliance clínico)
+  // Removidas funcionalidades de edição
 
   useEffect(() => {
     if (patientId && user) {
@@ -222,42 +218,8 @@ const PatientDetails = () => {
     }
   };
 
-  // Funções de edição de notas
-  const handleEditNote = (note: DoctorNote) => {
-    setEditingNoteId(note.id);
-    setEditNoteText(note.note);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingNoteId(null);
-    setEditNoteText('');
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editingNoteId || !editNoteText.trim()) return;
-
-    try {
-      const { error } = await supabase
-        .from('doctor_notes')
-        .update({ note: editNoteText })
-        .eq('id', editingNoteId);
-
-      if (error) throw error;
-
-      setNotes(notes.map(n => 
-        n.id === editingNoteId ? { ...n, note: editNoteText } : n
-      ));
-      handleCancelEdit();
-      toast({ title: "Nota atualizada" });
-    } catch (error: any) {
-      console.error('Error updating note:', error);
-      toast({
-        title: "Erro ao atualizar nota",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  };
+  // NOTAS CLÍNICAS SÃO IMUTÁVEIS
+  // Somente criação e exclusão são permitidas (compliance e rastreabilidade)
 
   const handleDeleteNote = async (noteId: string) => {
     try {
@@ -572,58 +534,17 @@ const PatientDetails = () => {
                           {new Date(note.created_at).toLocaleString('pt-BR')}
                         </span>
                       </div>
-                      {editingNoteId !== note.id && (
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditNote(note)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteNote(note.id)}
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
+                      {/* Somente exclusão permitida - notas são imutáveis */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteNote(note.id)}
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                    
-                    {editingNoteId === note.id ? (
-                      <div className="space-y-3">
-                        <Textarea
-                          value={editNoteText}
-                          onChange={(e) => setEditNoteText(e.target.value)}
-                          rows={3}
-                          autoFocus
-                        />
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleCancelEdit}
-                          >
-                            <X className="h-4 w-4 mr-1" />
-                            Cancelar
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={handleSaveEdit}
-                            disabled={!editNoteText.trim()}
-                          >
-                            <Check className="h-4 w-4 mr-1" />
-                            Salvar
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-sm">{note.note}</p>
-                    )}
+                    <p className="text-sm">{note.note}</p>
                   </CardContent>
                 </Card>
               ))

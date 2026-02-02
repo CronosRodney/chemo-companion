@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.reject-doctor-invite]
 verify_jwt = false
+
+[functions.update-doctor-profile]
+verify_jwt = false
