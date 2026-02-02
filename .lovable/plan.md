@@ -1,272 +1,237 @@
 
 
-# Plano Corrigido: Auditoria Final + Hardening para iOS / Android
+# Plano: Login Social com Apple ID e Google
 
-## Resumo Executivo
+## Resumo
 
-Preparar o OncoTrack para publicacao na App Store e Google Play, garantindo compliance LGPD, seguranca de dados de saude, e prontidao para review, sem alterar layout ou funcionalidades existentes.
+Implementar autenticacao OAuth com Apple ID e Google no OncoTrack, mantendo o login por email existente. Essencial para publicacao na App Store (Apple Sign In obrigatorio).
 
 ---
 
-## Correcao Critica Aplicada
+## 1. Modificacoes em Auth.tsx
 
-O metodo `supabase.auth.getClaims(token)` foi **removido** do plano. Todas as Edge Functions usarao exclusivamente:
+### 1.1 Adicionar Funcao de Deteccao de Plataforma Apple
+
+Detectar se o usuario esta em iOS ou Safari para mostrar botao Apple:
 
 ```typescript
-// Padrao correto - ja implementado em _shared/auth.ts
-import { getUserFromRequest } from '../_shared/auth.ts';
+const isApplePlatform = () => {
+  const ua = navigator.userAgent.toLowerCase();
+  const isIOS = /iphone|ipad|ipod/.test(ua);
+  const isSafari = /safari/.test(ua) && !/chrome/.test(ua);
+  const isMacOS = /macintosh/.test(ua);
+  return isIOS || (isMacOS && isSafari);
+};
+```
 
-const { userId, error: authError } = await getUserFromRequest(req);
-if (authError || !userId) {
-  return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-}
+### 1.2 Adicionar Funcoes de Login OAuth
+
+```typescript
+const handleGoogleSignIn = async () => {
+  setIsLoading(true);
+  setMessage(null);
+  
+  try {
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectUrl,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+      },
+    });
+    
+    if (error) throw error;
+  } catch (error: any) {
+    setMessage({
+      type: 'error',
+      text: error.message || 'Erro ao conectar com Google'
+    });
+    setIsLoading(false);
+  }
+};
+
+const handleAppleSignIn = async () => {
+  setIsLoading(true);
+  setMessage(null);
+  
+  try {
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: {
+        redirectTo: redirectUrl,
+      },
+    });
+    
+    if (error) throw error;
+  } catch (error: any) {
+    setMessage({
+      type: 'error',
+      text: error.message || 'Erro ao conectar com Apple'
+    });
+    setIsLoading(false);
+  }
+};
+```
+
+### 1.3 Adicionar Componentes de Icones SVG
+
+Criar icones inline para Apple e Google sem dependencias externas:
+
+- AppleIcon: SVG preto/branco seguindo guidelines Apple
+- GoogleIcon: SVG colorido oficial do Google
+
+### 1.4 Adicionar UI de Login Social
+
+Na tab de login (apos botao "Entrar", antes do "Modo Teste"):
+
+```typescript
+{/* Divisor */}
+<div className="relative my-4">
+  <div className="absolute inset-0 flex items-center">
+    <span className="w-full border-t" />
+  </div>
+  <div className="relative flex justify-center text-xs uppercase">
+    <span className="bg-card px-2 text-muted-foreground">
+      ou continue com
+    </span>
+  </div>
+</div>
+
+{/* Botoes OAuth */}
+<div className="space-y-2">
+  {isApplePlatform() && (
+    <Button variant="outline" onClick={handleAppleSignIn}>
+      <AppleIcon /> Sign in with Apple
+    </Button>
+  )}
+  
+  <Button variant="outline" onClick={handleGoogleSignIn}>
+    <GoogleIcon /> Entrar com Google
+  </Button>
+</div>
 ```
 
 ---
 
-## Status Atual das Edge Functions
+## 2. Modificacoes em useAuth.ts
 
-| Funcao | Auth | Rate Limit | Acao |
-|--------|------|------------|------|
-| `screenshot-medication` | OK | OK | Nenhuma |
-| `user-backup` | OK (+ filtra por user.id) | Nao | Adicionar rate limit |
-| `analyze-symptoms` | NAO | NAO | Adicionar auth + rate limit |
-| `search-pharmacies` | NAO | NAO | Adicionar auth |
+### 2.1 Atualizar loadProfile para Usuarios OAuth
 
----
-
-## 1. Navegacao Deterministica (WebView-Safe)
-
-### Arquivos e Correcoes
-
-| Arquivo | Linha | Atual | Correcao |
-|---------|-------|-------|----------|
-| `src/pages/Profile.tsx` | 44 | `window.history.back()` | `navigate('/')` |
-| `src/pages/Timeline.tsx` | 347 | `navigate(-1)` | `navigate('/')` |
-| `src/pages/Events.tsx` | 183 | `navigate(-1)` | `navigate('/')` |
-| `src/pages/Health.tsx` | 113, 132 | `navigate(-1)` | `navigate('/')` |
-| `src/pages/MedicationDetails.tsx` | 117 | `navigate(-1)` | `navigate('/medications')` |
-| `src/pages/ManualMedicationEntry.tsx` | 138 | `navigate(-1)` | `navigate('/medications')` |
-| `src/pages/Medications.tsx` | 217 | `navigate(-1)` | `navigate('/')` |
-| `src/pages/Share.tsx` | 123 | `navigate(-1)` | `navigate('/profile')` |
-| `src/pages/EditableProfile.tsx` | 133 | `navigate(-1)` | `navigate('/profile')` |
-| `src/pages/Teleconsultation.tsx` | 130 | `navigate(-1)` | `navigate('/')` |
-| `src/pages/QRScanner.tsx` | 350 | `navigate(-1)` | `navigate('/')` |
-| `src/pages/ScanMed.tsx` | 374 | `navigate(-1)` | `navigate('/scanner')` |
-
----
-
-## 2. Remocao de Vulnerabilidade: process.env no Frontend
-
-### Arquivo: src/services/aiMedicationExtractor.ts
-
-**Problema:** Usa `process.env.OPENAI_API_KEY` (linhas 22 e 110)
-
-**Correcao:** Remover classe `AIMedicationExtractor` ou redirecionar para Edge Function `extract-medication-ai`
-
----
-
-## 3. Paginas Legais (Bloqueante para Store)
-
-### 3.1 Criar src/pages/PrivacyPolicy.tsx
-
-Conteudo em PT-BR cobrindo:
-- Identificacao do app
-- Dados coletados (nome, email, dados de saude)
-- Armazenamento seguro (Supabase/AWS)
-- Compartilhamento apenas com medicos autorizados
-- Direitos LGPD (acesso, correcao, exclusao, portabilidade)
-- Disclaimer medico claro
-
-### 3.2 Criar src/pages/TermsOfUse.tsx
-
-Conteudo cobrindo:
-- Descricao do servico
-- Elegibilidade
-- Limitacoes de responsabilidade
-- Disclaimer: "NAO substitui orientacao medica profissional"
-
-### 3.3 Atualizar App.tsx
-
-Adicionar rotas:
-```typescript
-<Route path="/privacy-policy" element={<PrivacyPolicy />} />
-<Route path="/terms-of-use" element={<TermsOfUse />} />
-```
-
-### 3.4 Atualizar Auth.tsx
-
-Adicionar links clicaveis para as paginas legais no texto de consentimento.
-
----
-
-## 4. Compliance Apple - Disclaimers de App de Saude
-
-### 4.1 Home.tsx - Footer Discreto
-
-Adicionar apos o card de Emergencia 24h:
-```typescript
-<p className="text-xs text-muted-foreground text-center px-4 mt-4">
-  Este aplicativo auxilia no acompanhamento do tratamento e nao substitui orientacao medica profissional.
-</p>
-```
-
-### 4.2 Onboarding.tsx - Step Adicional
-
-Adicionar step informativo sobre limitacoes do app antes do ultimo step.
-
----
-
-## 5. Seguranca - Edge Functions (CORRIGIDO)
-
-### 5.1 analyze-symptoms/index.ts - Adicionar Auth + Rate Limit
+Quando um usuario faz login via OAuth (Apple/Google), o Supabase fornece dados em `user_metadata`. Precisamos extrair esses dados para criar o perfil:
 
 ```typescript
-// Adicionar imports
-import { getUserFromRequest } from '../_shared/auth.ts';
-import { checkRateLimit } from '../_shared/rateLimiter.ts';
+const loadProfile = async (userId: string) => {
+  // ... busca perfil existente ...
 
-// Apos CORS check, antes de processar:
-const { userId, error: authError } = await getUserFromRequest(req);
-if (authError || !userId) {
-  return new Response(
-    JSON.stringify({ error: 'Autenticacao necessaria' }),
-    { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
-}
+  if (!data) {
+    // Obter dados do usuario (inclui metadata do provider OAuth)
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    
+    // Extrair nome do provider (Google/Apple)
+    const metadata = authUser?.user_metadata || {};
+    const providerName = metadata.full_name || metadata.name || '';
+    const [firstName, ...lastParts] = providerName.split(' ');
+    const lastName = lastParts.join(' ');
+    
+    // Email pode ser privado (Apple relay @privaterelay.appleid.com)
+    const email = authUser?.email || '';
+    
+    const newProfile = {
+      user_id: userId,
+      first_name: firstName || 'Usuario',  // Fallback se Apple nao enviar nome
+      last_name: lastName || '',
+      email: email,
+    };
 
-// Rate limit (10 req/min para chamadas OpenAI)
-const rateLimitResult = checkRateLimit(userId, { maxRequests: 10, windowMs: 60000 });
-if (!rateLimitResult.allowed) {
-  const resetIn = Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000);
-  return new Response(
-    JSON.stringify({ error: `Limite excedido. Tente em ${resetIn}s` }),
-    { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
-}
+    // ... insere novo perfil ...
+  }
+};
 ```
-
-### 5.2 search-pharmacies/index.ts - Adicionar Auth
-
-```typescript
-// Adicionar import
-import { getUserFromRequest } from '../_shared/auth.ts';
-
-// Apos CORS check:
-const { userId, error: authError } = await getUserFromRequest(req);
-if (authError || !userId) {
-  return new Response(
-    JSON.stringify({ error: 'Autenticacao necessaria' }),
-    { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
-}
-```
-
-### 5.3 user-backup/index.ts - Adicionar Rate Limit
-
-A funcao JA tem auth implementada e JA filtra por `user.id` em todas as queries:
-- Linha 56: `.eq('user_id', user.id)`
-- Linha 57-61: Todas as queries usam `user.id`
-
-Apenas adicionar rate limit:
-```typescript
-import { checkRateLimit } from '../_shared/rateLimiter.ts';
-
-// Apos auth check:
-const rateLimitResult = checkRateLimit(user.id, { maxRequests: 5, windowMs: 60000 });
-if (!rateLimitResult.allowed) {
-  return new Response(
-    JSON.stringify({ error: 'Limite de backups excedido' }),
-    { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
-}
-```
-
-### 5.4 screenshot-medication - JA PROTEGIDO
-
-Nenhuma acao necessaria - ja usa `getUserFromRequest` + `checkRateLimit`.
 
 ---
 
-## 6. Capacitor - Preparacao
+## 3. Arquivos a Modificar
 
-### 6.1 Atualizar capacitor.config.ts
-
-```typescript
-appName: 'OncoTrack', // era 'chemo-companion'
-```
-
-### 6.2 Assets Necessarios (criar posteriormente)
-
-| Arquivo | Tamanho | Uso |
-|---------|---------|-----|
-| `public/icon-1024x1024.png` | 1024x1024 | App Store |
-| `public/icon-512x512.png` | 512x512 | PWA/Android |
-| `public/apple-touch-icon.png` | 180x180 | iOS Safari |
-| `public/splash.png` | 2732x2732 | Splash screen |
-
----
-
-## 7. Arquivos a Criar/Modificar
-
-### Novos Arquivos
-| Arquivo | Descricao |
-|---------|-----------|
-| `src/pages/PrivacyPolicy.tsx` | Politica de Privacidade LGPD |
-| `src/pages/TermsOfUse.tsx` | Termos de Uso |
-
-### Arquivos a Modificar
 | Arquivo | Modificacao |
 |---------|-------------|
-| `src/App.tsx` | Adicionar rotas legais |
-| `src/pages/Auth.tsx` | Links para politicas |
-| `src/pages/Home.tsx` | Disclaimer footer |
-| `src/pages/Onboarding.tsx` | Step de disclaimer |
-| 12 paginas com navigate(-1) | Substituir por rotas fixas |
-| `src/services/aiMedicationExtractor.ts` | Remover process.env |
-| `supabase/functions/analyze-symptoms/index.ts` | Adicionar auth + rate limit |
-| `supabase/functions/search-pharmacies/index.ts` | Adicionar auth |
-| `supabase/functions/user-backup/index.ts` | Adicionar rate limit |
-| `capacitor.config.ts` | Atualizar appName |
+| `src/pages/Auth.tsx` | Adicionar funcoes OAuth, icones SVG, botoes de login social |
+| `src/hooks/useAuth.ts` | Melhorar loadProfile para extrair dados do provider OAuth |
 
 ---
 
-## 8. Acao Manual Pos-Deploy
+## 4. Configuracoes Manuais no Supabase (Usuario)
 
-### No Dashboard Supabase
-1. **Ativar Leaked Password Protection**:
-   - Authentication > Settings > Password protection
-   - Habilitar "Check for leaked passwords"
+### 4.1 URL Configuration
+
+Em **Authentication > URL Configuration**:
+- Site URL: `https://quimio-companheiro.lovable.app`
+- Redirect URLs:
+  - `https://quimio-companheiro.lovable.app`
+  - `https://id-preview--df633801-1f93-46c2-a717-4709fe54b455.lovable.app`
+
+### 4.2 Google Provider
+
+1. Criar projeto no Google Cloud Console
+2. Configurar OAuth Consent Screen
+3. Criar OAuth Client ID (Web application)
+4. Adicionar redirect URI: `https://xpxsdlvicmlqpcaldyyz.supabase.co/auth/v1/callback`
+5. Habilitar provider no Supabase com Client ID e Secret
+
+### 4.3 Apple Provider
+
+1. Criar App ID com Sign in with Apple no Apple Developer Portal
+2. Criar Services ID
+3. Configurar dominio: `xpxsdlvicmlqpcaldyyz.supabase.co`
+4. Gerar chave privada (.p8)
+5. Habilitar provider no Supabase
 
 ---
 
-## 9. Validacao de Seguranca user-backup
+## 5. Fluxo de Usuario
 
-A funcao `user-backup` JA implementa corretamente a validacao:
-
-```typescript
-// Linha 36 - Obtem usuario autenticado
-const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-// Linhas 56-61 - TODAS as queries filtram por user.id
-supabase.from('profiles').select('*').eq('user_id', user.id)
-supabase.from('events').select('*').eq('user_id', user.id)
-supabase.from('user_medications').select('*').eq('user_id', user.id)
-supabase.from('reminders').select('*').eq('user_id', user.id)
-supabase.from('treatment_plans').select('*').eq('user_id', user.id)
-supabase.from('user_stats').select('*').eq('user_id', user.id)
+```text
+Usuario abre /auth
+    |
+    +-- Login Email/Senha (existente)
+    |
+    +-- "ou continue com"
+    |
+    +-- Clica "Entrar com Google"
+    |   +-- Redireciona para Google
+    |   +-- Usuario autoriza
+    |   +-- Retorna para app
+    |   +-- onAuthStateChange detecta sessao
+    |   +-- loadProfile cria perfil com dados do provider
+    |   +-- Redireciona para Home
+    |
+    +-- Clica "Sign in with Apple" (iOS/Safari)
+        +-- Mesmo fluxo (email pode ser @privaterelay.appleid.com)
 ```
 
-Nao ha como um usuario acessar dados de outro usuario - o `user.id` vem do token JWT validado.
+---
+
+## 6. Consideracoes Importantes
+
+1. **Email Relay Apple**: Sistema aceita emails `@privaterelay.appleid.com`
+2. **Nome do Usuario**: Apple so envia nome no primeiro login; fallback para "Usuario"
+3. **Sem tokens expostos**: Supabase gerencia sessao automaticamente
+4. **RLS inalterado**: `user.id` continua sendo fonte de verdade
+5. **Compativel Capacitor**: OAuth funciona via Browser plugin
 
 ---
 
-## Impacto
+## 7. Impacto
 
-- **Zero breaking changes** em funcionalidades
-- **Zero alteracoes de layout**
-- **Compliance LGPD** com documentacao legal
-- **Apple Health App Guidelines** atendidas
-- **Seguranca reforçada** com auth correta (getUser)
-- **Navegacao estavel** em WebViews iOS/Android
+- Zero breaking changes em funcionalidades existentes
+- Login por email continua funcionando
+- RLS e Edge Functions nao afetados
+- Perfil criado automaticamente com dados do provider
+- Compativel com Web, iOS e Android
 
