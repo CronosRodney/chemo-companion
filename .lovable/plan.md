@@ -1,166 +1,204 @@
 
 
-# Plano: Correção de Contexto Médico/Paciente e Edge Functions
+# Plano: Conectar Botões de Ação ao Domínio de Dados
 
-## Diagnóstico Técnico
+## Diagnóstico Completo
 
-### Problema 1 - Edge Functions com Método Inexistente
+### O que está funcionando
+- RLS policies para médicos (INSERT/UPDATE/DELETE) já existem na migration `20260202041953`
+- `TreatmentService.createTreatmentPlan` usa `targetPatientId` corretamente
+- `TreatmentPlanDialog` passa `patientId` e valida retorno com `result?.id`
+- `Treatment.tsx` passa `patientId` para o dialog
 
-As edge functions `accept-doctor-invite` e `reject-doctor-invite` usam:
-```typescript
-await userClient.auth.getClaims(token);
+### Problema Real: Botões sem Handlers
+
+Os botões em `Treatment.tsx` (linhas 265-277) estão **sem onClick**:
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                 BOTÕES DE AÇÃO (MORTOS)                         │
+├─────────────────────────────────────────────────────────────────┤
+│  Ver Detalhes    → SEM onClick                                  │
+│  Ver Ciclos      → SEM onClick                                  │
+│  Gerenciar       → SEM onClick                                  │
+│  Excluir         → NÃO EXISTE                                   │
+│  Liberar Ciclo   → NÃO EXISTE na UI                             │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-Este método **não existe** no SDK do Supabase. Isso causa erro 500 silencioso e o aceite falha.
+---
 
-**Solução:** Refatorar para usar o padrão correto `auth.getUser()` que já existe em `_shared/auth.ts`.
+## Solução Proposta
 
-### Problema 2 - Upsert sem Constraint
+### 1. Criar Modais/Dialogs Necessários
 
-A edge function tenta fazer upsert com:
-```typescript
-onConflict: 'patient_user_id,doctor_user_id'
+| Componente | Função | Prioridade |
+|------------|--------|------------|
+| `TreatmentDetailDialog` | Visualizar detalhes completos do plano | Alta |
+| `TreatmentCyclesDialog` | Visualizar/gerenciar ciclos do plano | Alta |
+| `ReleaseCycleDialog` | Liberar ciclo para administração | Alta |
+| `EditTreatmentPlanDialog` | Editar plano existente | Média |
+| Confirmação de exclusão | Alert dialog para excluir plano | Média |
+
+### 2. Conectar Botões em Treatment.tsx
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                 BOTÕES APÓS CORREÇÃO                            │
+├─────────────────────────────────────────────────────────────────┤
+│  Ver Detalhes    → onClick={() => setDetailDialogPlan(plan)}    │
+│  Ver Ciclos      → onClick={() => setCyclesDialogPlan(plan)}    │
+│  Gerenciar       → onClick={() => setEditDialogPlan(plan)}      │
+│  Excluir         → onClick={() => handleDeletePlan(plan.id)}    │
+│  Liberar Ciclo   → onClick={() => setReleaseCycle(cycle)}       │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-Mas se não existir uma constraint UNIQUE nessas colunas, o upsert falhará.
+### 3. Adicionar Métodos no TreatmentService
 
-**Solução:** Alterar para insert com verificação de existência prévia, ou criar constraint única.
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│              NOVOS MÉTODOS NO SERVICE                           │
+├─────────────────────────────────────────────────────────────────┤
+│  updateTreatmentPlan(planId, data)   → UPDATE treatment_plans   │
+│  deleteTreatmentPlan(planId)         → DELETE treatment_plans   │
+│  releaseCycle(cycleId, status)       → já existe, só conectar   │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-### Problema 3 - Portal do Médico mostrando UI simplificada
+### 4. Garantir Re-fetch Após Cada Ação
 
-O `PatientDetails.tsx` atual já é um painel clínico, mas:
-- A aba Tratamento mostra apenas lista, sem ações de edição
-- A aba Saúde está vazia com placeholder
-- Falta indicação visual clara de que é contexto médico
-
-**Solução:** Melhorar a UX do portal médico com:
-- Badge indicando "Visualização Médica"
-- Adicionar ações de edição nas abas permitidas
-- Integrar dados reais de exames na aba Saúde
+Todas as ações devem chamar `refetchTreatmentPlans()` após sucesso.
 
 ---
 
 ## Implementação Detalhada
 
-### 1. Corrigir Edge Functions (Prioridade Alta)
-
-**Arquivos:**
-- `supabase/functions/accept-doctor-invite/index.ts`
-- `supabase/functions/reject-doctor-invite/index.ts`
+### Arquivo: `src/pages/Treatment.tsx`
 
 **Mudanças:**
 
-1. Substituir `auth.getClaims()` por `auth.getUser()`
-2. Adicionar verificação de existência antes do upsert
-3. Buscar email do usuário via tabela `profiles` (pois `getUser()` retorna dados da tabela auth)
+1. Adicionar estados para controlar dialogs:
+   - `selectedPlanForDetails` - plano para visualizar detalhes
+   - `selectedPlanForCycles` - plano para visualizar ciclos
+   - `selectedPlanForEdit` - plano para editar
+   - `planToDelete` - plano para confirmar exclusão
 
-**Fluxo corrigido:**
+2. Adicionar handlers:
+   - `handleViewDetails(plan)` - abre dialog de detalhes
+   - `handleViewCycles(plan)` - abre dialog de ciclos
+   - `handleEditPlan(plan)` - abre dialog de edição (somente médico)
+   - `handleDeletePlan(planId)` - confirma e exclui plano
+   - `handleReleaseCycle(cycle)` - libera ciclo
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                    ACCEPT-DOCTOR-INVITE                         │
-├─────────────────────────────────────────────────────────────────┤
-│  1. Validar Authorization header                                │
-│  2. Chamar auth.getUser() (NÃO getClaims)                       │
-│  3. Buscar email do usuário via profiles                        │
-│  4. Validar que email == invite.patient_email                   │
-│  5. Verificar se conexão já existe                              │
-│  6. UPDATE connection_invites.status = 'accepted'               │
-│  7. INSERT ou UPDATE patient_doctor_connections                 │
-│  8. Retornar sucesso                                            │
-└─────────────────────────────────────────────────────────────────┘
+3. Conectar botões aos handlers
+
+4. Adicionar componentes de dialog no final do componente
+
+### Arquivo: `src/services/treatmentService.ts`
+
+**Novos métodos:**
+
+```typescript
+// Atualizar plano existente
+static async updateTreatmentPlan(planId: string, data: Partial<TreatmentPlanData>) {
+  const { data: result, error } = await supabase
+    .from('treatment_plans')
+    .update(data)
+    .eq('id', planId)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  if (!result) throw new Error("Falha ao atualizar plano");
+  return result;
+}
+
+// Excluir plano
+static async deleteTreatmentPlan(planId: string) {
+  // Primeiro exclui dependências (ciclos, drogas)
+  await supabase.from('treatment_cycles').delete().eq('treatment_plan_id', planId);
+  await supabase.from('treatment_drugs').delete().eq('treatment_plan_id', planId);
+  
+  const { error } = await supabase
+    .from('treatment_plans')
+    .delete()
+    .eq('id', planId);
+  
+  if (error) throw error;
+}
 ```
 
-### 2. Adicionar Constraint Única (Banco de Dados)
+### Novos Componentes
 
-**Migração SQL:**
-```sql
-ALTER TABLE patient_doctor_connections 
-ADD CONSTRAINT unique_patient_doctor 
-UNIQUE (patient_user_id, doctor_user_id);
-```
-
-Isso permitirá que o upsert funcione corretamente.
-
-### 3. Melhorar Portal do Médico
-
-**Arquivo:** `src/pages/doctor/PatientDetails.tsx`
-
-**Mudanças:**
-- Adicionar badge "Painel Clínico" no header
-- Adicionar aba "Exames" funcional
-- Integrar botões de ação na aba Tratamento (editar plano, liberar ciclo)
-- Mostrar dados reais de wearables na aba Saúde
-
-**Nova estrutura de abas:**
-
-```text
-┌──────────────────────────────────────────────────────────────────┐
-│  🏥 Painel Clínico                              [Visualização]   │
-├──────────────────────────────────────────────────────────────────┤
-│  [Resumo] [Tratamento*] [Exames*] [Saúde] [Notas]                │
-│                        * = editável                              │
-├──────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  Aba Tratamento:                                                 │
-│  - Lista de planos com botão "Editar"                            │
-│  - Botão "Liberar Próximo Ciclo"                                 │
-│  - Histórico de ajustes de dose                                  │
-│                                                                  │
-│  Aba Exames:                                                     │
-│  - Lista de exames laboratoriais do paciente                     │
-│  - Botão "Adicionar Resultado"                                   │
-│  - Gráficos de tendência                                         │
-│                                                                  │
-│  Aba Saúde:                                                      │
-│  - Métricas de wearables (se conectados)                         │
-│  - Alertas de saúde                                              │
-│  - Sem edição (somente leitura)                                  │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
-```
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/components/TreatmentDetailDialog.tsx` | Modal com detalhes do plano (drogas, doses, cronograma) |
+| `src/components/TreatmentCyclesDialog.tsx` | Modal com lista de ciclos e ação de liberar |
+| `src/components/ReleaseCycleDialog.tsx` | Modal para liberar ciclo (escolher status, motivo) |
 
 ---
 
 ## Arquivos a Modificar
 
-| Arquivo | Ação | Prioridade |
-|---------|------|------------|
-| `supabase/functions/accept-doctor-invite/index.ts` | Modificar | Crítica |
-| `supabase/functions/reject-doctor-invite/index.ts` | Modificar | Crítica |
-| `src/pages/doctor/PatientDetails.tsx` | Modificar | Alta |
-| Migração SQL (constraint única) | Criar | Alta |
+| Arquivo | Ação | Linhas Afetadas |
+|---------|------|-----------------|
+| `src/pages/Treatment.tsx` | Modificar | 27-50 (estados), 265-277 (botões), 718-723 (dialogs) |
+| `src/services/treatmentService.ts` | Modificar | Adicionar updateTreatmentPlan, deleteTreatmentPlan |
+| `src/components/TreatmentDetailDialog.tsx` | Criar | Novo arquivo |
+| `src/components/TreatmentCyclesDialog.tsx` | Criar | Novo arquivo |
+| `src/components/ReleaseCycleDialog.tsx` | Criar | Novo arquivo |
 
 ---
 
-## O que NÃO será alterado
+## Fluxo de Dados Após Correção
 
-| Item | Motivo |
-|------|--------|
-| `usePendingInvites.ts` | Query já filtra corretamente por `status = 'pending'` |
-| `PendingInvitesNotification.tsx` | Componente funciona corretamente |
-| `Home.tsx` | `MyDoctorsCard` já foi removido |
-| `Profile.tsx` | Médico responsável já está implementado corretamente |
-| `Treatment.tsx` | Badge do médico já está implementado |
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                    FLUXO MÉDICO                                 │
+├─────────────────────────────────────────────────────────────────┤
+│  1. Médico clica "Novo Plano"                                   │
+│  2. TreatmentPlanDialog abre                                    │
+│  3. Médico preenche dados                                       │
+│  4. TreatmentService.createTreatmentPlan(data, patientId)       │
+│  5. Service usa user_id = patientId (não auth.uid())            │
+│  6. RLS permite INSERT (doctor_has_patient_access)              │
+│  7. Banco persiste plano                                        │
+│  8. Dialog valida result.id                                     │
+│  9. onSuccess() → refetchTreatmentPlans()                       │
+│  10. UI atualiza para médico                                    │
+│  11. Paciente vê mesmos dados (mesma tabela)                    │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Sequência de Implementação
+## Validação Esperada
 
-1. **Migração SQL**: Criar constraint única em `patient_doctor_connections`
-2. **Edge Functions**: Corrigir `accept-doctor-invite` e `reject-doctor-invite`
-3. **Portal Médico**: Melhorar `PatientDetails.tsx` com funcionalidades clínicas
+| Teste | Resultado |
+|-------|-----------|
+| Médico clica "Novo Plano" | Modal abre |
+| Médico preenche e confirma | Plano persiste, toast sucesso |
+| Médico clica "Ver Detalhes" | Modal com detalhes abre |
+| Médico clica "Ver Ciclos" | Modal com ciclos abre |
+| Médico clica "Gerenciar" | Modal de edição abre |
+| Médico clica "Excluir" | Confirmação, plano excluído |
+| Paciente atualiza tela | Vê plano criado pelo médico |
+| Paciente não vê botões de ação | Correto (somente visualização) |
 
 ---
 
-## Verificação Pós-Implementação
+## Resumo Técnico
 
-| Teste | Resultado Esperado |
-|-------|-------------------|
-| Paciente clica "Aceitar" | Conexão criada com sucesso |
-| Paciente atualiza Home | Solicitação desaparece |
-| Médico abre portal | Painel clínico (não dashboard paciente) |
-| Médico edita tratamento | Edição funciona |
-| Paciente vê Tratamento | Badge do médico visível |
-| Paciente vê Perfil | Bloco médico responsável visível |
+A feature de tratamento possui a estrutura correta:
+- RLS configurado
+- Service usa patientId
+- Dialog passa patientId
+
+O problema é que **os botões não estão conectados a handlers**. A solução é:
+1. Adicionar estados para controlar modais
+2. Criar handlers para cada ação
+3. Conectar botões aos handlers via onClick
+4. Criar dialogs de visualização/edição
+5. Garantir re-fetch após cada operação
 
