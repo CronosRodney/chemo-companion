@@ -11,11 +11,13 @@ import { useAppContext } from "@/contexts/AppContext";
 import { useToast } from "@/hooks/use-toast";
 import { useDoctorAuth } from "@/hooks/useDoctorAuth";
 import { PendingInvitesNotification } from "@/components/PendingInvitesNotification";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Home = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isDoctor } = useDoctorAuth();
+  const isMobile = useIsMobile();
   const { 
     profile, 
     loading, 
@@ -52,6 +54,9 @@ const Home = () => {
       });
     }
   };
+
+  // Mobile: limit reminders to 1 item
+  const displayedReminders = isMobile ? reminders.slice(0, 1) : reminders;
 
   if (loading) {
     return (
@@ -173,7 +178,7 @@ const Home = () => {
               </Button>
             </div>
             <div className="space-y-4">
-            {reminders.map((reminder) => (
+            {displayedReminders.map((reminder) => (
               <div key={reminder.id} className={`glass-effect p-4 rounded-xl border-2 relative overflow-hidden ${reminder.urgent ? 'border-primary/40' : 'border-accent/40'}`}>
                 {reminder.urgent && <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary-glow/5"></div>}
                 <div className="relative flex items-center gap-4">
@@ -194,6 +199,17 @@ const Home = () => {
               </div>
             ))}
             
+            {/* Mobile: "See more" link when there are more reminders */}
+            {isMobile && reminders.length > 1 && (
+              <Button
+                variant="link"
+                className="w-full text-primary"
+                onClick={() => setShowReminderManager(true)}
+              >
+                Ver mais ({reminders.length - 1} lembrete{reminders.length > 2 ? 's' : ''})
+              </Button>
+            )}
+            
             {/* ReminderManager Integration */}
             {showReminderManager && (
               <div className="pt-4 border-t border-accent/30">
@@ -210,8 +226,8 @@ const Home = () => {
         {/* Treatment Progress Widget */}
         <TreatmentProgressWidget treatmentPlans={treatmentPlans || []} />
 
-        {/* Connected Clinics */}
-        {!clinicsLoading && clinics.length > 0 && (
+        {/* Desktop only: Connected Clinics */}
+        {!isMobile && !clinicsLoading && clinics.length > 0 && (
           <div className="luxury-card p-6 space-y-4 border-2 border-secondary/20">
             <h2 className="text-xl font-bold text-card-foreground text-shadow flex items-center gap-3">
               <Building2 className="h-6 w-6 text-secondary-accent" />
@@ -257,34 +273,36 @@ const Home = () => {
           </div>
         )}
 
-        {/* Quick Stats Premium */}
-        <div className="grid grid-cols-2 gap-3">
-          <div 
-            className="luxury-card p-5 text-center relative overflow-hidden border-2 border-success/30 group hover:scale-105 transition-transform cursor-pointer"
-            onClick={() => navigate('/medications')}
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-success/10 via-success/5 to-transparent"></div>
-            <div className="absolute -top-10 -right-10 w-32 h-32 bg-success/20 rounded-full blur-2xl group-hover:blur-3xl transition-all"></div>
-            <div className="relative">
-              <div className="text-4xl font-bold bg-gradient-to-br from-success to-success/70 bg-clip-text text-transparent mb-2 text-shadow">{stats.adherence}%</div>
-              <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">Adesão</div>
+        {/* Desktop only: Quick Stats Premium */}
+        {!isMobile && (
+          <div className="grid grid-cols-2 gap-3">
+            <div 
+              className="luxury-card p-5 text-center relative overflow-hidden border-2 border-success/30 group hover:scale-105 transition-transform cursor-pointer"
+              onClick={() => navigate('/medications')}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-success/10 via-success/5 to-transparent"></div>
+              <div className="absolute -top-10 -right-10 w-32 h-32 bg-success/20 rounded-full blur-2xl group-hover:blur-3xl transition-all"></div>
+              <div className="relative">
+                <div className="text-4xl font-bold bg-gradient-to-br from-success to-success/70 bg-clip-text text-transparent mb-2 text-shadow">{stats.adherence}%</div>
+                <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">Adesão</div>
+              </div>
+            </div>
+            <div 
+              className="luxury-card p-5 text-center relative overflow-hidden border-2 border-secondary/30 group hover:scale-105 transition-transform cursor-pointer"
+              onClick={() => navigate('/events')}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 via-secondary-accent/5 to-transparent"></div>
+              <div className="absolute -top-10 -right-10 w-32 h-32 bg-secondary/20 rounded-full blur-2xl group-hover:blur-3xl transition-all"></div>
+              <div className="relative">
+                <div className="text-xl font-bold bg-gradient-to-br from-secondary-accent to-secondary bg-clip-text text-transparent mb-2 text-shadow">{stats.nextAppointment}</div>
+                <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">Consulta</div>
+              </div>
             </div>
           </div>
-          <div 
-            className="luxury-card p-5 text-center relative overflow-hidden border-2 border-secondary/30 group hover:scale-105 transition-transform cursor-pointer"
-            onClick={() => navigate('/events')}
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 via-secondary-accent/5 to-transparent"></div>
-            <div className="absolute -top-10 -right-10 w-32 h-32 bg-secondary/20 rounded-full blur-2xl group-hover:blur-3xl transition-all"></div>
-            <div className="relative">
-              <div className="text-xl font-bold bg-gradient-to-br from-secondary-accent to-secondary bg-clip-text text-transparent mb-2 text-shadow">{stats.nextAppointment}</div>
-              <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">Consulta</div>
-            </div>
-          </div>
-        </div>
+        )}
 
-        {/* Lab Results Quick Access */}
-        {treatmentPlans && treatmentPlans.length > 0 && (
+        {/* Desktop only: Lab Results Quick Access */}
+        {!isMobile && treatmentPlans && treatmentPlans.length > 0 && (
           <div 
             className="luxury-card p-6 border-2 border-accent/30 relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer"
             onClick={() => navigate('/labs')}
@@ -307,32 +325,34 @@ const Home = () => {
           </div>
         )}
 
-        {/* Wearables / Health Monitoring */}
-        <div 
-          className="luxury-card p-6 border-2 border-chart-1/30 relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer"
-          onClick={() => navigate('/health')}
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-chart-1/10 to-transparent"></div>
-          <div className="relative flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-chart-1/20 flex items-center justify-center">
-                <Activity className="h-6 w-6 text-chart-1" />
+        {/* Desktop only: Wearables / Health Monitoring */}
+        {!isMobile && (
+          <div 
+            className="luxury-card p-6 border-2 border-chart-1/30 relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer"
+            onClick={() => navigate('/health')}
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-chart-1/10 to-transparent"></div>
+            <div className="relative flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-chart-1/20 flex items-center justify-center">
+                  <Activity className="h-6 w-6 text-chart-1" />
+                </div>
+                <div>
+                  <p className="font-bold text-lg">Monitoramento de Saúde</p>
+                  <p className="text-sm text-muted-foreground">Conecte seus dispositivos wearables</p>
+                </div>
               </div>
-              <div>
-                <p className="font-bold text-lg">Monitoramento de Saúde</p>
-                <p className="text-sm text-muted-foreground">Conecte seus dispositivos wearables</p>
-              </div>
+              <Button variant="ghost" size="sm">
+                Ver
+              </Button>
             </div>
-            <Button variant="ghost" size="sm">
-              Ver
-            </Button>
           </div>
-        </div>
+        )}
 
-        {/* Pending Doctor Invites - For Patients */}
-        <PendingInvitesNotification />
+        {/* Desktop only: Pending Doctor Invites */}
+        {!isMobile && <PendingInvitesNotification />}
 
-        {/* Emergency Alert */}
+        {/* Emergency Alert - Always visible */}
         <div className="luxury-card bg-destructive/5 border-2 border-destructive/30 p-6 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-destructive/5 to-destructive/10"></div>
           <div className="relative">
@@ -360,8 +380,7 @@ const Home = () => {
                 {profile?.emergency_contact_name || 'Maria Silva'} - {profile?.emergency_contact_phone || '(11) 88888-8888'}
               </p>
               <Button variant="destructive" size="sm" className="font-bold">
-                <Clock className="h-4 w-4 mr-2" />
-                Ligar Emergência
+                <a href={`tel:${profile?.emergency_contact_phone || '(11) 88888-8888'}`}>Ligar Agora</a>
               </Button>
             </div>
           </div>
