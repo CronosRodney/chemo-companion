@@ -222,4 +222,71 @@ export class TreatmentService {
 
     if (error) throw error;
   }
+
+  /**
+   * Atualiza um plano de tratamento existente
+   */
+  static async updateTreatmentPlan(
+    planId: string,
+    data: Partial<TreatmentPlanData>
+  ) {
+    const { data: result, error } = await supabase
+      .from('treatment_plans')
+      .update(data)
+      .eq('id', planId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    if (!result) throw new Error("Falha ao atualizar plano de tratamento");
+    return result;
+  }
+
+  /**
+   * Exclui um plano de tratamento e todas as dependências
+   */
+  static async deleteTreatmentPlan(planId: string) {
+    // Primeiro exclui as prescrições de suporte dos ciclos
+    const { data: cycles } = await supabase
+      .from('treatment_cycles')
+      .select('id')
+      .eq('treatment_plan_id', planId);
+
+    if (cycles && cycles.length > 0) {
+      const cycleIds = cycles.map(c => c.id);
+      await supabase
+        .from('cycle_support_prescriptions')
+        .delete()
+        .in('cycle_id', cycleIds);
+      
+      await supabase
+        .from('cycle_administrations')
+        .delete()
+        .in('cycle_id', cycleIds);
+    }
+
+    // Exclui ciclos
+    const { error: cyclesError } = await supabase
+      .from('treatment_cycles')
+      .delete()
+      .eq('treatment_plan_id', planId);
+
+    if (cyclesError) throw cyclesError;
+
+    // Exclui drogas
+    const { error: drugsError } = await supabase
+      .from('treatment_drugs')
+      .delete()
+      .eq('treatment_plan_id', planId);
+
+    if (drugsError) throw drugsError;
+
+    // Exclui o plano
+    const { error: planError } = await supabase
+      .from('treatment_plans')
+      .delete()
+      .eq('id', planId);
+
+    if (planError) throw planError;
+  }
 }

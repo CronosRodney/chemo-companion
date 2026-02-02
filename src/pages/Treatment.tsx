@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Activity, Calendar as CalendarIcon, Clock, CheckCircle2, AlertCircle, Beaker, Syringe, Eye, Stethoscope } from "lucide-react";
+import { Plus, Activity, Calendar as CalendarIcon, Clock, CheckCircle2, AlertCircle, Beaker, Syringe, Eye, Stethoscope, Trash2, Settings } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useAppContext } from "@/contexts/AppContext";
 import TreatmentPlanDialog from "@/components/TreatmentPlanDialog";
+import TreatmentDetailDialog from "@/components/TreatmentDetailDialog";
+import TreatmentCyclesDialog from "@/components/TreatmentCyclesDialog";
 import { format, isPast, isFuture, isToday, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Progress } from "@/components/ui/progress";
@@ -13,6 +15,18 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePatientTreatment } from "@/hooks/usePatientTreatment";
+import { TreatmentService } from "@/services/treatmentService";
+import { toast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface TreatmentProps {
   // Optional: Patient ID for doctor context (loads patient's data instead of current user)
@@ -25,6 +39,12 @@ interface TreatmentProps {
 
 export default function Treatment({ patientId, canEditOverride, onRefetch }: TreatmentProps = {}) {
   const [createPlanDialogOpen, setCreatePlanDialogOpen] = useState(false);
+  
+  // Dialog states for action buttons
+  const [selectedPlanForDetails, setSelectedPlanForDetails] = useState<any>(null);
+  const [selectedPlanForCycles, setSelectedPlanForCycles] = useState<any>(null);
+  const [planToDelete, setPlanToDelete] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Use AppContext for patient's own view, or usePatientTreatment for doctor's view
   const appContext = useAppContext();
@@ -102,6 +122,41 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
   
   // Determine context for UI text
   const isDoctorContext = isViewingPatient || isDoctor;
+
+  // Handlers for action buttons
+  const handleViewDetails = (plan: any) => {
+    setSelectedPlanForDetails(plan);
+  };
+
+  const handleViewCycles = (plan: any) => {
+    setSelectedPlanForCycles(plan);
+  };
+
+  const handleDeletePlan = async () => {
+    if (!planToDelete) return;
+    
+    try {
+      setIsDeleting(true);
+      await TreatmentService.deleteTreatmentPlan(planToDelete.id);
+      
+      toast({
+        title: "Plano excluído",
+        description: `O plano "${planToDelete.regimen_name}" foi excluído com sucesso.`,
+      });
+      
+      setPlanToDelete(null);
+      refetchTreatmentPlans();
+    } catch (error) {
+      console.error('Error deleting plan:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao excluir plano",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="container max-w-7xl mx-auto p-6 space-y-6">
@@ -263,15 +318,31 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
                         )}
 
                         <div className="flex gap-2 border-t pt-4">
-                          <Button size="sm" variant="outline" className="flex-1">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex-1"
+                            onClick={() => handleViewDetails(plan)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
                             Ver Detalhes
                           </Button>
-                          <Button size="sm" variant="outline" className="flex-1">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex-1"
+                            onClick={() => handleViewCycles(plan)}
+                          >
+                            <CalendarIcon className="h-4 w-4 mr-1" />
                             Ver Ciclos
                           </Button>
                           {canEditTreatment && plan.status === 'active' && (
-                            <Button size="sm" className="flex-1">
-                              Gerenciar
+                            <Button 
+                              size="sm" 
+                              variant="destructive"
+                              onClick={() => setPlanToDelete(plan)}
+                            >
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           )}
                         </div>
@@ -721,6 +792,42 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
         onSuccess={refetchTreatmentPlans}
         patientId={patientId}
       />
+
+      <TreatmentDetailDialog
+        open={!!selectedPlanForDetails}
+        onOpenChange={(open) => !open && setSelectedPlanForDetails(null)}
+        plan={selectedPlanForDetails}
+      />
+
+      <TreatmentCyclesDialog
+        open={!!selectedPlanForCycles}
+        onOpenChange={(open) => !open && setSelectedPlanForCycles(null)}
+        plan={selectedPlanForCycles}
+        canEdit={canEditTreatment}
+        onSuccess={refetchTreatmentPlans}
+      />
+
+      <AlertDialog open={!!planToDelete} onOpenChange={(open) => !open && setPlanToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Plano de Tratamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o plano "{planToDelete?.regimen_name}"? 
+              Esta ação irá remover todos os ciclos e medicamentos associados e não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeletePlan}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Excluindo..." : "Excluir Plano"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
