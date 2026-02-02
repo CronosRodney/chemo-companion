@@ -10,8 +10,8 @@ export const MyDoctorsCard = () => {
   const { toast } = useToast();
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
 
-  // Filter out disconnected doctors
-  const activeDoctors = doctors.filter(d => d.status !== 'disconnected');
+  // Filter to show only active doctors (not pending, rejected, or disconnected)
+  const activeDoctors = doctors.filter(d => d.status === 'active');
 
   if (loading) {
     return (

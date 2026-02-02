@@ -10,7 +10,6 @@ import { TreatmentProgressWidget } from "@/components/TreatmentProgressWidget";
 import { useAppContext } from "@/contexts/AppContext";
 import { useToast } from "@/hooks/use-toast";
 import { useDoctorAuth } from "@/hooks/useDoctorAuth";
-import { MyDoctorsCard } from "@/components/MyDoctorsCard";
 import { PendingInvitesNotification } from "@/components/PendingInvitesNotification";
 
 const Home = () => {
@@ -278,9 +277,6 @@ const Home = () => {
 
         {/* Pending Doctor Invites - For Patients */}
         {!isDoctor && <PendingInvitesNotification />}
-
-        {/* My Doctors Section - For Patients */}
-        <MyDoctorsCard />
 
         {/* Doctor Portal Access - Only for users who are already doctors */}
         {isDoctor && (
