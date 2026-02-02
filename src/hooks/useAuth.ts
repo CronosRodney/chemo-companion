@@ -95,35 +95,34 @@ export const useAuth = () => {
       if (data) {
         setProfile(data);
       } else {
-        // Create default profile if none exists
-        const defaultProfile = {
+        // Obter dados do usuário autenticado (inclui metadata do provider OAuth)
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        
+        // Extrair nome do provider (Google/Apple fornecem em user_metadata)
+        const metadata = authUser?.user_metadata || {};
+        const providerName = metadata.full_name || metadata.name || '';
+        const [firstName, ...lastParts] = providerName.split(' ');
+        const lastName = lastParts.join(' ');
+        
+        // Email pode ser privado (Apple relay @privaterelay.appleid.com)
+        const email = authUser?.email || '';
+        
+        // Criar perfil com dados do provider ou valores padrão mínimos
+        const newProfile = {
           user_id: userId,
-          first_name: 'João',
-          last_name: 'Silva',
-          email: 'joao.silva@email.com',
-          phone: '(11) 99999-9999',
-          birth_date: '1985-03-15',
-          cpf: '123.456.789-00',
-          rg: '12.345.678-9',
-          address: 'Rua das Flores, 123, Apto 45',
-          city: 'São Paulo',
-          state: 'SP',
-          zip: '01234-567',
-          emergency_contact_name: 'Maria Silva',
-          emergency_contact_phone: '(11) 88888-8888',
-          medical_history: 'Hipertensão arterial, Diabetes tipo 2',
-          allergies: 'Penicilina, Ácido acetilsalicílico',
-          current_medications: 'Losartana 50mg, Metformina 850mg'
+          first_name: firstName || 'Usuário',
+          last_name: lastName || '',
+          email: email,
         };
 
-        const { data: newProfile, error: createError } = await supabase
+        const { data: createdProfile, error: createError } = await supabase
           .from('profiles')
-          .insert(defaultProfile)
+          .insert(newProfile)
           .select()
           .single();
 
         if (createError) throw createError;
-        setProfile(newProfile);
+        setProfile(createdProfile);
       }
     } catch (error) {
       console.error('Error loading profile:', error);
