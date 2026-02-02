@@ -38,20 +38,27 @@ Deno.serve(async (req: Request) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    // Get authenticated user
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    // Get authenticated user using getUser() - the correct method
+    const { data: userData, error: userError } = await userClient.auth.getUser();
     
-    if (claimsError || !claimsData?.claims) {
-      console.error('[ACCEPT-INVITE] Auth error:', claimsError);
+    if (userError || !userData?.user) {
+      console.error('[ACCEPT-INVITE] Auth error:', userError);
       return new Response(
         JSON.stringify({ error: 'Token inválido ou expirado' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const userId = claimsData.claims.sub as string;
-    const userEmail = claimsData.claims.email as string;
+    const userId = userData.user.id;
+    const userEmail = userData.user.email;
+
+    if (!userEmail) {
+      console.error('[ACCEPT-INVITE] User has no email');
+      return new Response(
+        JSON.stringify({ error: 'Usuário sem email cadastrado' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     console.log(`[ACCEPT-INVITE] User ${userId} (${userEmail}) accepting invite ${invite_id}`);
 
@@ -107,7 +114,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // 4b. Upsert patient_doctor_connections
+    // 4b. Upsert patient_doctor_connections (uses unique constraint)
     const { error: connectionError } = await adminClient
       .from('patient_doctor_connections')
       .upsert(
