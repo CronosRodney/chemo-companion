@@ -27,6 +27,8 @@ import Health from "./pages/Health";
 import Teleconsultation from "./pages/Teleconsultation";
 import Navigation from "./components/Navigation";
 import NotFound from "./pages/NotFound";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfUse from "./pages/TermsOfUse";
 // Doctor pages
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
 import DoctorRegistration from "./pages/doctor/DoctorRegistration";
@@ -49,6 +51,8 @@ const App = () => (
           <div className="relative">
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms-of-use" element={<TermsOfUse />} />
               <Route path="/" element={
                 <ProtectedRoute>
                   <Home />

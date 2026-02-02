@@ -214,7 +214,7 @@ export default function Medications() {
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5 p-4 pb-20">
       <div className="container mx-auto max-w-2xl space-y-6">
         <div className="flex items-center gap-4 pt-4">
-          <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="outline" size="icon" onClick={() => navigate('/')}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
