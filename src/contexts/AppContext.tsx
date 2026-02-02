@@ -354,30 +354,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       )
       .subscribe();
 
-    // Listen to treatment_cycles changes
-    const treatmentCyclesChannel = supabase
-      .channel('treatment-cycles-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'treatment_cycles'
-        },
-        () => {
-          console.log('Treatment cycles changed, reloading plans...');
-          loadTreatmentPlans();
-        }
-      )
-      .subscribe();
-
     return () => {
       supabase.removeChannel(remindersChannel);
       supabase.removeChannel(userEventsChannel);
       supabase.removeChannel(eventsChannel);
       supabase.removeChannel(statsChannel);
       supabase.removeChannel(treatmentPlansChannel);
-      supabase.removeChannel(treatmentCyclesChannel);
     };
   }, [user]);
 
