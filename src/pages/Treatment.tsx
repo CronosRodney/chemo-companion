@@ -12,13 +12,36 @@ import { Progress } from "@/components/ui/progress";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePatientTreatment } from "@/hooks/usePatientTreatment";
 
-export default function Treatment() {
+interface TreatmentProps {
+  // Optional: Patient ID for doctor context (loads patient's data instead of current user)
+  patientId?: string;
+  // Optional: Override edit permission (used in doctor context)
+  canEditOverride?: boolean;
+  // Optional: Custom refetch function for external data sources
+  onRefetch?: () => Promise<void>;
+}
+
+export default function Treatment({ patientId, canEditOverride, onRefetch }: TreatmentProps = {}) {
   const [createPlanDialogOpen, setCreatePlanDialogOpen] = useState(false);
-  const { treatmentPlans, refetchTreatmentPlans, doctors, doctorsLoading } = useAppContext();
+  
+  // Use AppContext for patient's own view, or usePatientTreatment for doctor's view
+  const appContext = useAppContext();
+  const patientTreatment = usePatientTreatment(patientId);
+  
+  // Determine which data source to use
+  const isViewingPatient = !!patientId;
+  const treatmentPlans = isViewingPatient ? patientTreatment.treatmentPlans : appContext.treatmentPlans;
+  const refetchTreatmentPlans = onRefetch || (isViewingPatient ? patientTreatment.refetch : appContext.refetchTreatmentPlans);
+  
+  // Doctor info only shown in patient's own view
+  const doctors = isViewingPatient ? [] : appContext.doctors;
+  const doctorsLoading = isViewingPatient ? false : appContext.doctorsLoading;
+  
   const { canEdit, isDoctor } = usePermissions();
   
-  // Filter only active doctors
+  // Filter only active doctors (for patient's own view)
   const activeDoctors = doctors.filter(d => d.status === 'active');
   const primaryDoctor = activeDoctors.length > 0 ? activeDoctors[0] : null;
   const getStatusVariant = (status: string) => {
@@ -74,7 +97,11 @@ export default function Treatment() {
     return Math.min(completedCycles + 1, plan.planned_cycles);
   };
 
-  const canEditTreatment = canEdit('treatment');
+  // Use override if provided (doctor context), otherwise use permission hook
+  const canEditTreatment = canEditOverride !== undefined ? canEditOverride : canEdit('treatment');
+  
+  // Determine context for UI text
+  const isDoctorContext = isViewingPatient || isDoctor;
 
   return (
     <div className="container max-w-7xl mx-auto p-6 space-y-6">
@@ -82,11 +109,11 @@ export default function Treatment() {
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">Tratamento</h1>
           <p className="text-muted-foreground">
-            {isDoctor ? 'Gerencie os planos de tratamento do paciente' : 'Acompanhe seus planos de tratamento oncológico'}
+            {isDoctorContext ? 'Gerencie os planos de tratamento do paciente' : 'Acompanhe seus planos de tratamento oncológico'}
           </p>
           
-          {/* Responsible Doctor Badge */}
-          {!isDoctor && (
+          {/* Responsible Doctor Badge - only show in patient's own view */}
+          {!isViewingPatient && !isDoctor && (
             doctorsLoading ? (
               <div className="flex items-center gap-2 mt-2">
                 <Skeleton className="h-4 w-4 rounded-full" />

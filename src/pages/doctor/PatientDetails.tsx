@@ -8,7 +8,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { 
   ArrowLeft, 
   User, 
-  Activity, 
   Heart,
   FileText,
   Plus,
@@ -24,6 +23,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useDoctorAuth } from '@/hooks/useDoctorAuth';
 import { useToast } from '@/hooks/use-toast';
 import DoctorNavigation from '@/components/doctor/DoctorNavigation';
+import Treatment from '@/pages/Treatment';
 
 interface PatientProfile {
   first_name: string;
@@ -36,23 +36,6 @@ interface PatientProfile {
   current_medications: string | null;
 }
 
-interface TreatmentPlan {
-  id: string;
-  regimen_name: string;
-  status: string | null;
-  start_date: string;
-  planned_cycles: number;
-  line_of_therapy: string;
-  treatment_cycles?: TreatmentCycle[];
-}
-
-interface TreatmentCycle {
-  id: string;
-  cycle_number: number;
-  scheduled_date: string;
-  status: string | null;
-  release_status: string;
-}
 
 interface DoctorNote {
   id: string;
@@ -77,7 +60,6 @@ const PatientDetails = () => {
   const { user } = useDoctorAuth();
   
   const [profile, setProfile] = useState<PatientProfile | null>(null);
-  const [treatments, setTreatments] = useState<TreatmentPlan[]>([]);
   const [notes, setNotes] = useState<DoctorNote[]>([]);
   const [wearableMetrics, setWearableMetrics] = useState<WearableMetric[]>([]);
   const [loading, setLoading] = useState(true);
@@ -144,18 +126,7 @@ const PatientDetails = () => {
       if (profileError) throw profileError;
       setProfile(profileData);
 
-      // Load treatment plans with cycles
-      const { data: treatmentData, error: treatmentError } = await supabase
-        .from('treatment_plans')
-        .select(`
-          id, regimen_name, status, start_date, planned_cycles, line_of_therapy,
-          treatment_cycles (id, cycle_number, scheduled_date, status, release_status)
-        `)
-        .eq('user_id', patientId)
-        .order('created_at', { ascending: false });
-
-      if (treatmentError) throw treatmentError;
-      setTreatments(treatmentData || []);
+      // Treatment data is now loaded by the Treatment component directly
 
       // Load doctor notes
       const { data: notesData, error: notesError } = await supabase
@@ -286,9 +257,6 @@ const PatientDetails = () => {
     return labels[type] || type;
   };
 
-  const getPendingCyclesCount = (treatment: TreatmentPlan) => {
-    return treatment.treatment_cycles?.filter(c => c.release_status === 'pending').length || 0;
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 pb-24">
@@ -435,78 +403,12 @@ const PatientDetails = () => {
             </Card>
           </TabsContent>
 
-          {/* Tratamento Tab - EDITÁVEL */}
-          <TabsContent value="treatment" className="space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-semibold flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                Planos de Tratamento
-              </h3>
-              <Badge className="bg-green-500/10 text-green-600 border-green-500/30">
-                <Edit className="h-3 w-3 mr-1" />
-                Editável
-              </Badge>
-            </div>
-
-            {treatments.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center">
-                  <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                  <p className="text-muted-foreground">Nenhum tratamento registrado</p>
-                </CardContent>
-              </Card>
-            ) : (
-              treatments.map((treatment) => (
-                <Card key={treatment.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-semibold">{treatment.regimen_name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {treatment.line_of_therapy} • {treatment.planned_cycles} ciclos planejados
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Início: {new Date(treatment.start_date).toLocaleDateString('pt-BR')}
-                        </p>
-                      </div>
-                      <Badge variant={treatment.status === 'active' ? 'default' : 'secondary'}>
-                        {treatment.status === 'active' ? 'Ativo' : treatment.status}
-                      </Badge>
-                    </div>
-
-                    {/* Cycles pending release */}
-                    {getPendingCyclesCount(treatment) > 0 && (
-                      <div className="mt-3 p-3 bg-amber-500/10 rounded-lg border border-amber-500/30">
-                        <p className="text-sm font-medium text-amber-600 mb-2">
-                          {getPendingCyclesCount(treatment)} ciclo(s) aguardando liberação
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {treatment.treatment_cycles
-                            ?.filter(c => c.release_status === 'pending')
-                            .slice(0, 3)
-                            .map(cycle => (
-                              <Badge key={cycle.id} variant="outline" className="text-xs">
-                                Ciclo {cycle.cycle_number} - {new Date(cycle.scheduled_date).toLocaleDateString('pt-BR')}
-                              </Badge>
-                            ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="mt-3 flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <Eye className="h-3 w-3 mr-1" />
-                        Ver Detalhes
-                      </Button>
-                      <Button variant="default" size="sm" className="flex-1">
-                        <Edit className="h-3 w-3 mr-1" />
-                        Ajustar Dose
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
+          {/* Tratamento Tab - Uses shared Treatment component */}
+          <TabsContent value="treatment">
+            <Treatment 
+              patientId={patientId} 
+              canEditOverride={true}
+            />
           </TabsContent>
 
           {/* Exames Tab - EDITÁVEL */}
