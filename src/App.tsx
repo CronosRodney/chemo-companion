@@ -34,6 +34,7 @@ import PatientsList from "./pages/doctor/PatientsList";
 import PatientDetails from "./pages/doctor/PatientDetails";
 import InvitePatient from "./pages/doctor/InvitePatient";
 import DoctorAlerts from "./pages/doctor/DoctorAlerts";
+import DoctorProfile from "./pages/doctor/DoctorProfile";
 import AcceptInvite from "./pages/AcceptInvite";
 
 const queryClient = new QueryClient();
@@ -162,6 +163,11 @@ const App = () => (
               <Route path="/doctor/alerts" element={
                 <DoctorProtectedRoute>
                   <DoctorAlerts />
+                </DoctorProtectedRoute>
+              } />
+              <Route path="/doctor/profile" element={
+                <DoctorProtectedRoute>
+                  <DoctorProfile />
                 </DoctorProtectedRoute>
               } />
               {/* Accept invite route (public) */}
