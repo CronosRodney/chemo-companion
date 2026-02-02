@@ -41,6 +41,17 @@ const isApplePlatform = () => {
   return isIOS || (isMacOS && isSafari);
 };
 
+// Detectar se está em ambiente de desenvolvimento (localhost ou preview)
+// Usado para ocultar "Modo Teste" em produção (domínios custom ou *.lovable.app sem preview)
+const isDevEnvironment = () => {
+  const hostname = window.location.hostname;
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.includes('preview')
+  );
+};
+
 const patientSchema = z.object({
   email: z.string().email('Email inválido').min(1, 'Email é obrigatório'),
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
@@ -816,36 +827,38 @@ export default function Auth() {
                   </Button>
                 </div>
 
-                {/* Modo Teste - Acesso Rápido */}
-                <div className="mt-6 pt-4 border-t border-border">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Zap className="h-4 w-4 text-amber-500" />
-                    <span className="text-sm font-medium text-muted-foreground">Modo Teste</span>
+                {/* Modo Teste - Apenas em ambiente de desenvolvimento */}
+                {isDevEnvironment() && (
+                  <div className="mt-6 pt-4 border-t border-border">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Zap className="h-4 w-4 text-amber-500" />
+                      <span className="text-sm font-medium text-muted-foreground">Modo Teste</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button 
+                        variant="outline"
+                        onClick={() => handleQuickLogin('patient')}
+                        disabled={isLoading}
+                        className="border-primary/30 hover:bg-primary/10"
+                      >
+                        <UserRound className="h-4 w-4 mr-2" />
+                        Paciente
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={() => handleQuickLogin('doctor')}
+                        disabled={isLoading}
+                        className="border-primary/30 hover:bg-primary/10"
+                      >
+                        <Stethoscope className="h-4 w-4 mr-2" />
+                        Médico
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center mt-2">
+                      Acesso rápido para desenvolvimento
+                    </p>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button 
-                      variant="outline"
-                      onClick={() => handleQuickLogin('patient')}
-                      disabled={isLoading}
-                      className="border-primary/30 hover:bg-primary/10"
-                    >
-                      <UserRound className="h-4 w-4 mr-2" />
-                      Paciente
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => handleQuickLogin('doctor')}
-                      disabled={isLoading}
-                      className="border-primary/30 hover:bg-primary/10"
-                    >
-                      <Stethoscope className="h-4 w-4 mr-2" />
-                      Médico
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground text-center mt-2">
-                    Acesso rápido para desenvolvimento
-                  </p>
-                </div>
+                )}
               </TabsContent>
 
               <TabsContent value="signup" className="mt-6">
