@@ -17,6 +17,8 @@ interface TreatmentPlanDialogProps {
   onSuccess: () => void;
   /** When provided, creates plan for this patient (doctor context) */
   patientId?: string;
+  /** Edit mode: existing plan to edit */
+  editPlan?: any;
 }
 
 interface Drug {
@@ -30,7 +32,7 @@ interface Drug {
   day_codes: string[];
 }
 
-export default function TreatmentPlanDialog({ open, onOpenChange, onSuccess, patientId }: TreatmentPlanDialogProps) {
+export default function TreatmentPlanDialog({ open, onOpenChange, onSuccess, patientId, editPlan }: TreatmentPlanDialogProps) {
   const [templates, setTemplates] = useState<any[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [isCustom, setIsCustom] = useState(false);
@@ -53,12 +55,43 @@ export default function TreatmentPlanDialog({ open, onOpenChange, onSuccess, pat
   
   // Drugs
   const [drugs, setDrugs] = useState<Drug[]>([]);
+  
+  // Submission state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Determine if in edit mode
+  const isEditMode = !!editPlan;
 
   useEffect(() => {
     if (open) {
       loadTemplates();
+      
+      // Pre-fill form if editing
+      if (editPlan) {
+        setRegimenName(editPlan.regimen_name || "");
+        setLineOfTherapy(editPlan.line_of_therapy || "1st");
+        setTreatmentIntent(editPlan.treatment_intent || "curative");
+        setPlannedCycles(editPlan.planned_cycles || 6);
+        setPeriodicityDays(editPlan.periodicity_days || 21);
+        setDiagnosisCid(editPlan.diagnosis_cid || "");
+        setWeightKg(editPlan.weight_kg || 70);
+        setHeightCm(editPlan.height_cm || 170);
+        setStartDate(editPlan.start_date || "");
+        setDrugs(editPlan.drugs?.map((d: any) => ({
+          drug_name: d.drug_name,
+          reference_dose: d.reference_dose,
+          dose_unit: d.dose_unit,
+          route: d.route,
+          diluent: d.diluent,
+          volume_ml: d.volume_ml,
+          infusion_time_min: d.infusion_time_min,
+          day_codes: d.day_codes || [],
+        })) || []);
+        setIsCustom(true);
+        setSelectedTemplate("custom");
+      }
     }
-  }, [open]);
+  }, [open, editPlan]);
 
   useEffect(() => {
     if (weightKg && heightCm) {
@@ -81,8 +114,10 @@ export default function TreatmentPlanDialog({ open, onOpenChange, onSuccess, pat
     
     if (templateId === "custom") {
       setIsCustom(true);
-      setRegimenName("");
-      setDrugs([]);
+      if (!isEditMode) {
+        setRegimenName("");
+        setDrugs([]);
+      }
     } else {
       setIsCustom(false);
       const template = templates.find(t => t.id === templateId);
@@ -129,8 +164,11 @@ export default function TreatmentPlanDialog({ open, onOpenChange, onSuccess, pat
     }
 
     try {
-      const result = await TreatmentService.createTreatmentPlan(
-        {
+      setIsSubmitting(true);
+      
+      if (isEditMode && editPlan?.id) {
+        // UPDATE existing plan
+        await TreatmentService.updateTreatmentPlan(editPlan.id, {
           diagnosis_cid: diagnosisCid,
           line_of_therapy: lineOfTherapy,
           treatment_intent: treatmentIntent,
@@ -140,22 +178,42 @@ export default function TreatmentPlanDialog({ open, onOpenChange, onSuccess, pat
           weight_kg: weightKg,
           height_cm: heightCm,
           start_date: startDate
-        },
-        drugs,
-        patientId // Pass patient ID for doctor context
-      );
+        });
+        
+        toast.success("Plano de tratamento atualizado com sucesso!");
+      } else {
+        // CREATE new plan
+        const result = await TreatmentService.createTreatmentPlan(
+          {
+            diagnosis_cid: diagnosisCid,
+            line_of_therapy: lineOfTherapy,
+            treatment_intent: treatmentIntent,
+            regimen_name: regimenName,
+            planned_cycles: plannedCycles,
+            periodicity_days: periodicityDays,
+            weight_kg: weightKg,
+            height_cm: heightCm,
+            start_date: startDate
+          },
+          drugs,
+          patientId
+        );
 
-      if (!result?.id) {
-        throw new Error("Falha ao criar plano - nenhum ID retornado");
+        if (!result?.id) {
+          throw new Error("Falha ao criar plano - nenhum ID retornado");
+        }
+        
+        toast.success("Plano de tratamento criado com sucesso!");
       }
-
-      toast.success("Plano de tratamento criado com sucesso!");
+      
       onSuccess();
       onOpenChange(false);
       resetForm();
     } catch (error: any) {
-      console.error("Error creating treatment plan:", error);
-      toast.error(error.message || "Erro ao criar plano de tratamento");
+      console.error("Error saving treatment plan:", error);
+      toast.error(error.message || "Erro ao salvar plano de tratamento");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -178,9 +236,9 @@ export default function TreatmentPlanDialog({ open, onOpenChange, onSuccess, pat
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Novo Plano de Tratamento</DialogTitle>
+          <DialogTitle>{isEditMode ? "Editar Plano de Tratamento" : "Novo Plano de Tratamento"}</DialogTitle>
           <DialogDescription>
-            Configure o protocolo de quimioterapia para o paciente
+            {isEditMode ? "Atualize as informações do protocolo de quimioterapia" : "Configure o protocolo de quimioterapia para o paciente"}
           </DialogDescription>
         </DialogHeader>
 
@@ -189,24 +247,26 @@ export default function TreatmentPlanDialog({ open, onOpenChange, onSuccess, pat
           <div className="space-y-4">
             <h3 className="font-semibold text-sm">Protocolo</h3>
             
-            <div>
-              <Label>Selecionar Template</Label>
-              <Select value={selectedTemplate} onValueChange={handleTemplateSelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Escolha um protocolo ou crie personalizado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="custom">Protocolo Personalizado</SelectItem>
-                  {templates.map(template => (
-                    <SelectItem key={template.id} value={template.id}>
-                      {template.name} - {template.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {!isEditMode && (
+              <div>
+                <Label>Selecionar Template</Label>
+                <Select value={selectedTemplate} onValueChange={handleTemplateSelect}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Escolha um protocolo ou crie personalizado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="custom">Protocolo Personalizado</SelectItem>
+                    {templates.map(template => (
+                      <SelectItem key={template.id} value={template.id}>
+                        {template.name} - {template.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
-            {isCustom && (
+            {(isCustom || isEditMode) && (
               <div>
                 <Label>Nome do Protocolo</Label>
                 <Input 
@@ -467,8 +527,8 @@ export default function TreatmentPlanDialog({ open, onOpenChange, onSuccess, pat
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit">
-              Criar Plano de Tratamento
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Salvando..." : isEditMode ? "Salvar Alterações" : "Criar Plano de Tratamento"}
             </Button>
           </div>
         </form>
