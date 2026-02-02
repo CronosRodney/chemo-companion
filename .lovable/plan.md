@@ -1,204 +1,183 @@
 
+# Plano: Corrigir Aba de Notas do Portal Médico
 
-# Plano: Conectar Botões de Ação ao Domínio de Dados
+## Diagnóstico Realizado
 
-## Diagnóstico Completo
+### Situação Atual
+Analisei o código da aba Notas em `PatientDetails.tsx` (linhas 464-513) e identifiquei:
 
-### O que está funcionando
-- RLS policies para médicos (INSERT/UPDATE/DELETE) já existem na migration `20260202041953`
-- `TreatmentService.createTreatmentPlan` usa `targetPatientId` corretamente
-- `TreatmentPlanDialog` passa `patientId` e valida retorno com `result?.id`
-- `Treatment.tsx` passa `patientId` para o dialog
+**O que existe:**
+- Textarea para digitar notas (linha 474-479) 
+- Botão "Adicionar Nota" com onClick (linha 480-487)
+- Função `handleAddNote` implementada (linhas 167-215)
+- Listagem de notas existentes (linhas 498-511)
 
-### Problema Real: Botões sem Handlers
+**O que está faltando:**
+- Botões de **editar** e **excluir** nas notas existentes
+- Nenhuma funcionalidade de modificação após a nota ser criada
 
-Os botões em `Treatment.tsx` (linhas 265-277) estão **sem onClick**:
-
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                 BOTÕES DE AÇÃO (MORTOS)                         │
-├─────────────────────────────────────────────────────────────────┤
-│  Ver Detalhes    → SEM onClick                                  │
-│  Ver Ciclos      → SEM onClick                                  │
-│  Gerenciar       → SEM onClick                                  │
-│  Excluir         → NÃO EXISTE                                   │
-│  Liberar Ciclo   → NÃO EXISTE na UI                             │
-└─────────────────────────────────────────────────────────────────┘
-```
+**Possíveis problemas no funcionamento:**
+- O console mostra erros de RLS em profiles (não relacionado diretamente)
+- A query de notas retorna array vazio `[]`, sugerindo que nenhuma nota foi salva ainda
 
 ---
 
-## Solução Proposta
+## Mudanças Necessárias
 
-### 1. Criar Modais/Dialogs Necessários
+### 1. Adicionar Estados para Edição
 
-| Componente | Função | Prioridade |
-|------------|--------|------------|
-| `TreatmentDetailDialog` | Visualizar detalhes completos do plano | Alta |
-| `TreatmentCyclesDialog` | Visualizar/gerenciar ciclos do plano | Alta |
-| `ReleaseCycleDialog` | Liberar ciclo para administração | Alta |
-| `EditTreatmentPlanDialog` | Editar plano existente | Média |
-| Confirmação de exclusão | Alert dialog para excluir plano | Média |
+No componente `PatientDetails`:
+- `editingNote`: guarda a nota sendo editada
+- `editNoteText`: texto da edição em andamento
 
-### 2. Conectar Botões em Treatment.tsx
+### 2. Adicionar Funções de Editar e Excluir
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                 BOTÕES APÓS CORREÇÃO                            │
-├─────────────────────────────────────────────────────────────────┤
-│  Ver Detalhes    → onClick={() => setDetailDialogPlan(plan)}    │
-│  Ver Ciclos      → onClick={() => setCyclesDialogPlan(plan)}    │
-│  Gerenciar       → onClick={() => setEditDialogPlan(plan)}      │
-│  Excluir         → onClick={() => handleDeletePlan(plan.id)}    │
-│  Liberar Ciclo   → onClick={() => setReleaseCycle(cycle)}       │
-└─────────────────────────────────────────────────────────────────┘
-```
+| Função | Ação | SQL |
+|--------|------|-----|
+| `handleEditNote` | Abre modo de edição com texto pré-preenchido | - |
+| `handleSaveEdit` | Salva alterações | `UPDATE doctor_notes SET note = ... WHERE id = ...` |
+| `handleDeleteNote` | Exclui nota com confirmação | `DELETE FROM doctor_notes WHERE id = ...` |
 
-### 3. Adicionar Métodos no TreatmentService
+### 3. Atualizar UI das Notas Existentes
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│              NOVOS MÉTODOS NO SERVICE                           │
-├─────────────────────────────────────────────────────────────────┤
-│  updateTreatmentPlan(planId, data)   → UPDATE treatment_plans   │
-│  deleteTreatmentPlan(planId)         → DELETE treatment_plans   │
-│  releaseCycle(cycleId, status)       → já existe, só conectar   │
-└─────────────────────────────────────────────────────────────────┘
-```
+Cada card de nota terá:
+- Botão de **Editar** (ícone lápis)
+- Botão de **Excluir** (ícone lixeira)
+- Quando em modo edição: textarea + botões Salvar/Cancelar
 
-### 4. Garantir Re-fetch Após Cada Ação
+### 4. Verificar RLS (já existente)
 
-Todas as ações devem chamar `refetchTreatmentPlans()` após sucesso.
-
----
-
-## Implementação Detalhada
-
-### Arquivo: `src/pages/Treatment.tsx`
-
-**Mudanças:**
-
-1. Adicionar estados para controlar dialogs:
-   - `selectedPlanForDetails` - plano para visualizar detalhes
-   - `selectedPlanForCycles` - plano para visualizar ciclos
-   - `selectedPlanForEdit` - plano para editar
-   - `planToDelete` - plano para confirmar exclusão
-
-2. Adicionar handlers:
-   - `handleViewDetails(plan)` - abre dialog de detalhes
-   - `handleViewCycles(plan)` - abre dialog de ciclos
-   - `handleEditPlan(plan)` - abre dialog de edição (somente médico)
-   - `handleDeletePlan(planId)` - confirma e exclui plano
-   - `handleReleaseCycle(cycle)` - libera ciclo
-
-3. Conectar botões aos handlers
-
-4. Adicionar componentes de dialog no final do componente
-
-### Arquivo: `src/services/treatmentService.ts`
-
-**Novos métodos:**
-
-```typescript
-// Atualizar plano existente
-static async updateTreatmentPlan(planId: string, data: Partial<TreatmentPlanData>) {
-  const { data: result, error } = await supabase
-    .from('treatment_plans')
-    .update(data)
-    .eq('id', planId)
-    .select()
-    .single();
-  
-  if (error) throw error;
-  if (!result) throw new Error("Falha ao atualizar plano");
-  return result;
-}
-
-// Excluir plano
-static async deleteTreatmentPlan(planId: string) {
-  // Primeiro exclui dependências (ciclos, drogas)
-  await supabase.from('treatment_cycles').delete().eq('treatment_plan_id', planId);
-  await supabase.from('treatment_drugs').delete().eq('treatment_plan_id', planId);
-  
-  const { error } = await supabase
-    .from('treatment_plans')
-    .delete()
-    .eq('id', planId);
-  
-  if (error) throw error;
-}
-```
-
-### Novos Componentes
-
-| Arquivo | Descrição |
-|---------|-----------|
-| `src/components/TreatmentDetailDialog.tsx` | Modal com detalhes do plano (drogas, doses, cronograma) |
-| `src/components/TreatmentCyclesDialog.tsx` | Modal com lista de ciclos e ação de liberar |
-| `src/components/ReleaseCycleDialog.tsx` | Modal para liberar ciclo (escolher status, motivo) |
+A tabela `doctor_notes` já possui RLS correta:
+- `Doctors can manage their notes` → USING `auth.uid() = doctor_user_id`
 
 ---
 
 ## Arquivos a Modificar
 
-| Arquivo | Ação | Linhas Afetadas |
-|---------|------|-----------------|
-| `src/pages/Treatment.tsx` | Modificar | 27-50 (estados), 265-277 (botões), 718-723 (dialogs) |
-| `src/services/treatmentService.ts` | Modificar | Adicionar updateTreatmentPlan, deleteTreatmentPlan |
-| `src/components/TreatmentDetailDialog.tsx` | Criar | Novo arquivo |
-| `src/components/TreatmentCyclesDialog.tsx` | Criar | Novo arquivo |
-| `src/components/ReleaseCycleDialog.tsx` | Criar | Novo arquivo |
+| Arquivo | Alterações |
+|---------|-----------|
+| `src/pages/doctor/PatientDetails.tsx` | Adicionar estados, funções e UI para edição/exclusão |
 
 ---
 
-## Fluxo de Dados Após Correção
+## Implementação Detalhada
+
+### Estados a Adicionar
+
+```typescript
+const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+const [editNoteText, setEditNoteText] = useState('');
+```
+
+### Funções a Adicionar
+
+```typescript
+// Iniciar edição
+const handleEditNote = (note: DoctorNote) => {
+  setEditingNoteId(note.id);
+  setEditNoteText(note.note);
+};
+
+// Cancelar edição
+const handleCancelEdit = () => {
+  setEditingNoteId(null);
+  setEditNoteText('');
+};
+
+// Salvar edição
+const handleSaveEdit = async () => {
+  if (!editingNoteId || !editNoteText.trim()) return;
+  
+  const { error } = await supabase
+    .from('doctor_notes')
+    .update({ note: editNoteText })
+    .eq('id', editingNoteId);
+    
+  if (!error) {
+    setNotes(notes.map(n => 
+      n.id === editingNoteId ? { ...n, note: editNoteText } : n
+    ));
+    handleCancelEdit();
+    toast({ title: "Nota atualizada" });
+  }
+};
+
+// Excluir nota
+const handleDeleteNote = async (noteId: string) => {
+  const { error } = await supabase
+    .from('doctor_notes')
+    .delete()
+    .eq('id', noteId);
+    
+  if (!error) {
+    setNotes(notes.filter(n => n.id !== noteId));
+    toast({ title: "Nota excluída" });
+  }
+};
+```
+
+### UI Atualizada para Cards de Notas
+
+Cada nota terá:
+1. **Modo visualização**: mostra texto + botões Editar/Excluir
+2. **Modo edição**: textarea editável + botões Salvar/Cancelar
+
+---
+
+## Fluxo Esperado Após Correção
 
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│                    FLUXO MÉDICO                                 │
-├─────────────────────────────────────────────────────────────────┤
-│  1. Médico clica "Novo Plano"                                   │
-│  2. TreatmentPlanDialog abre                                    │
-│  3. Médico preenche dados                                       │
-│  4. TreatmentService.createTreatmentPlan(data, patientId)       │
-│  5. Service usa user_id = patientId (não auth.uid())            │
-│  6. RLS permite INSERT (doctor_has_patient_access)              │
-│  7. Banco persiste plano                                        │
-│  8. Dialog valida result.id                                     │
-│  9. onSuccess() → refetchTreatmentPlans()                       │
-│  10. UI atualiza para médico                                    │
-│  11. Paciente vê mesmos dados (mesma tabela)                    │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│ ABA NOTAS - PORTAL DO MÉDICO                        │
+├─────────────────────────────────────────────────────┤
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ ADICIONAR NOTA                                  │ │
+│ │ [Textarea editável]                             │ │
+│ │ [+ Adicionar Nota]                              │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ observation    02/02/2026 03:20                 │ │
+│ │ Texto da nota clínica aqui...                   │ │
+│ │                         [✏️ Editar] [🗑️ Excluir] │ │
+│ └─────────────────────────────────────────────────┘ │
+│                                                     │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ observation    01/02/2026 18:45   (EDITANDO)   │ │
+│ │ [Textarea com texto atual]                      │ │
+│ │                     [✓ Salvar] [✕ Cancelar]     │ │
+│ └─────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Validação Esperada
+## Validação Final
 
-| Teste | Resultado |
-|-------|-----------|
-| Médico clica "Novo Plano" | Modal abre |
-| Médico preenche e confirma | Plano persiste, toast sucesso |
-| Médico clica "Ver Detalhes" | Modal com detalhes abre |
-| Médico clica "Ver Ciclos" | Modal com ciclos abre |
-| Médico clica "Gerenciar" | Modal de edição abre |
-| Médico clica "Excluir" | Confirmação, plano excluído |
-| Paciente atualiza tela | Vê plano criado pelo médico |
-| Paciente não vê botões de ação | Correto (somente visualização) |
+| Teste | Resultado Esperado |
+|-------|-------------------|
+| Digitar no textarea | Texto aparece normalmente |
+| Clicar "Adicionar Nota" | Nota é salva e aparece na lista |
+| Clicar "Editar" em nota | Abre textarea com texto atual |
+| Clicar "Salvar" na edição | Atualiza nota e fecha edição |
+| Clicar "Excluir" | Remove nota da lista |
+| Recarregar página | Notas persistem corretamente |
+| Paciente visualiza | Paciente NÃO pode ver/editar notas (regra RLS) |
 
 ---
 
-## Resumo Técnico
+## Imports Necessários
 
-A feature de tratamento possui a estrutura correta:
-- RLS configurado
-- Service usa patientId
-- Dialog passa patientId
+Adicionar aos imports existentes:
+- `Edit2, Trash2, Check, X` de `lucide-react`
+- Possivelmente `AlertDialog` para confirmação de exclusão
 
-O problema é que **os botões não estão conectados a handlers**. A solução é:
-1. Adicionar estados para controlar modais
-2. Criar handlers para cada ação
-3. Conectar botões aos handlers via onClick
-4. Criar dialogs de visualização/edição
-5. Garantir re-fetch após cada operação
+---
 
+## Resumo
+
+O código atual tem a estrutura básica funcionando (criar nota), mas está faltando:
+1. Botões de editar/excluir nas notas existentes
+2. Funcionalidades correspondentes
+
+A implementação reusa a lógica existente e adiciona apenas o necessário para CRUD completo das notas médicas.
