@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Home, Users, UserPlus, LogOut } from "lucide-react";
+import { Home, User, LogOut } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -12,15 +12,14 @@ const DoctorNavigation = () => {
     navigate('/auth');
   };
 
-  // Menu restrito para médicos: Início, Pacientes (inclui Tratamento/Exames)
+  // Menu simplificado para médicos: apenas Início, Perfil e Sair
   const navItems = [
     { path: "/doctor", icon: Home, label: "Início" },
-    { path: "/doctor/patients", icon: Users, label: "Pacientes" },
-    { path: "/doctor/invite", icon: UserPlus, label: "Convidar" },
+    { path: "/doctor/profile", icon: User, label: "Perfil" },
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border shadow-lg">
+    <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border shadow-lg z-50">
       <div className="flex items-center justify-around py-2 px-4 max-w-md mx-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
