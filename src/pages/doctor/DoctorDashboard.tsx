@@ -9,9 +9,6 @@ import {
   AlertTriangle, 
   Calendar,
   UserPlus,
-  Settings,
-  Bell,
-  TrendingUp,
   Stethoscope,
   ChevronRight
 } from 'lucide-react';
@@ -78,19 +75,6 @@ const DoctorDashboard = () => {
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="icon" onClick={() => navigate('/doctor/settings')}>
-                <Settings className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" className="relative">
-                <Bell className="h-4 w-4" />
-                {patientsWithAlerts.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center">
-                    {patientsWithAlerts.length}
-                  </span>
-                )}
-              </Button>
-            </div>
           </div>
 
           {!doctorProfile?.is_verified && (
@@ -149,41 +133,6 @@ const DoctorDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Patients with Alerts */}
-        {patientsWithAlerts.length > 0 && (
-          <Card className="border-amber-500/20">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-amber-500" />
-                  <CardTitle className="text-lg">Pacientes com Alertas</CardTitle>
-                </div>
-                <Badge variant="outline" className="text-amber-600 border-amber-500/30">
-                  {patientsWithAlerts.length}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {patientsWithAlerts.slice(0, 3).map((patient) => (
-                <div 
-                  key={patient.id}
-                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
-                  onClick={() => navigate(`/doctor/patients/${patient.patient_user_id}`)}
-                >
-                  <div>
-                    <p className="font-medium">
-                      {patient.patient_profile?.first_name} {patient.patient_profile?.last_name}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {patient.active_treatments} tratamento(s) ativo(s)
-                    </p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
 
         {/* Recent Patients */}
         <Card>
