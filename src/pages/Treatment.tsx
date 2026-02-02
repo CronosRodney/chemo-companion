@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Activity, Calendar as CalendarIcon, Clock, CheckCircle2, AlertCircle, Beaker, Syringe, Eye, Stethoscope, Trash2, Settings } from "lucide-react";
+import { Plus, Activity, Calendar as CalendarIcon, Clock, CheckCircle2, AlertCircle, Beaker, Syringe, Eye, Stethoscope, Trash2, Pencil } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useAppContext } from "@/contexts/AppContext";
@@ -38,7 +38,8 @@ interface TreatmentProps {
 }
 
 export default function Treatment({ patientId, canEditOverride, onRefetch }: TreatmentProps = {}) {
-  const [createPlanDialogOpen, setCreatePlanDialogOpen] = useState(false);
+  const [planDialogOpen, setPlanDialogOpen] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<any>(null);
   
   // Dialog states for action buttons
   const [selectedPlanForDetails, setSelectedPlanForDetails] = useState<any>(null);
@@ -132,6 +133,16 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
     setSelectedPlanForCycles(plan);
   };
 
+  const handleEditPlan = (plan: any) => {
+    setEditingPlan(plan);
+    setPlanDialogOpen(true);
+  };
+
+  const handleCreateNewPlan = () => {
+    setEditingPlan(null);
+    setPlanDialogOpen(true);
+  };
+
   const handleDeletePlan = async () => {
     if (!planToDelete) return;
     
@@ -222,7 +233,7 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
                   <CardDescription>Protocolos ativos e concluídos</CardDescription>
                 </div>
                 {canEditTreatment && (
-                  <Button onClick={() => setCreatePlanDialogOpen(true)}>
+                  <Button onClick={handleCreateNewPlan}>
                     <Plus className="mr-2 h-4 w-4" />
                     Novo Plano
                   </Button>
@@ -237,7 +248,7 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
                     Nenhum plano de tratamento cadastrado ainda.
                   </p>
                   {canEditTreatment && (
-                    <Button onClick={() => setCreatePlanDialogOpen(true)}>
+                    <Button onClick={handleCreateNewPlan}>
                       <Plus className="mr-2 h-4 w-4" />
                       Criar Primeiro Plano
                     </Button>
@@ -337,13 +348,22 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
                             Ver Ciclos
                           </Button>
                           {canEditTreatment && plan.status === 'active' && (
-                            <Button 
-                              size="sm" 
-                              variant="destructive"
-                              onClick={() => setPlanToDelete(plan)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleEditPlan(plan)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="destructive"
+                                onClick={() => setPlanToDelete(plan)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
                           )}
                         </div>
                       </CardContent>
@@ -787,10 +807,14 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
       </Tabs>
 
       <TreatmentPlanDialog
-        open={createPlanDialogOpen}
-        onOpenChange={setCreatePlanDialogOpen}
+        open={planDialogOpen}
+        onOpenChange={(open) => {
+          setPlanDialogOpen(open);
+          if (!open) setEditingPlan(null);
+        }}
         onSuccess={refetchTreatmentPlans}
         patientId={patientId}
+        editPlan={editingPlan}
       />
 
       <TreatmentDetailDialog
