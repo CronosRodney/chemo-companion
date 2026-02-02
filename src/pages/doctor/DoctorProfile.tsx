@@ -62,32 +62,45 @@ const DoctorProfile = () => {
     
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('healthcare_professionals')
-        .update({
+      // Usar Edge Function para validação segura de CRM
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      
+      if (!token) {
+        throw new Error('Sessão expirada. Faça login novamente.');
+      }
+
+      const response = await supabase.functions.invoke('update-doctor-profile', {
+        body: {
           first_name: formData.first_name,
           last_name: formData.last_name,
           crm: formData.crm,
           crm_uf: formData.crm_uf,
           specialty: formData.specialty,
-        })
-        .eq('user_id', user.id);
+        }
+      });
 
-      if (error) throw error;
+      if (response.error) {
+        throw new Error(response.error.message || 'Erro ao atualizar perfil');
+      }
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
 
       toast({
         title: "Perfil atualizado",
-        description: "Suas informações foram salvas com sucesso."
+        description: "Suas informações foram validadas e salvas com sucesso."
       });
       
       setIsEditing(false);
       // Refresh doctor profile data
       await refreshDoctorStatus();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating profile:', error);
       toast({
         title: "Erro ao salvar",
-        description: "Não foi possível atualizar o perfil. Tente novamente.",
+        description: error.message || "Não foi possível atualizar o perfil. Tente novamente.",
         variant: "destructive"
       });
     } finally {
