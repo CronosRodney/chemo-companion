@@ -26,8 +26,27 @@ export interface UserProfile {
 export const useAuth = () => {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [userRole, setUserRole] = useState<'patient' | 'doctor' | 'admin' | null | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  const loadUserRole = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (error) throw error;
+      
+      // Converter tipo do banco para string tipada
+      setUserRole(data?.role as 'patient' | 'doctor' | 'admin' | null);
+    } catch (error) {
+      console.error('Error loading user role:', error);
+      setUserRole(null);
+    }
+  };
 
   useEffect(() => {
     // Get initial session
@@ -48,6 +67,7 @@ export const useAuth = () => {
           loadProfile(session.user.id);
         } else {
           setProfile(null);
+          setUserRole(undefined);
           setLoading(false);
         }
       }
@@ -124,6 +144,9 @@ export const useAuth = () => {
         if (createError) throw createError;
         setProfile(createdProfile);
       }
+      
+      // Após carregar profile, verificar role
+      await loadUserRole(userId);
     } catch (error) {
       console.error('Error loading profile:', error);
       toast({
@@ -131,6 +154,7 @@ export const useAuth = () => {
         description: "Não foi possível carregar o perfil do usuário",
         variant: "destructive"
       });
+      setUserRole(null);
     } finally {
       setLoading(false);
     }
@@ -165,6 +189,8 @@ export const useAuth = () => {
   return {
     user,
     profile,
+    userRole,
+    setUserRole,
     loading,
     updateProfile,
     loadProfile

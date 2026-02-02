@@ -38,6 +38,7 @@ import InvitePatient from "./pages/doctor/InvitePatient";
 import DoctorAlerts from "./pages/doctor/DoctorAlerts";
 import DoctorProfile from "./pages/doctor/DoctorProfile";
 import AcceptInvite from "./pages/AcceptInvite";
+import ChooseRole from "./pages/ChooseRole";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,12 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms-of-use" element={<TermsOfUse />} />
+              {/* Rota de escolha de papel (obrigatória para OAuth sem role) */}
+              <Route path="/choose-role" element={
+                <ProtectedRoute skipRoleCheck>
+                  <ChooseRole />
+                </ProtectedRoute>
+              } />
               <Route path="/" element={
                 <ProtectedRoute>
                   <Home />
