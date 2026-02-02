@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Home, Users, UserPlus, Bell, LogOut } from "lucide-react";
+import { Home, Users, UserPlus, LogOut } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -12,11 +12,11 @@ const DoctorNavigation = () => {
     navigate('/auth');
   };
 
+  // Menu restrito para médicos: Início, Pacientes (inclui Tratamento/Exames)
   const navItems = [
     { path: "/doctor", icon: Home, label: "Início" },
     { path: "/doctor/patients", icon: Users, label: "Pacientes" },
     { path: "/doctor/invite", icon: UserPlus, label: "Convidar" },
-    { path: "/doctor/alerts", icon: Bell, label: "Alertas" },
   ];
 
   return (

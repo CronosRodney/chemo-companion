@@ -719,6 +719,7 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
         open={createPlanDialogOpen}
         onOpenChange={setCreatePlanDialogOpen}
         onSuccess={refetchTreatmentPlans}
+        patientId={patientId}
       />
     </div>
   );

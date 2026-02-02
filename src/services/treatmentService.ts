@@ -30,13 +30,20 @@ interface TreatmentDrug {
 export class TreatmentService {
   /**
    * Cria um novo plano de tratamento
+   * @param planData - Dados do plano
+   * @param drugs - Lista de drogas do protocolo
+   * @param targetPatientId - ID do paciente (para contexto médico). Se não informado, usa o user autenticado.
    */
   static async createTreatmentPlan(
     planData: TreatmentPlanData,
-    drugs: TreatmentDrug[]
+    drugs: TreatmentDrug[],
+    targetPatientId?: string
   ): Promise<{ id: string }> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Usuário não autenticado");
+
+    // Determina o user_id correto: patientId para médico, ou o próprio user para paciente
+    const userId = targetPatientId || user.id;
 
     // Calcula BSA se tiver peso e altura
     let bsa_m2 = undefined;
@@ -49,7 +56,7 @@ export class TreatmentService {
       .from('treatment_plans')
       .insert({
         ...planData,
-        user_id: user.id,
+        user_id: userId,
         bsa_m2
       })
       .select()

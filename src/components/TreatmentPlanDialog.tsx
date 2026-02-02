@@ -15,6 +15,8 @@ interface TreatmentPlanDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  /** When provided, creates plan for this patient (doctor context) */
+  patientId?: string;
 }
 
 interface Drug {
@@ -28,7 +30,7 @@ interface Drug {
   day_codes: string[];
 }
 
-export default function TreatmentPlanDialog({ open, onOpenChange, onSuccess }: TreatmentPlanDialogProps) {
+export default function TreatmentPlanDialog({ open, onOpenChange, onSuccess, patientId }: TreatmentPlanDialogProps) {
   const [templates, setTemplates] = useState<any[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [isCustom, setIsCustom] = useState(false);
@@ -127,7 +129,7 @@ export default function TreatmentPlanDialog({ open, onOpenChange, onSuccess }: T
     }
 
     try {
-      await TreatmentService.createTreatmentPlan(
+      const result = await TreatmentService.createTreatmentPlan(
         {
           diagnosis_cid: diagnosisCid,
           line_of_therapy: lineOfTherapy,
@@ -139,8 +141,13 @@ export default function TreatmentPlanDialog({ open, onOpenChange, onSuccess }: T
           height_cm: heightCm,
           start_date: startDate
         },
-        drugs
+        drugs,
+        patientId // Pass patient ID for doctor context
       );
+
+      if (!result?.id) {
+        throw new Error("Falha ao criar plano - nenhum ID retornado");
+      }
 
       toast.success("Plano de tratamento criado com sucesso!");
       onSuccess();
