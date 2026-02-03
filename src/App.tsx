@@ -147,7 +147,7 @@ const App = () => (
               } />
               {/* Doctor Routes */}
               <Route path="/doctor/register" element={
-                <ProtectedRoute>
+                <ProtectedRoute skipRoleCheck>
                   <DoctorRegistration />
                 </ProtectedRoute>
               } />
