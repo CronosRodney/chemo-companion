@@ -154,7 +154,7 @@ const DoctorRegistration = () => {
       
       toast({
         title: "Cadastro realizado!",
-        description: "Seu perfil de médico foi criado. Aguarde a verificação."
+        description: "Seu perfil de médico foi criado com sucesso."
       });
       
       navigate('/doctor');
@@ -365,9 +365,6 @@ const DoctorRegistration = () => {
           </CardContent>
         </Card>
 
-        <p className="text-center text-sm text-muted-foreground mt-4">
-          Após o cadastro, seu perfil passará por uma verificação antes de poder acessar dados de pacientes.
-        </p>
       </div>
     </div>
   );
