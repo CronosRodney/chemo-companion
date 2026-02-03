@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -25,8 +26,15 @@ export const useUserClinics = () => {
   const [clinics, setClinics] = useState<ConnectedClinic[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const location = useLocation();
 
   const fetchUserClinics = async () => {
+    // Não executar durante bootstrap de role
+    if (location.pathname === '/choose-role') {
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;

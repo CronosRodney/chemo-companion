@@ -11,15 +11,13 @@ export function useOnlineStatus(): OnlineStatus {
 
   useEffect(() => {
     const handleOnline = () => {
+      setWasOffline(true);  // Marca que reconectou após estar offline
       setIsOnline(true);
-      if (!navigator.onLine) {
-        setWasOffline(true);
-      }
     };
 
     const handleOffline = () => {
       setIsOnline(false);
-      setWasOffline(true);
+      // NÃO setamos wasOffline aqui - só quando reconectar
     };
 
     window.addEventListener('online', handleOnline);
