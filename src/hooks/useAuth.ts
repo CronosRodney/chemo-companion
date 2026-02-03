@@ -40,8 +40,10 @@ export const useAuth = () => {
 
       if (error) throw error;
       
-      // Converter tipo do banco para string tipada
-      setUserRole(data?.role as 'patient' | 'doctor' | 'admin' | null);
+      // IMPORTANTE: Se não há role, definir explicitamente como null
+      // Isso força o redirecionamento para /choose-role
+      // NÃO usar fallback para 'patient' - role só nasce por ação explícita
+      setUserRole(data?.role ?? null);
     } catch (error) {
       console.error('Error loading user role:', error);
       setUserRole(null);
