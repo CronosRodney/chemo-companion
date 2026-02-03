@@ -1,238 +1,148 @@
 
 
-# Plano: Correção de Popups Offline + Erro de Perfil OAuth (Ajustes Finais)
+# Plano: Correção do FK Constraint no Cadastro de Médico OAuth
 
-## Resumo
+## Problema
 
-Corrigir dois bugs críticos que afetam a experiência de login OAuth:
-1. Popup "Você está offline" aparece incorretamente após erros de API
-2. Toast "Não foi possível carregar o perfil" aparece durante bootstrap OAuth normal
+Para usuários que entram via Google OAuth, o `profile` pode não existir quando o fluxo de cadastro médico é executado. O trigger `add_doctor_role_on_professional_create` dispara ao inserir em `healthcare_professionals`, tentando criar o registro em `user_roles` - que falha por FK constraint porque `profiles` é dependência.
 
----
+## Solução
 
-## 1. Corrigir `useOnlineStatus` (src/hooks/useOffline.ts)
+Modificar a função `registerAsDoctor` em `src/hooks/useDoctorAuth.ts` para:
 
-### Problema Atual (linhas 13-18)
-```typescript
-const handleOnline = () => {
-  setIsOnline(true);
-  if (!navigator.onLine) {  // ← Bug: nunca é verdade aqui
-    setWasOffline(true);
-  }
-};
-```
-
-### Correção (versão simples e clara)
-```typescript
-const handleOnline = () => {
-  setWasOffline(true);  // Sempre marca que reconectou
-  setIsOnline(true);
-};
-
-const handleOffline = () => {
-  setIsOnline(false);
-  // NÃO setamos wasOffline aqui - só quando reconectar
-};
-```
-
-**Racional:** O `wasOffline` serve para mostrar toast "Conexão restaurada". Ele só precisa ser `true` quando o usuário reconecta após estar offline.
+1. Verificar se o profile existe antes de qualquer INSERT
+2. Se não existir, criar o profile usando os dados do formulário
+3. Só então inserir em `healthcare_professionals`
 
 ---
 
-## 2. Silenciar Toast de Perfil Durante Bootstrap OAuth (src/hooks/useAuth.ts)
+## Arquivo a Modificar
 
-### Problema Atual (linhas 150-157)
+**`src/hooks/useDoctorAuth.ts`** - Função `registerAsDoctor` (linhas 77-106)
+
+### Código Atual
 ```typescript
-catch (error) {
-  console.error('Error loading profile:', error);
-  toast({
-    title: "Erro",
-    description: "Não foi possível carregar o perfil do usuário",
-    variant: "destructive"
-  });
-  setUserRole(null);
-}
+const registerAsDoctor = async (data: {
+  first_name: string;
+  last_name: string;
+  crm: string;
+  crm_uf: string;
+  specialty: string;
+}) => {
+  if (!user) throw new Error('User not authenticated');
+
+  const { data: newProfile, error } = await supabase
+    .from('healthcare_professionals')
+    .insert({...})
+    .select()
+    .single();
+
+  if (error) throw error;
+  // ...
+};
 ```
 
-Este toast aparece mesmo durante a criação normal de perfil para novos usuários OAuth.
-
-### Correção
-
-**Contexto técnico:** Profile inexistente durante bootstrap OAuth é estado esperado para novos usuários, não um erro.
-
+### Código Corrigido
 ```typescript
-const loadProfile = async (userId: string) => {
-  try {
-    const { data, error } = await supabase
+const registerAsDoctor = async (data: {
+  first_name: string;
+  last_name: string;
+  crm: string;
+  crm_uf: string;
+  specialty: string;
+}) => {
+  if (!user) throw new Error('User not authenticated');
+
+  // 1️⃣ Garantir que o profile exista
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('user_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (!existingProfile) {
+    const { error: profileError } = await supabase
       .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
+      .insert({
+        user_id: user.id,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        email: user.email || ''
+      });
 
-    if (error) throw error;
-
-    if (data) {
-      setProfile(data);
-    } else {
-      // Profile inexistente durante bootstrap OAuth (estado esperado para novos usuários)
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      
-      const metadata = authUser?.user_metadata || {};
-      const providerName = metadata.full_name || metadata.name || '';
-      const [firstName, ...lastParts] = providerName.split(' ');
-      const lastName = lastParts.join(' ');
-      const email = authUser?.email || '';
-      
-      const newProfile = {
-        user_id: userId,
-        first_name: firstName || 'Usuário',
-        last_name: lastName || '',
-        email: email,
-      };
-
-      const { data: createdProfile, error: createError } = await supabase
-        .from('profiles')
-        .insert(newProfile)
-        .select()
-        .single();
-
-      if (createError) {
-        // Log silenciosamente - perfil pode ser criado depois
-        console.error('Error creating profile (will retry later):', createError);
-      } else {
-        setProfile(createdProfile);
-      }
+    if (profileError) {
+      console.error('Error creating profile:', profileError);
+      throw new Error('Não foi possível criar o perfil base');
     }
-    
-    await loadUserRole(userId);
-  } catch (error) {
-    // Log silenciosamente, sem toast durante bootstrap
-    console.error('Error in loadProfile:', error);
-    // Ainda assim tentar carregar role
-    await loadUserRole(userId);
-  } finally {
-    setLoading(false);
   }
-};
-```
 
-**Mudança principal:** Remover toast de erro do catch - erros de perfil durante bootstrap não são fatais.
+  // 2️⃣ Inserir profissional de saúde
+  const { data: doctorProfile, error } = await supabase
+    .from('healthcare_professionals')
+    .insert({
+      user_id: user.id,
+      first_name: data.first_name,
+      last_name: data.last_name,
+      crm: data.crm,
+      crm_uf: data.crm_uf,
+      specialty: data.specialty,
+      is_verified: false
+    })
+    .select()
+    .single();
 
----
+  if (error) throw error;
 
-## 3. Condicionar Carregamento de Dados ao Role (src/contexts/AppContext.tsx)
+  setDoctorProfile(doctorProfile);
+  setIsDoctor(true);
 
-### Problema Atual (linhas 251-259)
-```typescript
-useEffect(() => {
-  if (user) {
-    loadMedications();
-    loadEventsFromEventsTable();
-    loadReminders();
-    loadStats();
-    loadTreatmentPlans();
-  }
-}, [user]);
-```
-
-Isso carrega dados mesmo quando o usuário está em `/choose-role` e não tem role definido.
-
-### Correção
-
-```typescript
-import { useLocation } from 'react-router-dom';
-
-// No AppProvider:
-const { user, profile, loading, userRole, updateProfile: updateUserProfile } = useAuth();
-const location = useLocation();
-
-useEffect(() => {
-  // Não carregar dados se:
-  // 1. Usuário não existe
-  // 2. Role ainda não foi definido (null ou undefined)
-  // 3. Estamos na tela de escolha de role
-  const isChoosingRole = location.pathname === '/choose-role';
-  const hasDefinedRole = userRole !== null && userRole !== undefined;
-  
-  if (!user || !hasDefinedRole || isChoosingRole) {
-    return;
-  }
-  
-  loadMedications();
-  loadEventsFromEventsTable();
-  loadReminders();
-  loadStats();
-  loadTreatmentPlans();
-}, [user, userRole, location.pathname]);
-```
-
----
-
-## 4. Silenciar Hooks Durante Bootstrap (src/hooks/useUserClinics.ts)
-
-### Problema Atual
-O hook executa e pode exibir toasts de erro mesmo durante `/choose-role`.
-
-### Correção
-
-```typescript
-import { useLocation } from 'react-router-dom';
-
-export const useUserClinics = () => {
-  const [clinics, setClinics] = useState<ConnectedClinic[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-  const location = useLocation();
-
-  const fetchUserClinics = async () => {
-    // Não executar durante bootstrap de role
-    if (location.pathname === '/choose-role') {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      // ... resto do código existente
-    } catch (error) {
-      // ... resto do código existente
-    }
-  };
-
-  // ... resto do hook
+  return doctorProfile;
 };
 ```
 
 ---
 
-## 5. Arquivos a Modificar
+## Fluxo Corrigido
 
-| Arquivo | Mudança |
-|---------|---------|
-| `src/hooks/useOffline.ts` | Corrigir lógica de `wasOffline` |
-| `src/hooks/useAuth.ts` | Remover toast de erro durante bootstrap |
-| `src/contexts/AppContext.tsx` | Condicionar carregamento ao role definido |
-| `src/hooks/useUserClinics.ts` | Não executar durante `/choose-role` |
+```text
+OAuth Login (Google)
+     │
+     ▼
+registerAsDoctor()
+     │
+     ├── 1️⃣ SELECT profiles WHERE user_id = ?
+     │       │
+     │       ├── Profile existe → Continua
+     │       │
+     │       └── Profile não existe → INSERT profiles
+     │
+     ├── 2️⃣ INSERT healthcare_professionals
+     │
+     └── 3️⃣ Trigger → INSERT user_roles (role='doctor')
+             │
+             ▼
+           ✅ SUCESSO (FK satisfeito)
+```
 
 ---
 
-## 6. Resultado Esperado
+## Por que esta correção funciona
 
-| Cenário | Antes | Depois |
-|---------|-------|--------|
-| Login Google novo usuário | Toast "erro de perfil" | Tela limpa |
-| Tela /choose-role | Toasts de erro de dados | Nenhum toast |
-| Perda real de conexão | Popup offline | Popup offline |
-| Erro de API com internet | Popup offline (incorreto) | Nenhum popup offline |
-| Reconexão após offline | Popup "Conexão restaurada" | Popup "Conexão restaurada" |
+| Aspecto | Explicação |
+|---------|------------|
+| **Resolve o FK** | O profile existe antes do trigger disparar |
+| **Idempotente** | Usa `maybeSingle()` - não duplica profile existente |
+| **Dados consistentes** | Usa os mesmos dados do formulário para profile e healthcare |
+| **Não altera RLS** | Nenhuma mudança em políticas ou triggers |
+| **Compatível com email/senha** | Se profile já existe, apenas continua |
 
 ---
 
-## 7. Critérios de Aceite
+## Critérios de Aceite
 
-- Login Google sem toasts de erro
-- Tela /choose-role sem popups
-- Popup "Você está offline" apenas quando `navigator.onLine === false`
-- Popup "Conexão restaurada" apenas após reconexão real
-- Dados do paciente só carregam após role definido
-- Fluxo de email/senha não afetado
+- Login Google → Cadastro médico → Sucesso (sem erro FK)
+- Profile criado automaticamente se não existir
+- Role 'doctor' atribuído pelo trigger existente
+- Fluxo email/senha não é afetado
+- Dados do formulário salvos corretamente em ambas as tabelas
 
