@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider } from "./contexts/AppContext";
+import { AuthProvider } from "./hooks/useAuth";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { DoctorProtectedRoute } from "./components/doctor/DoctorProtectedRoute";
 import { OfflineBanner } from "./components/OfflineBanner";
@@ -48,7 +49,8 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AppProvider>
+        <AuthProvider>
+          <AppProvider>
           <div className="relative">
             <Routes>
               <Route path="/auth" element={<Auth />} />
@@ -188,7 +190,8 @@ const App = () => (
             <Navigation />
             <OfflineBanner />
           </div>
-        </AppProvider>
+          </AppProvider>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

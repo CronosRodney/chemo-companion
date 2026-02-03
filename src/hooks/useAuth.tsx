@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -23,7 +23,19 @@ export interface UserProfile {
   current_medications?: string;
 }
 
-export const useAuth = () => {
+interface AuthContextType {
+  user: any;
+  profile: UserProfile | null;
+  userRole: 'patient' | 'doctor' | 'admin' | null | undefined;
+  loading: boolean;
+  setUserRole: (role: 'patient' | 'doctor' | 'admin' | null) => void;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
+  loadProfile: (userId: string) => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [userRole, setUserRole] = useState<'patient' | 'doctor' | 'admin' | null | undefined>(undefined);
@@ -49,60 +61,6 @@ export const useAuth = () => {
       setUserRole(null);
     }
   };
-
-  useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        loadProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          loadProfile(session.user.id);
-        } else {
-          setProfile(null);
-          setUserRole(undefined);
-          setLoading(false);
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // Real-time listener for profile changes
-  useEffect(() => {
-    if (!user) return;
-
-    const profileChannel = supabase
-      .channel('profile-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'profiles',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          console.log('Profile updated in real-time:', payload.new);
-          setProfile(payload.new as UserProfile);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(profileChannel);
-    };
-  }, [user]);
 
   const loadProfile = async (userId: string) => {
     try {
@@ -163,6 +121,60 @@ export const useAuth = () => {
     }
   };
 
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        loadProfile(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          loadProfile(session.user.id);
+        } else {
+          setProfile(null);
+          setUserRole(undefined);
+          setLoading(false);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Real-time listener for profile changes
+  useEffect(() => {
+    if (!user) return;
+
+    const profileChannel = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Profile updated in real-time:', payload.new);
+          setProfile(payload.new as UserProfile);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(profileChannel);
+    };
+  }, [user]);
+
   const updateProfile = async (updates: Partial<UserProfile>) => {
     if (!user || !profile) return;
 
@@ -189,13 +201,25 @@ export const useAuth = () => {
     }
   };
 
-  return {
-    user,
-    profile,
-    userRole,
-    setUserRole,
-    loading,
-    updateProfile,
-    loadProfile
-  };
+  return (
+    <AuthContext.Provider value={{
+      user,
+      profile,
+      userRole,
+      loading,
+      setUserRole,
+      updateProfile,
+      loadProfile
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
