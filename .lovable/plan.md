@@ -1,119 +1,228 @@
 
-
-# Plano: Correção da Navegação na Tela de Escolha de Papel
+# Plano: Correção do Estado de Role OAuth - Contexto Compartilhado
 
 ## Diagnóstico
 
-Ao analisar o código, identifiquei a causa raiz do problema:
+### Problema Raiz Identificado
 
-### Cenário de Bug
+O hook `useAuth()` é instanciado **múltiplas vezes** em diferentes componentes:
+- `ProtectedRoute.tsx` → instância própria
+- `ChooseRole.tsx` → instância própria  
+- `AppContext.tsx` → instância própria
+- `Auth.tsx` → instância própria
+
+Cada instância mantém seu próprio estado React (`useState`), então quando `ChooseRole` executa `setUserRole('patient')`, isso atualiza apenas a instância local - não afeta o estado nas outras instâncias.
+
+### Fluxo Atual Problemático
 
 ```text
-Usuário clica "Sou Profissional de Saúde"
+OAuth Login
     │
     ▼
-handleChooseDoctor() → navigate('/doctor/register')
+ProtectedRoute (instância A)
+    │ userRole = undefined → loading
+    ▼
+loadProfile() completa
+    │ userRole = null (instância A)
+    ▼
+Redireciona para /choose-role
     │
     ▼
-ProtectedRoute (sem skipRoleCheck)
+ChooseRole (instância B)
+    │ userRole = undefined (estado próprio!)
     │
-    ├── userRole === null?
-    │       │
-    │       └── SIM → Navigate('/choose-role') 🔄 LOOP!
-```
-
-A rota `/doctor/register` está protegida com `ProtectedRoute` **sem** `skipRoleCheck`, então quando um usuário OAuth sem role definido tenta acessar, é imediatamente redirecionado de volta para `/choose-role`.
-
-### Código Problemático (src/App.tsx, linhas 149-153)
-
-```typescript
-<Route path="/doctor/register" element={
-  <ProtectedRoute>  // ← Falta skipRoleCheck
-    <DoctorRegistration />
-  </ProtectedRoute>
-} />
+    ├── Clique "Sou Paciente"
+    │       ├── INSERT user_roles OK
+    │       └── setUserRole('patient') (instância B apenas)
+    │
+    └── navigate('/') 
+            │
+            ▼
+    ProtectedRoute (instância A)
+            │ userRole ainda é null (não foi atualizado!)
+            ▼
+    Redireciona de volta para /choose-role 🔄 LOOP
 ```
 
 ---
 
-## Solução
+## Solução Proposta
 
-### 1. Adicionar `skipRoleCheck` na rota `/doctor/register`
+### Arquitetura: Context Provider para Auth
 
-**Arquivo:** `src/App.tsx` (linha 149-153)
+Transformar `useAuth` em um **Context Provider** que compartilha estado único entre todos os componentes.
+
+### Arquivos a Modificar
+
+| Arquivo | Mudança |
+|---------|---------|
+| `src/hooks/useAuth.ts` | Criar `AuthProvider` e `useAuth` via Context |
+| `src/App.tsx` | Envolver app com `AuthProvider` |
+
+---
+
+## Implementação Detalhada
+
+### 1. Refatorar `src/hooks/useAuth.ts`
+
+Transformar de hook simples para Context Provider:
 
 ```typescript
-<Route path="/doctor/register" element={
-  <ProtectedRoute skipRoleCheck>
-    <DoctorRegistration />
-  </ProtectedRoute>
-} />
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+// Interface do Profile (existente)
+export interface UserProfile {
+  id?: string;
+  user_id?: string;
+  first_name: string;
+  // ... demais campos existentes
+}
+
+// Interface do contexto de auth
+interface AuthContextType {
+  user: any;
+  profile: UserProfile | null;
+  userRole: 'patient' | 'doctor' | 'admin' | null | undefined;
+  loading: boolean;
+  setUserRole: (role: 'patient' | 'doctor' | 'admin' | null) => void;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
+  loadProfile: (userId: string) => Promise<void>;
+}
+
+// Criar contexto
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Provider component
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [userRole, setUserRole] = useState<'patient' | 'doctor' | 'admin' | null | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  // ... toda a lógica existente do useAuth ...
+  // loadUserRole, loadProfile, updateProfile, useEffects
+
+  return (
+    <AuthContext.Provider value={{
+      user,
+      profile,
+      userRole,
+      loading,
+      setUserRole,
+      updateProfile,
+      loadProfile
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+// Hook que consome o contexto
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 ```
 
-**Justificativa:** Esta rota é acessada diretamente da tela de escolha de papel, antes do usuário ter um role definido. O `skipRoleCheck` permite que o usuário acesse a página para completar seu cadastro profissional.
+### 2. Atualizar `src/App.tsx`
+
+Adicionar `AuthProvider` no topo da hierarquia (antes do `AppProvider`):
+
+```typescript
+import { AuthProvider } from './hooks/useAuth';
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <AuthProvider>  {/* NOVO: Envolve toda a app */}
+          <AppProvider>
+            <div className="relative">
+              <Routes>
+                {/* ... rotas existentes ... */}
+              </Routes>
+              <Navigation />
+              <OfflineBanner />
+            </div>
+          </AppProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
+```
 
 ---
 
 ## Fluxo Corrigido
 
 ```text
-OAuth Login (Google)
+OAuth Login
     │
     ▼
-loadProfile + loadUserRole
+AuthProvider (estado ÚNICO)
+    │ userRole = undefined → loading
+    ▼
+loadProfile() + loadUserRole()
+    │ userRole = null (estado compartilhado)
+    ▼
+ProtectedRoute (consome AuthContext)
+    │ userRole === null
+    ▼
+Redireciona para /choose-role
     │
     ▼
-userRole === null → /choose-role
+ChooseRole (consome AuthContext)
     │
     ├── Clique "Sou Paciente"
-    │       │
-    │       ├── INSERT user_roles (patient)
-    │       ├── setUserRole('patient')
-    │       └── navigate('/') → ✅ Home
+    │       ├── INSERT user_roles OK
+    │       └── setUserRole('patient') (mesmo contexto!)
     │
-    └── Clique "Sou Profissional de Saúde"
+    └── navigate('/') 
             │
-            └── navigate('/doctor/register')
-                    │
-                    ▼
-            ProtectedRoute (skipRoleCheck)
-                    │
-                    └── ✅ DoctorRegistration
-                            │
-                            ├── Preenche dados
-                            ├── registerAsDoctor()
-                            │       ├── Garante profile
-                            │       ├── INSERT healthcare_professionals
-                            │       └── Trigger → INSERT user_roles (doctor)
-                            └── navigate('/doctor') → ✅ Dashboard
+            ▼
+    ProtectedRoute (consome AuthContext)
+            │ userRole === 'patient' ✅
+            ▼
+    Renderiza Home
 ```
 
 ---
 
-## Arquivo a Modificar
+## Benefícios da Solução
 
-| Arquivo | Mudança |
-|---------|---------|
-| `src/App.tsx` | Adicionar `skipRoleCheck` na rota `/doctor/register` |
+| Aspecto | Melhoria |
+|---------|----------|
+| Estado único | Todos componentes leem/escrevem o mesmo estado |
+| Sem duplicação | Uma só fonte de verdade para auth |
+| Reatividade | Mudanças propagam imediatamente |
+| Consistência | ProtectedRoute sempre tem o valor correto |
+| Padrão React | Context é a solução recomendada para estado global |
 
 ---
 
 ## Critérios de Aceite
 
-- Clicar em "Sou Paciente" → vai para `/` (role criado)
-- Clicar em "Sou Profissional de Saúde" → vai para `/doctor/register`
-- Nenhum loop de redirecionamento
-- Toast informativo pode aparecer, mas NÃO bloqueia navegação
-- Fluxo completo de cadastro médico funciona
+- Login Google (novo usuário) → sempre `/choose-role`
+- Clicar "Sou Paciente" → role persiste e navega para `/`
+- Não há loop de redirecionamento
+- Clicar "Sou Profissional de Saúde" → navega para `/doctor/register`
+- Estado de auth consistente em toda a aplicação
+- Fluxo de email/senha não é afetado
 
 ---
 
-## Análise de Segurança
+## Notas Técnicas
 
-A adição de `skipRoleCheck` em `/doctor/register` é **segura** porque:
-
-1. A rota ainda requer autenticação (usuário logado)
-2. O role `doctor` só é criado via trigger após INSERT em `healthcare_professionals`
-3. O INSERT em `healthcare_professionals` requer validação de dados profissionais
-4. Não há escalação de privilégios - o usuário não ganha acesso a nada até completar o cadastro
-
+1. **AuthProvider deve vir antes de AppProvider**: Porque AppProvider usa `useAuth()`
+2. **AuthProvider deve estar dentro de BrowserRouter**: Porque pode usar hooks de navegação
+3. **Manter interface pública idêntica**: O hook `useAuth()` continua retornando os mesmos campos
+4. **Nenhuma mudança em chamadas existentes**: Componentes continuam usando `const { user, userRole } = useAuth()`
