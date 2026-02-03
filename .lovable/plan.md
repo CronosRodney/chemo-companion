@@ -1,104 +1,56 @@
 
 
-# Plano: Correção do FK Constraint no Cadastro de Médico OAuth
+# Plano: Correção da Navegação na Tela de Escolha de Papel
 
-## Problema
+## Diagnóstico
 
-Para usuários que entram via Google OAuth, o `profile` pode não existir quando o fluxo de cadastro médico é executado. O trigger `add_doctor_role_on_professional_create` dispara ao inserir em `healthcare_professionals`, tentando criar o registro em `user_roles` - que falha por FK constraint porque `profiles` é dependência.
+Ao analisar o código, identifiquei a causa raiz do problema:
 
-## Solução
+### Cenário de Bug
 
-Modificar a função `registerAsDoctor` em `src/hooks/useDoctorAuth.ts` para:
+```text
+Usuário clica "Sou Profissional de Saúde"
+    │
+    ▼
+handleChooseDoctor() → navigate('/doctor/register')
+    │
+    ▼
+ProtectedRoute (sem skipRoleCheck)
+    │
+    ├── userRole === null?
+    │       │
+    │       └── SIM → Navigate('/choose-role') 🔄 LOOP!
+```
 
-1. Verificar se o profile existe antes de qualquer INSERT
-2. Se não existir, criar o profile usando os dados do formulário
-3. Só então inserir em `healthcare_professionals`
+A rota `/doctor/register` está protegida com `ProtectedRoute` **sem** `skipRoleCheck`, então quando um usuário OAuth sem role definido tenta acessar, é imediatamente redirecionado de volta para `/choose-role`.
+
+### Código Problemático (src/App.tsx, linhas 149-153)
+
+```typescript
+<Route path="/doctor/register" element={
+  <ProtectedRoute>  // ← Falta skipRoleCheck
+    <DoctorRegistration />
+  </ProtectedRoute>
+} />
+```
 
 ---
 
-## Arquivo a Modificar
+## Solução
 
-**`src/hooks/useDoctorAuth.ts`** - Função `registerAsDoctor` (linhas 77-106)
+### 1. Adicionar `skipRoleCheck` na rota `/doctor/register`
 
-### Código Atual
+**Arquivo:** `src/App.tsx` (linha 149-153)
+
 ```typescript
-const registerAsDoctor = async (data: {
-  first_name: string;
-  last_name: string;
-  crm: string;
-  crm_uf: string;
-  specialty: string;
-}) => {
-  if (!user) throw new Error('User not authenticated');
-
-  const { data: newProfile, error } = await supabase
-    .from('healthcare_professionals')
-    .insert({...})
-    .select()
-    .single();
-
-  if (error) throw error;
-  // ...
-};
+<Route path="/doctor/register" element={
+  <ProtectedRoute skipRoleCheck>
+    <DoctorRegistration />
+  </ProtectedRoute>
+} />
 ```
 
-### Código Corrigido
-```typescript
-const registerAsDoctor = async (data: {
-  first_name: string;
-  last_name: string;
-  crm: string;
-  crm_uf: string;
-  specialty: string;
-}) => {
-  if (!user) throw new Error('User not authenticated');
-
-  // 1️⃣ Garantir que o profile exista
-  const { data: existingProfile } = await supabase
-    .from('profiles')
-    .select('user_id')
-    .eq('user_id', user.id)
-    .maybeSingle();
-
-  if (!existingProfile) {
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        user_id: user.id,
-        first_name: data.first_name,
-        last_name: data.last_name,
-        email: user.email || ''
-      });
-
-    if (profileError) {
-      console.error('Error creating profile:', profileError);
-      throw new Error('Não foi possível criar o perfil base');
-    }
-  }
-
-  // 2️⃣ Inserir profissional de saúde
-  const { data: doctorProfile, error } = await supabase
-    .from('healthcare_professionals')
-    .insert({
-      user_id: user.id,
-      first_name: data.first_name,
-      last_name: data.last_name,
-      crm: data.crm,
-      crm_uf: data.crm_uf,
-      specialty: data.specialty,
-      is_verified: false
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-
-  setDoctorProfile(doctorProfile);
-  setIsDoctor(true);
-
-  return doctorProfile;
-};
-```
+**Justificativa:** Esta rota é acessada diretamente da tela de escolha de papel, antes do usuário ter um role definido. O `skipRoleCheck` permite que o usuário acesse a página para completar seu cadastro profissional.
 
 ---
 
@@ -106,43 +58,62 @@ const registerAsDoctor = async (data: {
 
 ```text
 OAuth Login (Google)
-     │
-     ▼
-registerAsDoctor()
-     │
-     ├── 1️⃣ SELECT profiles WHERE user_id = ?
-     │       │
-     │       ├── Profile existe → Continua
-     │       │
-     │       └── Profile não existe → INSERT profiles
-     │
-     ├── 2️⃣ INSERT healthcare_professionals
-     │
-     └── 3️⃣ Trigger → INSERT user_roles (role='doctor')
-             │
-             ▼
-           ✅ SUCESSO (FK satisfeito)
+    │
+    ▼
+loadProfile + loadUserRole
+    │
+    ▼
+userRole === null → /choose-role
+    │
+    ├── Clique "Sou Paciente"
+    │       │
+    │       ├── INSERT user_roles (patient)
+    │       ├── setUserRole('patient')
+    │       └── navigate('/') → ✅ Home
+    │
+    └── Clique "Sou Profissional de Saúde"
+            │
+            └── navigate('/doctor/register')
+                    │
+                    ▼
+            ProtectedRoute (skipRoleCheck)
+                    │
+                    └── ✅ DoctorRegistration
+                            │
+                            ├── Preenche dados
+                            ├── registerAsDoctor()
+                            │       ├── Garante profile
+                            │       ├── INSERT healthcare_professionals
+                            │       └── Trigger → INSERT user_roles (doctor)
+                            └── navigate('/doctor') → ✅ Dashboard
 ```
 
 ---
 
-## Por que esta correção funciona
+## Arquivo a Modificar
 
-| Aspecto | Explicação |
-|---------|------------|
-| **Resolve o FK** | O profile existe antes do trigger disparar |
-| **Idempotente** | Usa `maybeSingle()` - não duplica profile existente |
-| **Dados consistentes** | Usa os mesmos dados do formulário para profile e healthcare |
-| **Não altera RLS** | Nenhuma mudança em políticas ou triggers |
-| **Compatível com email/senha** | Se profile já existe, apenas continua |
+| Arquivo | Mudança |
+|---------|---------|
+| `src/App.tsx` | Adicionar `skipRoleCheck` na rota `/doctor/register` |
 
 ---
 
 ## Critérios de Aceite
 
-- Login Google → Cadastro médico → Sucesso (sem erro FK)
-- Profile criado automaticamente se não existir
-- Role 'doctor' atribuído pelo trigger existente
-- Fluxo email/senha não é afetado
-- Dados do formulário salvos corretamente em ambas as tabelas
+- Clicar em "Sou Paciente" → vai para `/` (role criado)
+- Clicar em "Sou Profissional de Saúde" → vai para `/doctor/register`
+- Nenhum loop de redirecionamento
+- Toast informativo pode aparecer, mas NÃO bloqueia navegação
+- Fluxo completo de cadastro médico funciona
+
+---
+
+## Análise de Segurança
+
+A adição de `skipRoleCheck` em `/doctor/register` é **segura** porque:
+
+1. A rota ainda requer autenticação (usuário logado)
+2. O role `doctor` só é criado via trigger após INSERT em `healthcare_professionals`
+3. O INSERT em `healthcare_professionals` requer validação de dados profissionais
+4. Não há escalação de privilégios - o usuário não ganha acesso a nada até completar o cadastro
 
