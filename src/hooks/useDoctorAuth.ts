@@ -83,6 +83,30 @@ export const useDoctorAuth = () => {
   }) => {
     if (!user) throw new Error('User not authenticated');
 
+    // 1️⃣ Garantir que o profile exista (obrigatório para FK em user_roles)
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (!existingProfile) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          user_id: user.id,
+          first_name: data.first_name,
+          last_name: data.last_name,
+          email: user.email || ''
+        });
+
+      if (profileError) {
+        console.error('Error creating profile:', profileError);
+        throw new Error('Não foi possível criar o perfil base');
+      }
+    }
+
+    // 2️⃣ Inserir profissional de saúde (trigger cuidará do role 'doctor')
     const { data: newProfile, error } = await supabase
       .from('healthcare_professionals')
       .insert({
