@@ -115,7 +115,7 @@ export const useAuth = () => {
       if (data) {
         setProfile(data);
       } else {
-        // Obter dados do usuário autenticado (inclui metadata do provider OAuth)
+        // Profile inexistente durante bootstrap OAuth (estado esperado para novos usuários)
         const { data: { user: authUser } } = await supabase.auth.getUser();
         
         // Extrair nome do provider (Google/Apple fornecem em user_metadata)
@@ -141,20 +141,21 @@ export const useAuth = () => {
           .select()
           .single();
 
-        if (createError) throw createError;
-        setProfile(createdProfile);
+        if (createError) {
+          // Log silenciosamente - perfil pode ser criado depois
+          console.error('Error creating profile (will retry later):', createError);
+        } else {
+          setProfile(createdProfile);
+        }
       }
       
       // Após carregar profile, verificar role
       await loadUserRole(userId);
     } catch (error) {
-      console.error('Error loading profile:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar o perfil do usuário",
-        variant: "destructive"
-      });
-      setUserRole(null);
+      // Log silenciosamente, sem toast durante bootstrap
+      console.error('Error in loadProfile:', error);
+      // Ainda assim tentar carregar role
+      await loadUserRole(userId);
     } finally {
       setLoading(false);
     }

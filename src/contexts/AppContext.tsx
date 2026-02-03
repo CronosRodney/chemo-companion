@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserClinics, ConnectedClinic } from '@/hooks/useUserClinics';
 import { useMyDoctors, ConnectedDoctor } from '@/hooks/useMyDoctors';
@@ -58,9 +59,10 @@ interface AppData {
 const AppContext = createContext<AppData | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, profile, loading, updateProfile: updateUserProfile } = useAuth();
+  const { user, profile, loading, userRole, updateProfile: updateUserProfile } = useAuth();
   const { clinics, loading: clinicsLoading, refetch: refetchClinics } = useUserClinics();
   const { doctors, loading: doctorsLoading, refetch: refetchDoctors } = useMyDoctors();
+  const location = useLocation();
   
   const [medications, setMedications] = useState<any[]>([]);
 
@@ -247,16 +249,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Load data when user changes
+  // Load data when user changes - only after role is defined
   useEffect(() => {
-    if (user) {
-      loadMedications();
-      loadEventsFromEventsTable();
-      loadReminders();
-      loadStats();
-      loadTreatmentPlans();
+    // Não carregar dados se:
+    // 1. Usuário não existe
+    // 2. Role ainda não foi definido (null ou undefined)
+    // 3. Estamos na tela de escolha de role
+    const isChoosingRole = location.pathname === '/choose-role';
+    const hasDefinedRole = userRole !== null && userRole !== undefined;
+    
+    if (!user || !hasDefinedRole || isChoosingRole) {
+      return;
     }
-  }, [user]);
+    
+    loadMedications();
+    loadEventsFromEventsTable();
+    loadReminders();
+    loadStats();
+    loadTreatmentPlans();
+  }, [user, userRole, location.pathname]);
 
   // Setup realtime listeners for data updates
   useEffect(() => {
