@@ -185,15 +185,9 @@ const DoctorProfile = () => {
               </>
             )}
             <div className="flex justify-center gap-2 mt-3">
-              {doctorProfile?.is_verified ? (
-                <Badge className="bg-success/20 text-success border-success/30">
-                  Verificado
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="text-warning border-warning/30">
-                  Pendente Verificação
-                </Badge>
-              )}
+              <Badge className="bg-success/20 text-success border-success/30">
+                Verificado
+              </Badge>
             </div>
           </CardContent>
         </Card>

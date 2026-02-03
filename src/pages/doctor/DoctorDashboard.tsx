@@ -77,13 +77,6 @@ const DoctorDashboard = () => {
             </div>
           </div>
 
-          {!doctorProfile?.is_verified && (
-            <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-              <p className="text-sm text-amber-600 dark:text-amber-400">
-                ⚠️ Seu perfil está aguardando verificação. Algumas funcionalidades podem estar limitadas.
-              </p>
-            </div>
-          )}
         </div>
       </div>
 

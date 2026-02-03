@@ -116,7 +116,7 @@ export const useDoctorAuth = () => {
         crm: data.crm,
         crm_uf: data.crm_uf,
         specialty: data.specialty,
-        is_verified: false
+        is_verified: true // MVP: médico entra já verificado
       })
       .select()
       .single();
