@@ -1,6 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Activity, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { mobileMoreMenuItems } from "@/config/navigation";
@@ -13,11 +13,7 @@ interface MobileMoreMenuProps {
 export const MobileMoreMenu = ({ open, onOpenChange }: MobileMoreMenuProps) => {
   const navigate = useNavigate();
   
-  // Health monitoring is a special item not in core navigation
-  const menuItems = [
-    { path: "/health", icon: Activity, label: "Monitoramento de Saúde" },
-    ...mobileMoreMenuItems,
-  ];
+  const menuItems = mobileMoreMenuItems;
 
   const handleNavigate = (path: string) => {
     navigate(path);
