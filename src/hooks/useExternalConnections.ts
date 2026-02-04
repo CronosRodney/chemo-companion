@@ -49,6 +49,23 @@ interface UseExternalConnectionsReturn {
 const CADERNETA_APP_URL = 'https://chronicle-my-health.lovable.app';
 const CADERNETA_API_URL = 'https://yzegsqdpltiiawbhoafo.supabase.co/functions/v1';
 
+// URL canônica (produção) usada como callback para evitar origins não permitidos
+// (ex.: capacitor://localhost, id-preview--*.lovable.app)
+const ONCOTRACK_CANONICAL_URL = 'https://quimio-companheiro.lovable.app';
+
+function getPreferredCallbackOrigin(): string {
+  const origin = window.location.origin;
+
+  // Em ambientes nativos/dev/preview, use a URL canônica para bater na allowlist
+  // do app parceiro. (Se você usar domínio custom, atualize esta constante.)
+  const isCapacitor = origin.startsWith('capacitor://');
+  const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
+  const isLovablePreview = origin.includes('id-preview--');
+
+  if (isCapacitor || isLocalhost || isLovablePreview) return ONCOTRACK_CANONICAL_URL;
+  return origin;
+}
+
 export function useExternalConnections(provider: ExternalProvider = 'minha_caderneta'): UseExternalConnectionsReturn {
   const { user } = useAuth();
   const [connection, setConnection] = useState<ExternalConnection | null>(null);
@@ -96,7 +113,16 @@ export function useExternalConnections(provider: ExternalProvider = 'minha_cader
       return;
     }
 
-    const callbackUrl = `${window.location.origin}/vaccination?connected=true`;
+    // Marca que iniciamos um fluxo de conexão para que, ao voltar para /vaccination,
+    // possamos completar o handshake mesmo sem querystring.
+    try {
+      sessionStorage.setItem('caderneta_connect_pending', '1');
+    } catch {
+      // ignore
+    }
+
+    // Evita depender de querystring no callback_url (alguns allowlists validam URL exata)
+    const callbackUrl = `${getPreferredCallbackOrigin()}/vaccination`;
     const connectUrl = `${CADERNETA_APP_URL}/connect?source=oncotrack&oncotrack_user_id=${user.id}&callback_url=${encodeURIComponent(callbackUrl)}`;
     
     window.location.href = connectUrl;
