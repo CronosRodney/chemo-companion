@@ -178,5 +178,42 @@
     "title": "Offline",
     "message": "You are offline. Some features may be limited.",
     "retry": "Try again"
+  },
+  "vaccination": {
+    "title": "Vaccination",
+    "subtitle": "Integration with Minha Caderneta",
+    "notConnected": {
+      "title": "Connect your vaccination record",
+      "description": "During oncology treatment, keeping your vaccinations up to date is essential for your safety. By connecting your Minha Caderneta, OncoTrack can analyze your vaccination history and generate safer recommendations.",
+      "button": "Connect Minha Caderneta"
+    },
+    "connected": {
+      "status": "Minha Caderneta connected",
+      "lastUpdate": "Last update",
+      "refresh": "Refresh data",
+      "openButton": "Open Minha Caderneta",
+      "disconnectButton": "Disconnect",
+      "disconnectConfirm": "Are you sure you want to disconnect?"
+    },
+    "summary": {
+      "title": "Vaccination Summary",
+      "total": "Total vaccines",
+      "upToDate": "Up to date",
+      "pending": "Pending",
+      "overdue": "Overdue"
+    },
+    "alerts": {
+      "title": "Clinical Alerts",
+      "empty": "No alerts at the moment",
+      "source": {
+        "minha_caderneta": "Minha Caderneta",
+        "oncotrack": "OncoTrack"
+      }
+    },
+    "errors": {
+      "fetchFailed": "Error loading vaccination data",
+      "connectionFailed": "Error connecting",
+      "disconnectFailed": "Error disconnecting"
+    }
   }
 }

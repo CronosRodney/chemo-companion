@@ -35,3 +35,9 @@ verify_jwt = false
 
 [functions.update-doctor-profile]
 verify_jwt = false
+
+[functions.complete-caderneta-connection]
+verify_jwt = false
+
+[functions.disconnect-caderneta]
+verify_jwt = false

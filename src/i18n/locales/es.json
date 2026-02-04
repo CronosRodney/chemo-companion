@@ -178,5 +178,42 @@
     "title": "Sin conexión",
     "message": "Estás sin conexión. Algunas funciones pueden estar limitadas.",
     "retry": "Intentar de nuevo"
+  },
+  "vaccination": {
+    "title": "Vacunación",
+    "subtitle": "Integración con Minha Caderneta",
+    "notConnected": {
+      "title": "Conecta tu cartilla de vacunación",
+      "description": "Durante el tratamiento oncológico, mantener las vacunas al día es esencial para tu seguridad. Al conectar tu Minha Caderneta, OncoTrack podrá analizar tu historial de vacunación y generar recomendaciones más seguras.",
+      "button": "Conectar Minha Caderneta"
+    },
+    "connected": {
+      "status": "Minha Caderneta conectada",
+      "lastUpdate": "Última actualización",
+      "refresh": "Actualizar datos",
+      "openButton": "Abrir Minha Caderneta",
+      "disconnectButton": "Desconectar",
+      "disconnectConfirm": "¿Estás seguro de que deseas desconectar?"
+    },
+    "summary": {
+      "title": "Resumen de Vacunación",
+      "total": "Total de vacunas",
+      "upToDate": "Al día",
+      "pending": "Pendientes",
+      "overdue": "Atrasadas"
+    },
+    "alerts": {
+      "title": "Alertas Clínicas",
+      "empty": "Sin alertas por el momento",
+      "source": {
+        "minha_caderneta": "Minha Caderneta",
+        "oncotrack": "OncoTrack"
+      }
+    },
+    "errors": {
+      "fetchFailed": "Error al cargar datos de vacunación",
+      "connectionFailed": "Error al conectar",
+      "disconnectFailed": "Error al desconectar"
+    }
   }
 }

@@ -25,6 +25,7 @@ import ImportMeds from "./pages/ImportMeds";
 import Treatment from "./pages/Treatment";
 import Labs from "./pages/Labs";
 import Health from "./pages/Health";
+import Vaccination from "./pages/Vaccination";
 import Teleconsultation from "./pages/Teleconsultation";
 import Navigation from "./components/Navigation";
 import NotFound from "./pages/NotFound";
@@ -110,6 +111,11 @@ const App = () => (
               <Route path="/health" element={
                 <ProtectedRoute>
                   <Health />
+                </ProtectedRoute>
+              } />
+              <Route path="/vaccination" element={
+                <ProtectedRoute>
+                  <Vaccination />
                 </ProtectedRoute>
               } />
               <Route path="/timeline" element={
