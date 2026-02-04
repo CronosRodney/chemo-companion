@@ -68,11 +68,11 @@ const Navigation = () => {
     );
   }
 
-  // Desktop/Tablet: primary nav on left, user menu dropdown on right
+  // Desktop/Tablet: centered nav items
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border shadow-lg z-50">
-      <div className="flex items-center justify-between py-2 px-4 max-w-4xl mx-auto">
-        {/* Primary Navigation - Left Side */}
+      <div className="flex items-center justify-center py-2 px-4">
+        {/* All Navigation Items - Centered */}
         <div className="flex items-center gap-1">
           {primaryNavItems.map((item) => {
             const isActive = location.pathname === item.path;
@@ -95,10 +95,8 @@ const Navigation = () => {
               </Button>
             );
           })}
-        </div>
-
-        {/* User Menu - Right Side */}
-        <div className="flex items-center">
+          
+          {/* User Menu - Inline with other items */}
           <UserMenuDropdown />
         </div>
       </div>
