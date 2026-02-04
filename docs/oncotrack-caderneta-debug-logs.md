@@ -2,7 +2,7 @@
 
 **Gerado em:** 2026-02-04 04:25 UTC
 
-**Atualizado em:** 2026-02-04 04:51 UTC (snapshot de rede do preview)
+**Atualizado em:** 2026-02-04 05:06 UTC (snapshot de rede + edge logs + DB)
 
 ---
 
@@ -234,6 +234,14 @@ No editor do Lovable, abra o arquivo `docs/oncotrack-caderneta-debug-logs.md` e 
 ### Interpretação
 
 No momento do snapshot, o OncoTrack estava autenticado e consultou a tabela `external_connections`, mas **não havia vínculo ativo** para `minha_caderneta`.
+
+---
+
+## 🆕 Atualização (2026-02-04 05:06 UTC)
+
+📄 Snapshot completo desta atualização (rede + edge logs + consulta DB + screenshot):
+
+- `docs/oncotrack-caderneta-snapshots/2026-02-04-0506-utc.md`
 
 ---
 
