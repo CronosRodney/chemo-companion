@@ -1,4 +1,4 @@
-import { Home, Pill, Activity, Beaker, Calendar, User, Syringe } from "lucide-react";
+import { Home, Pill, Activity, Beaker, Calendar, User, Syringe, Heart } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
 export interface NavItem {
@@ -8,32 +8,40 @@ export interface NavItem {
   labelKey?: string; // for i18n support
 }
 
-// Core navigation items - shared across all viewports
-export const coreNavItems: NavItem[] = [
+// Primary navigation items - core app functionality (left side on desktop)
+export const primaryNavItems: NavItem[] = [
   { path: "/", icon: Home, label: "Início" },
-  { path: "/medications", icon: Pill, label: "Medicamentos" },
   { path: "/treatment", icon: Activity, label: "Tratamento" },
   { path: "/labs", icon: Beaker, label: "Exames" },
-  { path: "/vaccination", icon: Syringe, label: "Vacinação" },
 ];
 
-// Secondary navigation items
-export const secondaryNavItems: NavItem[] = [
+// User/personal menu items (right side dropdown on desktop)
+export const userMenuItems: NavItem[] = [
+  { path: "/medications", icon: Pill, label: "Medicamentos" },
+  { path: "/vaccination", icon: Syringe, label: "Vacinação" },
   { path: "/timeline", icon: Calendar, label: "Timeline" },
   { path: "/profile", icon: User, label: "Perfil" },
 ];
 
-// All navigation items combined
-export const allNavItems: NavItem[] = [...coreNavItems, ...secondaryNavItems];
+// Health monitoring (special item, not in core navigation)
+export const healthMenuItem: NavItem = { 
+  path: "/health", 
+  icon: Heart, 
+  label: "Monitoramento de Saúde" 
+};
 
-// Mobile bottom bar shows first 4 core items + "More" button
-export const mobileBottomBarItems: NavItem[] = coreNavItems.slice(0, 4);
-
-// Items shown in mobile "More" menu (remaining core + all secondary)
-export const mobileMoreMenuItems: NavItem[] = [
-  ...coreNavItems.slice(4), // Vacinação
-  ...secondaryNavItems,     // Timeline, Perfil
+// Mobile bottom bar shows condensed items + "More" button
+export const mobileBottomBarItems: NavItem[] = [
+  { path: "/", icon: Home, label: "Início" },
+  { path: "/medications", icon: Pill, label: "Meds" },
+  { path: "/treatment", icon: Activity, label: "Tratamento" },
+  { path: "/labs", icon: Beaker, label: "Exames" },
 ];
 
-// Desktop shows all items
-export const desktopNavItems: NavItem[] = allNavItems;
+// Items shown in mobile "More" menu
+export const mobileMoreMenuItems: NavItem[] = [
+  healthMenuItem,
+  { path: "/vaccination", icon: Syringe, label: "Vacinação" },
+  { path: "/timeline", icon: Calendar, label: "Timeline" },
+  { path: "/profile", icon: User, label: "Perfil" },
+];
