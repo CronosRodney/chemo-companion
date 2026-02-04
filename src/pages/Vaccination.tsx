@@ -53,8 +53,25 @@ export default function Vaccination() {
   // Handle callback from Minha Caderneta
   useEffect(() => {
     const connected = searchParams.get('connected');
-    if (connected === 'true' && !isConnected && !isCompletingConnection) {
+
+    // Fluxo resiliente: se voltamos para esta tela após iniciar conexão,
+    // completamos o handshake mesmo que o parceiro não retorne querystring.
+    let pending = false;
+    try {
+      pending = sessionStorage.getItem('caderneta_connect_pending') === '1';
+    } catch {
+      pending = false;
+    }
+
+    if ((connected === 'true' || pending) && !isConnected && !isCompletingConnection) {
       setIsCompletingConnection(true);
+
+      // Consome o flag de pending imediatamente para evitar loops
+      try {
+        sessionStorage.removeItem('caderneta_connect_pending');
+      } catch {
+        // ignore
+      }
       
       // Clean URL immediately
       setSearchParams({}, { replace: true });
