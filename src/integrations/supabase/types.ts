@@ -362,6 +362,45 @@ export type Database = {
         }
         Relationships: []
       }
+      external_connections: {
+        Row: {
+          connected_at: string
+          connection_token: string
+          created_at: string
+          id: string
+          last_sync_at: string | null
+          metadata: Json | null
+          provider: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          connected_at?: string
+          connection_token: string
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          metadata?: Json | null
+          provider: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          connected_at?: string
+          connection_token?: string
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          metadata?: Json | null
+          provider?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       healthcare_professionals: {
         Row: {
           clinic_id: string | null

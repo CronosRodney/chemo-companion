@@ -178,5 +178,42 @@
     "title": "Sem conexão",
     "message": "Você está offline. Algumas funcionalidades podem estar limitadas.",
     "retry": "Tentar novamente"
+  },
+  "vaccination": {
+    "title": "Vacinação",
+    "subtitle": "Integração com Minha Caderneta",
+    "notConnected": {
+      "title": "Conecte sua carteira de vacinação",
+      "description": "Durante o tratamento oncológico, manter a vacinação em dia é essencial para sua segurança. Ao conectar sua Minha Caderneta, o OncoTrack poderá analisar seu histórico vacinal e gerar recomendações mais seguras.",
+      "button": "Conectar Minha Caderneta"
+    },
+    "connected": {
+      "status": "Minha Caderneta conectada",
+      "lastUpdate": "Última atualização",
+      "refresh": "Atualizar dados",
+      "openButton": "Abrir Minha Caderneta",
+      "disconnectButton": "Desconectar",
+      "disconnectConfirm": "Tem certeza que deseja desconectar?"
+    },
+    "summary": {
+      "title": "Resumo Vacinal",
+      "total": "Total de vacinas",
+      "upToDate": "Em dia",
+      "pending": "Pendentes",
+      "overdue": "Atrasadas"
+    },
+    "alerts": {
+      "title": "Alertas Clínicos",
+      "empty": "Nenhum alerta no momento",
+      "source": {
+        "minha_caderneta": "Minha Caderneta",
+        "oncotrack": "OncoTrack"
+      }
+    },
+    "errors": {
+      "fetchFailed": "Erro ao carregar dados vacinais",
+      "connectionFailed": "Erro ao conectar",
+      "disconnectFailed": "Erro ao desconectar"
+    }
   }
 }

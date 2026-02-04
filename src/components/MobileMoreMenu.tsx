@@ -1,6 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Activity, Calendar, User, LogOut } from "lucide-react";
+import { Activity, Calendar, User, LogOut, Syringe } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,6 +14,7 @@ export const MobileMoreMenu = ({ open, onOpenChange }: MobileMoreMenuProps) => {
   
   const menuItems = [
     { path: "/health", icon: Activity, label: "Monitoramento de Saúde" },
+    { path: "/vaccination", icon: Syringe, label: "Vacinação" },
     { path: "/timeline", icon: Calendar, label: "Timeline" },
     { path: "/profile", icon: User, label: "Perfil" },
   ];
