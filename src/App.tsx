@@ -113,7 +113,7 @@ const App = () => (
                   <Health />
                 </ProtectedRoute>
               } />
-              <Route path="/vaccination" element={
+              <Route path="/vaccination/*" element={
                 <ProtectedRoute>
                   <Vaccination />
                 </ProtectedRoute>
