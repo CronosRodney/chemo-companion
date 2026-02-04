@@ -2,6 +2,8 @@
 
 **Gerado em:** 2026-02-04 04:25 UTC
 
+**Atualizado em:** 2026-02-04 04:51 UTC (snapshot de rede do preview)
+
 ---
 
 ## 📋 RESUMO DO PROBLEMA
@@ -204,6 +206,34 @@ Deno.serve(async (req) => {
 - **Logs da Edge Function:** https://supabase.com/dashboard/project/xpxsdlvicmlqpcaldyyz/functions/complete-caderneta-connection/logs
 - **OncoTrack Preview:** https://quimio-companheiro.lovable.app/vaccination
 - **Minha Caderneta:** https://chronicle-my-health.lovable.app
+
+---
+
+## ⬇️ COMO BAIXAR ESTE ARQUIVO
+
+No editor do Lovable, abra o arquivo `docs/oncotrack-caderneta-debug-logs.md` e use a opção de download/exportação do painel de arquivos (ou copie o conteúdo para um `.md` local).
+
+---
+
+## 🌐 SNAPSHOT DE REDE (Preview OncoTrack)
+
+> **Obs.:** headers sensíveis (JWT do usuário) foram **redigidos**.
+
+### 2026-02-04T04:48:51Z
+
+- **Request:** `GET /rest/v1/external_connections?select=*&user_id=eq.4152a7eb-...&provider=eq.minha_caderneta&status=eq.active`
+- **Status:** `200`
+- **Response body:** `[]` (nenhuma conexão ativa encontrada)
+
+### 2026-02-04T04:51:27Z
+
+- **Request:** `GET /rest/v1/external_connections?select=*&user_id=eq.4152a7eb-...&provider=eq.minha_caderneta&status=eq.active`
+- **Status:** `200`
+- **Response body:** `[]` (nenhuma conexão ativa encontrada)
+
+### Interpretação
+
+No momento do snapshot, o OncoTrack estava autenticado e consultou a tabela `external_connections`, mas **não havia vínculo ativo** para `minha_caderneta`.
 
 ---
 
