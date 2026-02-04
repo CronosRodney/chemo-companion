@@ -38,15 +38,14 @@ export const UserMenuDropdown = () => {
         <Button
           variant="ghost"
           size="sm"
-          className={`flex items-center gap-2 h-10 px-3 ${
+          className={`flex-col gap-1 h-16 px-4 ${
             isUserMenuActive
               ? "text-primary bg-primary/10"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <User className="h-4 w-4" />
-          <span className="hidden sm:inline">Minha Conta</span>
-          <ChevronDown className="h-3 w-3" />
+          <User className="h-5 w-5" />
+          <span className="text-xs">Mais</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
