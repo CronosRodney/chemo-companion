@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Home, Pill, Calendar, User, LogOut, Activity, Beaker, MoreHorizontal } from "lucide-react";
+import { LogOut, MoreHorizontal } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../hooks/useAuth";
 import { useIsMobile } from "../hooks/use-mobile";
 import { MobileMoreMenu } from "./MobileMoreMenu";
+import { mobileBottomBarItems, desktopNavItems } from "@/config/navigation";
 
 const Navigation = () => {
   const { user } = useAuth();
@@ -23,25 +24,7 @@ const Navigation = () => {
     return null;
   }
 
-  // Mobile navigation items (4 items + "More" button)
-  const mobileNavItems = [
-    { path: "/", icon: Home, label: "Início" },
-    { path: "/medications", icon: Pill, label: "Meds" },
-    { path: "/treatment", icon: Activity, label: "Tratamento" },
-    { path: "/labs", icon: Beaker, label: "Exames" },
-  ];
-
-  // Desktop navigation items (original 6 items + logout)
-  const desktopNavItems = [
-    { path: "/", icon: Home, label: "Início" },
-    { path: "/medications", icon: Pill, label: "Medicamentos" },
-    { path: "/treatment", icon: Activity, label: "Tratamento" },
-    { path: "/labs", icon: Beaker, label: "Exames" },
-    { path: "/timeline", icon: Calendar, label: "Timeline" },
-    { path: "/profile", icon: User, label: "Perfil" },
-  ];
-
-  const navItems = isMobile ? mobileNavItems : desktopNavItems;
+  const navItems = isMobile ? mobileBottomBarItems : desktopNavItems;
 
   return (
     <>
