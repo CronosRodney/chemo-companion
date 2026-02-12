@@ -18,7 +18,7 @@ export const TreatmentProgressWidget = ({ treatmentPlans, adherence }: Treatment
   
   if (!activePlan) {
     return (
-      <div className="bg-card rounded-2xl shadow-sm border border-border p-8">
+      <div className="bg-card rounded-2xl shadow-md border border-border/80 p-8 ring-1 ring-primary/5">
         <div className="text-center py-6">
           <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
             <Activity className="h-7 w-7 text-muted-foreground" />
@@ -44,7 +44,7 @@ export const TreatmentProgressWidget = ({ treatmentPlans, adherence }: Treatment
   const daysUntilNext = nextCycle ? differenceInDays(new Date(nextCycle.scheduled_date), new Date()) : null;
 
   return (
-    <div className="bg-card rounded-2xl shadow-sm border border-border p-6 space-y-5">
+    <div className="bg-card rounded-2xl shadow-md border border-border/80 p-6 space-y-5 ring-1 ring-primary/5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-base font-semibold text-foreground flex items-center gap-3">

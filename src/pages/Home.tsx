@@ -139,7 +139,7 @@ const Home = () => {
 
   // Shared sections as variables for reuse
   const headerSection = (
-    <div className={`${isDesktop ? 'rounded-2xl' : '-mx-4 rounded-b-[2rem]'} px-6 pt-6 pb-8 bg-gradient-to-br from-primary/8 to-primary/3`}>
+    <div className={`${isDesktop ? 'rounded-2xl shadow-sm border border-primary/10' : '-mx-4 rounded-b-[2rem] bg-gradient-to-br from-primary/8 to-primary/3'} px-6 pt-6 pb-8`} style={isDesktop ? { background: `linear-gradient(135deg, ${monthlyTheme.gradient}, rgba(59,130,246,0.04))` } : undefined} >
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between">
           <div className="flex-1">
@@ -369,7 +369,7 @@ const Home = () => {
             </div>
 
             {/* Sidebar column */}
-            <div className="col-span-4 space-y-8">
+            <div className="col-span-4 space-y-6 lg:pl-2">
               {clinicSection}
               {emergencySection}
             </div>
