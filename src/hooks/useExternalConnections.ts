@@ -47,7 +47,6 @@ interface UseExternalConnectionsReturn {
 }
 
 const CADERNETA_APP_URL = 'https://chronicle-my-health.lovable.app';
-const CADERNETA_API_URL = 'https://yzegsqdpltiiawbhoafo.supabase.co/functions/v1';
 
 // URL canônica (produção) usada como callback para evitar origins não permitidos
 // (ex.: capacitor://localhost, id-preview--*.lovable.app)
@@ -185,26 +184,13 @@ export function useExternalConnections(provider: ExternalProvider = 'minha_cader
 
     setIsLoadingVaccination(true);
     try {
-      const response = await fetch(`${CADERNETA_API_URL}/oncotrack-vaccination-summary`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-oncotrack-token': connection.connection_token
-        }
-      });
+      const { data, error } = await supabase.functions.invoke('sync-caderneta-vaccines');
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch vaccination data');
+      if (error) {
+        throw error;
       }
 
-      const data = await response.json();
       setVaccinationData(data);
-
-      // Update last_sync_at
-      await supabase
-        .from('external_connections')
-        .update({ last_sync_at: new Date().toISOString() })
-        .eq('id', connection.id);
     } catch (error) {
       console.error('Error fetching vaccination data:', error);
       toast.error('Erro ao carregar dados vacinais');
