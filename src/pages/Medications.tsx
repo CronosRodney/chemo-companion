@@ -60,6 +60,7 @@ export default function Medications() {
   const [dose, setDose] = useState('');
   const [frequency, setFrequency] = useState('');
   const [instructions, setInstructions] = useState('');
+  const [intervalHours, setIntervalHours] = useState('');
 
   // Available options (dynamically filtered based on selected medications)
   const [allMedNames, setAllMedNames] = useState<string[]>([]);
@@ -160,6 +161,7 @@ export default function Medications() {
     setDose('');
     setFrequency('');
     setInstructions('');
+    setIntervalHours('');
   };
 
   const handleSave = async () => {
@@ -184,8 +186,9 @@ export default function Medications() {
           route: selectedRoutes.join(', ') || undefined,
         };
 
+        const fullFrequency = [frequency, intervalHours ? `a cada ${intervalHours}h` : ''].filter(Boolean).join(' · ');
         const { id: medicationId } = await MedicationService.saveMedication(medicationData);
-        await MedicationService.linkToUser(medicationId, dose, frequency, instructions, selectedClinicId !== 'none' ? selectedClinicId : undefined);
+        await MedicationService.linkToUser(medicationId, dose, fullFrequency || undefined, instructions, selectedClinicId !== 'none' ? selectedClinicId : undefined);
         
         const selectedClinic = clinics.find(c => c.id === selectedClinicId);
         const eventDescription = [
@@ -194,7 +197,7 @@ export default function Medications() {
           selectedForms.length > 0 ? `Forma: ${selectedForms.join(', ')}` : '',
           selectedRoutes.length > 0 ? `Via: ${selectedRoutes.join(', ')}` : '',
           dose ? `Dose: ${dose}` : '',
-          frequency ? `Frequência: ${frequency}` : '',
+          fullFrequency ? `Frequência: ${fullFrequency}` : '',
           instructions ? `Instruções: ${instructions}` : ''
         ].filter(Boolean).join('\n');
 
@@ -332,6 +335,18 @@ export default function Medications() {
           value={frequency}
           onChange={(e) => setFrequency(e.target.value)}
         />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="intervalHours">Intervalo (horas)</Label>
+        <Input
+          id="intervalHours"
+          type="number"
+          min="1"
+          placeholder="Ex: 6, 8, 12, 24"
+          value={intervalHours}
+          onChange={(e) => setIntervalHours(e.target.value)}
+        />
+        <p className="text-xs text-muted-foreground">De quantas em quantas horas tomar</p>
       </div>
       <div className="space-y-2">
         <Label htmlFor="instructions">Instruções Adicionais</Label>
