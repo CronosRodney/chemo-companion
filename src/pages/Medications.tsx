@@ -457,28 +457,57 @@ export default function Medications() {
     </div>
   );
 
-  // Desktop layout (unchanged)
+  // Desktop layout – progressive disclosure (same logic as mobile)
   const renderDesktopForm = () => (
-    <Card className="rounded-2xl shadow-sm border-border">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2 text-xl">
-          <Plus className="h-5 w-5 text-primary" />
-          Adicionar Medicamento
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Preencha as informações do medicamento
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <MedNameField />
-        <StrengthField />
-        <FormField />
-        <RouteField />
-        <ClinicField />
-        {doseFreqFields}
-        {saveButtons}
-      </CardContent>
-    </Card>
+    <div className="space-y-5">
+      <Card className="rounded-2xl shadow-sm border-border">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <Plus className="h-5 w-5 text-primary" />
+            {editingId ? 'Editar Medicamento' : 'Adicionar Medicamento'}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Preencha as informações do medicamento
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <MedNameField />
+        </CardContent>
+      </Card>
+
+      {selectedMedNames.length > 0 && availableStrengths.length > 0 && (
+        <div className="animate-fade-in">
+          <Card className="rounded-2xl shadow-sm border-border">
+            <CardContent className="pt-6 space-y-6">
+              <StrengthField />
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {selectedMedNames.length > 0 && (selectedStrengths.length > 0 || availableStrengths.length === 0) && availableForms.length > 0 && (
+        <div className="animate-fade-in">
+          <Card className="rounded-2xl shadow-sm border-border">
+            <CardContent className="pt-6 space-y-6">
+              <FormField />
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {selectedMedNames.length > 0 && (selectedStrengths.length > 0 || availableStrengths.length === 0) && (selectedForms.length > 0 || availableForms.length === 0) && (
+        <div className="animate-fade-in">
+          <Card className="rounded-2xl shadow-sm border-border">
+            <CardContent className="pt-6 space-y-6">
+              {availableRoutes.length > 0 && <RouteField />}
+              <ClinicField />
+              {doseFreqFields}
+              {saveButtons}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
   );
 
   return (
