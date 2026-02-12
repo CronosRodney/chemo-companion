@@ -12,6 +12,25 @@ import { useDoctorAuth } from "@/hooks/useDoctorAuth";
 import { PendingInvitesNotification } from "@/components/PendingInvitesNotification";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+const getMonthlyTheme = () => {
+  const month = new Date().getMonth();
+  const themes: Record<number, { accentColor: string; gradient: string }> = {
+    0: { accentColor: '#CBD5E1', gradient: 'rgba(203,213,225,0.08)' },
+    1: { accentColor: '#7C3AED', gradient: 'rgba(124,58,237,0.08)' },
+    2: { accentColor: '#0072CE', gradient: 'rgba(0,114,206,0.08)' },
+    3: { accentColor: '#F97316', gradient: 'rgba(249,115,22,0.08)' },
+    4: { accentColor: '#FACC15', gradient: 'rgba(250,204,21,0.08)' },
+    5: { accentColor: '#DC2626', gradient: 'rgba(220,38,38,0.07)' },
+    6: { accentColor: '#F59E0B', gradient: 'rgba(245,158,11,0.07)' },
+    7: { accentColor: '#3B82F6', gradient: 'rgba(59,130,246,0.06)' },
+    8: { accentColor: '#16A34A', gradient: 'rgba(22,163,74,0.07)' },
+    9: { accentColor: '#EC4899', gradient: 'rgba(236,72,153,0.08)' },
+    10: { accentColor: '#1D4ED8', gradient: 'rgba(29,78,216,0.08)' },
+    11: { accentColor: '#EA580C', gradient: 'rgba(234,88,12,0.08)' },
+  };
+  return themes[month] || themes[7];
+};
+
 const Home = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -106,8 +125,9 @@ const Home = () => {
   }
 
   // Patient Home
+  const monthlyTheme = getMonthlyTheme();
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen pb-20" style={{ background: `linear-gradient(180deg, ${monthlyTheme.gradient} 0%, hsl(var(--background)) 40%)` }}>
       <div className="max-w-3xl mx-auto space-y-6 px-4">
 
         {/* ─── 1. HEADER — Full-width organic shape ─── */}
