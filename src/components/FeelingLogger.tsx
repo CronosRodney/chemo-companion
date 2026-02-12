@@ -68,12 +68,12 @@ export const FeelingLogger = ({ onFeelingLogged }: FeelingLoggerProps) => {
 
   return (
     <>
-      <div className="flex gap-3 mb-4">
+      <div className="flex gap-2">
         {[1, 2, 3, 4, 5].map((rating) => (
           <button
             key={rating}
             onClick={() => handleEmojiClick(rating)}
-            className="flex-1 aspect-square rounded-xl glass-effect border-2 border-muted-foreground/20 hover:border-primary hover:shadow-[var(--shadow-card)] transition-all duration-300 hover:scale-105 flex items-center justify-center text-3xl premium-button"
+            className="flex-1 aspect-square rounded-xl border border-border/50 bg-muted/30 hover:border-primary hover:bg-primary/5 transition-all duration-200 flex items-center justify-center text-2xl"
           >
             {rating === 1 && "😷"}
             {rating === 2 && "😔"}
