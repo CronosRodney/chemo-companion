@@ -107,35 +107,35 @@ const Home = () => {
 
   // Patient Home
   return (
-    <div className="min-h-screen bg-[hsl(214,32%,97%)] p-4 pb-20">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-b from-[hsl(214,25%,97%)] to-[hsl(214,20%,93%)] pb-20">
+      <div className="max-w-3xl mx-auto space-y-6 px-4">
 
-        {/* ─── 1. NEW HEADER — Blue gradient with avatar ─── */}
-        <div className="pt-4">
-          <div className="bg-gradient-to-br from-[hsl(214,60%,94%)] to-[hsl(214,40%,96%)] rounded-3xl p-6 shadow-sm border border-[hsl(214,50%,90%)]">
+        {/* ─── 1. HEADER — Full-width organic shape ─── */}
+        <div className="-mx-4 px-6 pt-6 pb-8 bg-gradient-to-br from-[hsl(214,55%,92%)] to-[hsl(214,40%,96%)] rounded-b-[2rem]">
+          <div className="max-w-3xl mx-auto">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <h1 className="text-2xl font-semibold text-[hsl(214,40%,25%)]">
+                <h1 className="text-2xl font-semibold text-[hsl(214,40%,22%)]">
                   {getGreeting()}, {profile?.first_name || 'Maria'}
                 </h1>
                 {activePlan ? (
-                  <p className="text-sm text-[hsl(214,20%,45%)] mt-1">
+                  <p className="text-sm text-[hsl(214,20%,42%)] mt-1">
                     Tratamento {activePlan.regimen_name} · Ciclo {completedCycles + 1} de {totalCycles}
                   </p>
                 ) : (
-                  <p className="text-sm text-[hsl(214,20%,45%)] mt-1">
+                  <p className="text-sm text-[hsl(214,20%,42%)] mt-1">
                     Como você está se sentindo hoje?
                   </p>
                 )}
               </div>
-              <div className="w-16 h-16 rounded-full border-2 border-white shadow-sm bg-[hsl(214,30%,88%)] flex items-center justify-center flex-shrink-0 ml-4">
-                <User className="h-7 w-7 text-[hsl(214,30%,50%)]" />
+              <div className="w-14 h-14 rounded-full border-2 border-white/80 shadow-md bg-[hsl(214,30%,86%)] flex items-center justify-center flex-shrink-0 ml-4">
+                <User className="h-6 w-6 text-[hsl(214,30%,45%)]" />
               </div>
             </div>
 
-            {/* Feeling Logger inside header */}
+            {/* Feeling Logger */}
             <div className="mt-5">
-              <p className="text-xs text-[hsl(214,20%,50%)] mb-2.5 font-medium">Como você está hoje?</p>
+              <p className="text-xs text-[hsl(214,20%,48%)] mb-2.5 font-medium">Como você está hoje?</p>
               <FeelingLogger onFeelingLogged={handleFeelingLogged} />
             </div>
           </div>
@@ -144,19 +144,21 @@ const Home = () => {
         {/* ─── 2. TREATMENT (elevated card) ─── */}
         <TreatmentProgressWidget treatmentPlans={treatmentPlans || []} adherence={stats.adherence} />
 
-        {/* ─── 3. ONCOTRACK AI — static highlight ─── */}
-        <div className="bg-[hsl(214,50%,96%)] rounded-2xl border border-[hsl(214,40%,90%)] p-5">
-          <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Bot className="h-4.5 w-4.5 text-primary" strokeWidth={1.5} />
+        {/* ─── 3. ONCOTRACK AI — refined ─── */}
+        <div className="bg-[hsl(214,45%,97%)] rounded-2xl border border-[hsl(214,40%,90%)] p-5 flex overflow-hidden">
+          {/* Left accent bar */}
+          <div className="w-[3px] bg-primary/40 rounded-full mr-4 flex-shrink-0" />
+          <div className="flex items-start gap-3 flex-1">
+            <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Bot className="h-4 w-4 text-primary" strokeWidth={1.5} />
             </div>
             <div>
-              <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">OncoTrack AI</p>
-              <p className="text-sm text-[hsl(214,20%,40%)] leading-relaxed">
-                Você está dentro do cronograma.
+              <p className="text-[11px] font-semibold text-primary/70 uppercase tracking-wider mb-1.5">OncoTrack AI</p>
+              <p className="text-sm text-[hsl(214,15%,35%)] leading-relaxed">
+                Análise diária concluída
               </p>
-              <p className="text-sm text-[hsl(214,20%,40%)] leading-relaxed">
-                Nenhum alerta clínico detectado hoje.
+              <p className="text-sm text-[hsl(214,15%,50%)] leading-relaxed">
+                Nenhum sinal fora do padrão hoje.
               </p>
             </div>
           </div>
