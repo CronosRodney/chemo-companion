@@ -13,6 +13,7 @@ import { MedicationService } from '@/services/medicationService';
 import { MultiSelect } from '@/components/MultiSelect';
 import { useAppContext } from '@/contexts/AppContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { ConfirmDeleteModal } from '@/components/ConfirmDeleteModal';
 
 interface OncologyMed {
   id: string;
@@ -51,6 +52,7 @@ export default function Medications() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   // Form fields - multi-select
   const [selectedMedNames, setSelectedMedNames] = useState<string[]>([]);
@@ -164,6 +166,17 @@ export default function Medications() {
     setInstructions('');
     setIntervalHours('');
     setEditingId(null);
+  };
+
+  const handleDeleteMed = async (id: string) => {
+    const { error } = await supabase.from('user_medications').delete().eq('id', id);
+    if (error) {
+      toast({ title: 'Erro', description: 'Não foi possível remover.', variant: 'destructive' });
+    } else {
+      refetchMedications();
+      toast({ title: 'Removido', description: 'Medicamento removido com sucesso.' });
+    }
+    setDeleteTarget(null);
   };
 
   const handleSave = async () => {
@@ -520,14 +533,12 @@ export default function Medications() {
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7"
-                    onClick={async () => {
-                      if (!confirm('Remover este medicamento?')) return;
-                      const { error } = await supabase.from('user_medications').delete().eq('id', med.id);
-                      if (error) {
-                        toast({ title: 'Erro', description: 'Não foi possível remover.', variant: 'destructive' });
+                    onClick={() => {
+                      const skip = localStorage.getItem('skipMedicationDeleteConfirm') === 'true';
+                      if (skip) {
+                        handleDeleteMed(med.id);
                       } else {
-                        refetchMedications();
-                        toast({ title: 'Removido', description: 'Medicamento removido com sucesso.' });
+                        setDeleteTarget(med.id);
                       }
                     }}
                   >
@@ -567,6 +578,11 @@ export default function Medications() {
           </div>
         )}
       </div>
+      <ConfirmDeleteModal
+        open={deleteTarget !== null}
+        onConfirm={() => deleteTarget && handleDeleteMed(deleteTarget)}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }
