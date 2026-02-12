@@ -203,6 +203,15 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
         </div>
       </div>
 
+      {!canEditTreatment && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg border border-border">
+          <Eye className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            Somente visualização — alterações devem ser feitas pelo seu médico.
+          </p>
+        </div>
+      )}
+
       <Tabs defaultValue="plans" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="plans">Planos</TabsTrigger>
