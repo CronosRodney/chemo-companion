@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Pill } from 'lucide-react';
+import { ArrowLeft, Plus, Pill, Clock, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -44,7 +44,7 @@ export default function Medications() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const context = useAppContext();
-  const { refetchMedications = () => {}, refetchEvents = () => {}, clinics = [], clinicsLoading = false } = context || {};
+  const { refetchMedications = () => {}, refetchEvents = () => {}, clinics = [], clinicsLoading = false, medications: userMedications = [] } = context || {};
   const isMobile = useIsMobile();
   
   const [medOptions, setMedOptions] = useState<any[]>([]);
@@ -463,6 +463,45 @@ export default function Medications() {
           renderMobileForm()
         ) : (
           renderDesktopForm()
+        )}
+
+        {/* Lista de medicamentos do usuário */}
+        {userMedications.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold text-slate-800">Meus Medicamentos</h2>
+            {userMedications.map((med: any) => (
+              <Card key={med.id} className="bg-white rounded-2xl shadow-sm border border-gray-100">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-xl bg-primary/10">
+                      <Pill className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-slate-800 truncate">{med.name}</p>
+                      {med.concentration && (
+                        <p className="text-sm text-muted-foreground">{med.concentration}</p>
+                      )}
+                      <div className="flex flex-wrap gap-2 mt-1.5">
+                        {med.dose && (
+                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{med.dose}</span>
+                        )}
+                        {med.frequency && (
+                          <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Clock className="h-3 w-3" />{med.frequency}
+                          </span>
+                        )}
+                        {med.clinicName && (
+                          <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Building2 className="h-3 w-3" />{med.clinicName}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
       </div>
     </div>
