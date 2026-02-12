@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.generate-onco-insights]
 verify_jwt = false
+
+[functions.sync-caderneta-vaccines]
+verify_jwt = true
