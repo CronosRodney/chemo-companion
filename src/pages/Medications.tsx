@@ -50,6 +50,7 @@ export default function Medications() {
   const [medOptions, setMedOptions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Form fields - multi-select
   const [selectedMedNames, setSelectedMedNames] = useState<string[]>([]);
@@ -162,6 +163,7 @@ export default function Medications() {
     setFrequency('');
     setInstructions('');
     setIntervalHours('');
+    setEditingId(null);
   };
 
   const handleSave = async () => {
@@ -177,46 +179,58 @@ export default function Medications() {
     setIsSaving(true);
 
     try {
-      for (const medName of selectedMedNames) {
-        const medicationData = {
-          name: medName,
-          activeIngredient: medName,
-          concentration: selectedStrengths.join(', ') || undefined,
-          form: selectedForms.join(', ') || undefined,
-          route: selectedRoutes.join(', ') || undefined,
-        };
+      const fullFrequency = [frequency, intervalHours ? `a cada ${intervalHours}h` : ''].filter(Boolean).join(' · ');
 
-        const fullFrequency = [frequency, intervalHours ? `a cada ${intervalHours}h` : ''].filter(Boolean).join(' · ');
-        const { id: medicationId } = await MedicationService.saveMedication(medicationData);
-        await MedicationService.linkToUser(medicationId, dose, fullFrequency || undefined, instructions, selectedClinicId !== 'none' ? selectedClinicId : undefined);
-        
-        const selectedClinic = clinics.find(c => c.id === selectedClinicId);
-        const eventDescription = [
-          selectedClinic ? `Clínica: ${selectedClinic.clinic_name}` : '',
-          selectedStrengths.length > 0 ? `Concentração: ${selectedStrengths.join(', ')}` : '',
-          selectedForms.length > 0 ? `Forma: ${selectedForms.join(', ')}` : '',
-          selectedRoutes.length > 0 ? `Via: ${selectedRoutes.join(', ')}` : '',
-          dose ? `Dose: ${dose}` : '',
-          fullFrequency ? `Frequência: ${fullFrequency}` : '',
-          instructions ? `Instruções: ${instructions}` : ''
-        ].filter(Boolean).join('\n');
+      if (editingId) {
+        // Update existing user_medication
+        const { error } = await supabase.from('user_medications').update({
+          dose: dose || null,
+          frequency: fullFrequency || null,
+          instructions: instructions || null,
+          clinic_id: selectedClinicId !== 'none' ? selectedClinicId : null,
+        }).eq('id', editingId);
 
-        await MedicationService.addTimelineEvent(
-          'medication',
-          `Medicamento adicionado: ${medName}`,
-          eventDescription || 'Medicamento adicionado com sucesso'
-        );
+        if (error) throw error;
+
+        refetchMedications();
+        toast({ title: 'Atualizado!', description: 'Medicamento atualizado com sucesso.' });
+        resetForm();
+      } else {
+        for (const medName of selectedMedNames) {
+          const medicationData = {
+            name: medName,
+            activeIngredient: medName,
+            concentration: selectedStrengths.join(', ') || undefined,
+            form: selectedForms.join(', ') || undefined,
+            route: selectedRoutes.join(', ') || undefined,
+          };
+
+          const { id: medicationId } = await MedicationService.saveMedication(medicationData);
+          await MedicationService.linkToUser(medicationId, dose, fullFrequency || undefined, instructions, selectedClinicId !== 'none' ? selectedClinicId : undefined);
+          
+          const selectedClinic = clinics.find(c => c.id === selectedClinicId);
+          const eventDescription = [
+            selectedClinic ? `Clínica: ${selectedClinic.clinic_name}` : '',
+            selectedStrengths.length > 0 ? `Concentração: ${selectedStrengths.join(', ')}` : '',
+            selectedForms.length > 0 ? `Forma: ${selectedForms.join(', ')}` : '',
+            selectedRoutes.length > 0 ? `Via: ${selectedRoutes.join(', ')}` : '',
+            dose ? `Dose: ${dose}` : '',
+            fullFrequency ? `Frequência: ${fullFrequency}` : '',
+            instructions ? `Instruções: ${instructions}` : ''
+          ].filter(Boolean).join('\n');
+
+          await MedicationService.addTimelineEvent(
+            'medication',
+            `Medicamento adicionado: ${medName}`,
+            eventDescription || 'Medicamento adicionado com sucesso'
+          );
+        }
+
+        refetchMedications();
+        refetchEvents();
+        toast({ title: 'Sucesso!', description: `${selectedMedNames.length} medicamento(s) salvo(s) com sucesso.` });
+        resetForm();
       }
-
-      refetchMedications();
-      refetchEvents();
-
-      toast({
-        title: 'Sucesso!',
-        description: `${selectedMedNames.length} medicamento(s) salvo(s) com sucesso.`,
-      });
-
-      resetForm();
     } catch (error) {
       console.error('Error saving medication:', error);
       toast({
@@ -368,14 +382,14 @@ export default function Medications() {
         disabled={isSaving || selectedMedNames.length === 0} 
         className="flex-1 h-12 text-base font-semibold rounded-xl"
       >
-        {isSaving ? 'Salvando...' : 'Salvar'}
+        {isSaving ? 'Salvando...' : editingId ? 'Atualizar' : 'Salvar'}
       </Button>
       <Button 
         variant="outline"
         onClick={resetForm} 
         className="h-12 rounded-xl"
       >
-        Limpar
+        {editingId ? 'Cancelar' : 'Limpar'}
       </Button>
     </div>
   );
@@ -492,6 +506,7 @@ export default function Medications() {
                     size="icon"
                     className="h-7 w-7"
                     onClick={() => {
+                      setEditingId(med.id);
                       setSelectedMedNames([med.name]);
                       setDose(med.dose || '');
                       setFrequency(med.frequency || '');
