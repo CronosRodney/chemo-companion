@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AvatarUpload } from "@/components/AvatarUpload";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -154,9 +155,18 @@ const EditableProfile = () => {
 
         {/* Profile Header */}
         <Card className="clean-card">
-          <CardContent className="p-6 text-center">
-            <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <User className="h-10 w-10 text-primary" />
+           <CardContent className="p-6 text-center">
+            <div className="mb-4">
+              <AvatarUpload
+                avatarUrl={profile?.avatar_url || null}
+                userId={profile?.user_id || ''}
+                onAvatarChange={() => {
+                  // Trigger profile refetch by updating local state
+                  window.location.reload();
+                }}
+                editable={isEditing}
+                size="md"
+              />
             </div>
             {isEditing ? (
               <div className="space-y-2">
