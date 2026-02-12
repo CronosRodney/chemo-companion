@@ -138,10 +138,7 @@ const Home = () => {
             {/* FeelingLogger Integration */}
             <FeelingLogger onFeelingLogged={handleFeelingLogged} />
             
-            {/* Legend */}
-            <p className="text-xs text-muted-foreground text-center">
-              1 = Muito mal · 5 = Excelente
-            </p>
+            {/* Legend removed — labels now on each icon */}
           </div>
         </div>
 
@@ -213,12 +210,17 @@ const Home = () => {
         {/* Connected Clinics — visible on desktop */}
         {!isMobile && !clinicsLoading && clinics.length > 0 && (
           <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-6 space-y-4">
-            <h2 className="text-lg font-bold text-foreground flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-secondary/20 flex items-center justify-center">
-                <Building2 className="h-4 w-4 text-secondary-foreground" />
-              </div>
-              Clínica Conectada
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-secondary/20 flex items-center justify-center">
+                  <Building2 className="h-4 w-4 text-secondary-foreground" />
+                </div>
+                Clínica Conectada
+              </h2>
+              <Badge variant="outline" className="text-xs font-medium border-[hsl(142,60%,70%)] text-[hsl(142,60%,30%)] bg-[hsl(142,60%,95%)]">
+                ● Ativa
+              </Badge>
+            </div>
             <div className="space-y-3">
               {clinics.slice(0, 1).map((clinic) => (
                 <div key={clinic.id} className="p-4 rounded-xl border border-border/50 bg-muted/30">
