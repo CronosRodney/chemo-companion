@@ -119,6 +119,12 @@ const App = () => (
                   <Vaccination />
                 </ProtectedRoute>
               } />
+              {/* Doctor viewing patient vaccination (read-only) */}
+              <Route path="/doctor/patients/:patientId/vaccination" element={
+                <DoctorProtectedRoute>
+                  <Vaccination />
+                </DoctorProtectedRoute>
+              } />
               <Route path="/timeline" element={
                 <ProtectedRoute>
                   <Timeline />
