@@ -127,7 +127,7 @@ const EditableProfile = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-20">
+    <div className={`min-h-screen bg-background p-4 ${isEditing ? 'pb-36' : 'pb-20'}`}>
       <div className="mx-auto max-w-md space-y-6 pt-8">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -353,7 +353,7 @@ const EditableProfile = () => {
 
       {/* Floating Save Bar */}
       {isEditing && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border p-4">
+        <div className="fixed bottom-0 left-0 right-0 z-[60] bg-background border-t border-border p-4 shadow-lg">
           <div className="mx-auto max-w-md flex gap-3">
             <Button variant="outline" className="flex-1" onClick={handleCancel}>
               <X className="h-4 w-4 mr-2" />
