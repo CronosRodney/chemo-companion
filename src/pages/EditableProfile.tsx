@@ -340,6 +340,22 @@ const EditableProfile = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Floating Save Bar */}
+      {isEditing && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border p-4">
+          <div className="mx-auto max-w-md flex gap-3">
+            <Button variant="outline" className="flex-1" onClick={handleCancel}>
+              <X className="h-4 w-4 mr-2" />
+              Cancelar
+            </Button>
+            <Button className="flex-1" onClick={handleSave}>
+              <Save className="h-4 w-4 mr-2" />
+              Salvar Alterações
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
