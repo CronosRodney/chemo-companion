@@ -114,9 +114,15 @@ Deno.serve(async (req) => {
           ? rawData.data
           : [];
 
-    console.log('[sync] extracted vaccines array length:', vaccines.length);
+    // Gerar ID deterministico para cada vacina
+    const vaccinesWithId = vaccines.map((v: Record<string, unknown>, i: number) => ({
+      ...v,
+      id: v.id || `${String(v.name || '')}-${String(v.date || '')}-${String(v.dose || '')}`.toLowerCase().replace(/\s+/g, '-') || `vaccine-${i}`,
+    }));
 
-    if (vaccines.length === 0) {
+    console.log('[sync] extracted vaccines array length:', vaccinesWithId.length);
+
+    if (vaccinesWithId.length === 0) {
       console.warn('[sync] B2B returned empty vaccines array — keys in response:', Object.keys(rawData));
     }
 
@@ -125,7 +131,7 @@ Deno.serve(async (req) => {
       ? rawData.total_vaccines
       : typeof rawData.total === 'number'
         ? rawData.total
-        : vaccines.length;
+        : vaccinesWithId.length;
 
     const summary = {
       total_vaccines: totalVaccines,
@@ -158,7 +164,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         connected: true,
         summary,
-        vaccines,
+        vaccines: vaccinesWithId,
       }),
       {
         status: 200,

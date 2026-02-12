@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { useExternalConnections } from '@/hooks/useExternalConnections';
 import { VaccinationSummaryCard } from '@/components/VaccinationSummaryCard';
 import { VaccinationAlertsCard } from '@/components/VaccinationAlertsCard';
+import { VaccineListCard } from '@/components/VaccineListCard';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,6 +44,7 @@ export default function Vaccination() {
     isLoading,
     isConnected,
     vaccinationData,
+    vaccines,
     isLoadingVaccination,
     connect,
     disconnect,
@@ -190,8 +192,14 @@ export default function Vaccination() {
               lastSyncAt={connection?.last_sync_at || null}
             />
 
+            {/* Vaccine List */}
+            <VaccineListCard
+              vaccines={vaccines}
+              isLoading={isLoadingVaccination}
+            />
+
             {/* Clinical Alerts */}
-            <VaccinationAlertsCard 
+            <VaccinationAlertsCard
               alerts={vaccinationData?.clinical_alerts || []}
             />
 
