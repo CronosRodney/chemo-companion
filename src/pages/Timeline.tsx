@@ -330,7 +330,7 @@ const Timeline = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p>Carregando timeline...</p>
@@ -340,14 +340,14 @@ const Timeline = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 p-4 pb-20">
+    <div className="min-h-screen bg-background p-4 pb-20">
       <div className="mx-auto max-w-md space-y-6 pt-8">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Linha do Tempo</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Linha do Tempo</h1>
           <div className="ml-auto">
             <Button 
               variant="outline" 
@@ -442,7 +442,7 @@ const Timeline = () => {
               )}
               
               <Card 
-                className={`luxury-card cursor-pointer transition-all ${selectedEvent?.id === event.id ? 'ring-2 ring-primary' : ''}`}
+                className={`clean-card cursor-pointer transition-all ${selectedEvent?.id === event.id ? 'ring-2 ring-primary' : ''}`}
                 onClick={() => setSelectedEvent(selectedEvent?.id === event.id ? null : event)}
               >
                 <CardContent className="p-4">
@@ -630,7 +630,7 @@ const Timeline = () => {
 
         {/* Empty state */}
         {filteredEvents.length === 0 && (
-          <Card className="luxury-card">
+          <Card className="clean-card">
             <CardContent className="p-8 text-center">
               <Calendar className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
               <p className="text-muted-foreground">Nenhum evento encontrado</p>
@@ -642,7 +642,7 @@ const Timeline = () => {
         )}
 
         {/* Add Event Button */}
-        <Card className="luxury-card">
+        <Card className="clean-card">
           <CardContent className="p-4">
             <Button 
               onClick={() => {

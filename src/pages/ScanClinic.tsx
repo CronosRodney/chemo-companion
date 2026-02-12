@@ -246,7 +246,7 @@ export default function ScanClinic() {
 
   if (showScanner) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5 p-4">
+      <div className="min-h-screen bg-background p-4">
         <div className="max-w-2xl mx-auto space-y-4">
           <div className="flex items-center gap-4">
             <Button 
@@ -259,7 +259,7 @@ export default function ScanClinic() {
             <h1 className="text-2xl font-bold">Escanear QR Code da Clínica</h1>
           </div>
 
-          <Card className="luxury-card border-2 border-success/30">
+          <Card className="clean-card">
             <CardContent className="pt-6">
               <SimpleQRScanner
                 onScanComplete={handleScanComplete}
@@ -274,7 +274,7 @@ export default function ScanClinic() {
 
   if (!isEditing) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5 p-4 pb-20">
+      <div className="min-h-screen bg-background p-4 pb-20">
         <div className="max-w-2xl mx-auto space-y-6 pt-8">
           <div className="flex items-center gap-4">
             <Button 
@@ -287,13 +287,13 @@ export default function ScanClinic() {
             <h1 className="text-2xl font-bold">Adicionar Clínica</h1>
           </div>
 
-          <div className="luxury-card p-10 space-y-6 border-2 border-success/20 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-success/10 to-transparent"></div>
+          <div className="clean-card p-10 space-y-6 relative overflow-hidden">
             <div className="relative">
-              <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-success to-success/70 flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(var(--success-rgb),0.4)]">
+              <div className="w-20 h-20 mx-auto rounded-full bg-success/10 flex items-center justify-center mb-6">
+                <Building2 className="h-10 w-10 text-success" />
                 <Building2 className="h-10 w-10 text-white" />
               </div>
-              <h2 className="text-2xl font-bold text-center mb-2">Como deseja adicionar a clínica?</h2>
+              <h2 className="text-2xl font-semibold text-center mb-2">Como deseja adicionar a clínica?</h2>
               <p className="text-muted-foreground text-center mb-8">
                 Escolha uma opção abaixo
               </p>
@@ -301,7 +301,7 @@ export default function ScanClinic() {
               <div className="space-y-4">
                 <Button
                   size="lg"
-                  className="w-full h-20 glass-effect border-2 border-success/50 bg-gradient-to-br from-success/20 to-success/10 hover:from-success/30 hover:to-success/20 group"
+                  className="w-full h-20 bg-success/10 border border-success/30 hover:bg-success/20 group rounded-2xl"
                   onClick={() => setShowScanner(true)}
                 >
                   <div className="flex items-center gap-4">
@@ -318,7 +318,7 @@ export default function ScanClinic() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="w-full h-20 glass-effect border-2 border-primary/50 group"
+                  className="w-full h-20 border border-border group rounded-2xl"
                   onClick={() => setIsEditing(true)}
                 >
                   <div className="flex items-center gap-4">
@@ -340,7 +340,7 @@ export default function ScanClinic() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5 p-4 pb-20">
+    <div className="min-h-screen bg-background p-4 pb-20">
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
           <Button 

@@ -90,7 +90,7 @@ const EditableProfile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p>Carregando...</p>
@@ -126,14 +126,14 @@ const EditableProfile = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 p-4 pb-20">
+    <div className="min-h-screen bg-background p-4 pb-20">
       <div className="mx-auto max-w-md space-y-6 pt-8">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/profile')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Perfil</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Perfil</h1>
           <div className="ml-auto flex gap-2">
             {isEditing ? (
               <>
@@ -153,7 +153,7 @@ const EditableProfile = () => {
         </div>
 
         {/* Profile Header */}
-        <Card className="shadow-lg border-0 bg-gradient-to-r from-primary/10 to-secondary/20">
+        <Card className="clean-card">
           <CardContent className="p-6 text-center">
             <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <User className="h-10 w-10 text-primary" />
@@ -201,7 +201,7 @@ const EditableProfile = () => {
         </Card>
 
         {/* Medical Information */}
-        <Card className="shadow-md border-0">
+        <Card className="clean-card">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary" />
@@ -242,7 +242,7 @@ const EditableProfile = () => {
         </Card>
 
         {/* Contact Information */}
-        <Card className="shadow-md border-0">
+        <Card className="clean-card">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Phone className="h-5 w-5 text-secondary-accent" />
@@ -288,12 +288,12 @@ const EditableProfile = () => {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 gap-4">
-          <Card className="shadow-md border-0 text-center p-4">
+          <Card className="clean-card text-center p-4">
             <Calendar className="h-6 w-6 mx-auto text-primary mb-2" />
             <p className="text-xs text-muted-foreground">Próxima Consulta</p>
             <p className="font-semibold text-sm">{stats.nextAppointment}</p>
           </Card>
-          <Card className="shadow-md border-0 text-center p-4">
+          <Card className="clean-card text-center p-4">
             <Shield className="h-6 w-6 mx-auto text-success mb-2" />
             <p className="text-xs text-muted-foreground">Ciclo Atual</p>
             <p className="font-semibold text-sm text-success">{stats.currentCycle}</p>
@@ -325,7 +325,7 @@ const EditableProfile = () => {
         </div>
 
         {/* LGPD Notice */}
-        <Card className="shadow-md border-0 bg-muted/30">
+        <Card className="clean-card">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
               <Shield className="h-5 w-5 text-muted-foreground mt-0.5" />

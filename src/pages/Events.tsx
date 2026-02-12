@@ -166,7 +166,7 @@ const Events = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p>Carregando eventos...</p>
@@ -176,14 +176,14 @@ const Events = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 p-4 pb-20">
+    <div className="min-h-screen bg-background p-4 pb-20">
       <div className="mx-auto max-w-md space-y-6 pt-8">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Registrar Eventos</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Registrar Eventos</h1>
           <div className="ml-auto">
             <Button 
               variant="default" 
@@ -197,7 +197,7 @@ const Events = () => {
 
         {/* Event Registration Form */}
         {showForm && (
-          <Card className="luxury-card">
+          <Card className="clean-card">
             <CardHeader>
               <CardTitle className="text-lg">Novo Evento</CardTitle>
             </CardHeader>
@@ -302,7 +302,7 @@ const Events = () => {
           <h2 className="text-lg font-semibold">Eventos Registrados</h2>
           
           {events.length === 0 ? (
-            <Card className="luxury-card">
+            <Card className="clean-card">
               <CardContent className="p-8 text-center">
                 <Calendar className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
                 <p className="text-muted-foreground">Nenhum evento registrado</p>
@@ -313,7 +313,7 @@ const Events = () => {
             </Card>
           ) : (
             events.map((event) => (
-              <Card key={event.id} className="luxury-card">
+              <Card key={event.id} className="clean-card">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
                     <div className="flex-1 space-y-2">

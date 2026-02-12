@@ -116,20 +116,20 @@ Telefone: ${profile?.emergency_contact_phone || '(11) 88888-8888'}`;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 p-4 pb-20">
+    <div className="min-h-screen bg-background p-4 pb-20">
       <div className="mx-auto max-w-md space-y-6 pt-8">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/profile')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Compartilhar</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Compartilhar</h1>
         </div>
 
         {/* PDF Export */}
         <div className="space-y-6">
           {/* PDF Export Options */}
-          <Card className="shadow-lg border-0 bg-gradient-to-r from-primary/10 to-secondary/20">
+          <Card className="clean-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Download className="h-5 w-5 text-primary" />
@@ -187,7 +187,7 @@ Telefone: ${profile?.emergency_contact_phone || '(11) 88888-8888'}`;
           </Card>
 
           {/* Info Notice */}
-          <Card className="shadow-md border-0 bg-primary/10 border-primary/30">
+          <Card className="clean-card">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <FileText className="h-5 w-5 text-primary mt-0.5" />

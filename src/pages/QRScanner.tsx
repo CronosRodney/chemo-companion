@@ -95,7 +95,7 @@ const QRScanner = () => {
 
   if (scanResult) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 p-4">
+      <div className="min-h-screen bg-background p-4">
         <div className="mx-auto max-w-md space-y-6 pt-8">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => setScanResult(null)}>
@@ -344,7 +344,7 @@ const QRScanner = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 p-4">
+    <div className="min-h-screen bg-background p-4">
       <div className="mx-auto max-w-md space-y-6 pt-8">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
@@ -390,7 +390,7 @@ const QRScanner = () => {
 
         {/* Sample QR Types */}
         <div className="space-y-3">
-          <Card className="shadow-md border-0">
+          <Card className="clean-card">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <Building2 className="h-5 w-5 text-primary" />
@@ -402,7 +402,7 @@ const QRScanner = () => {
             </CardContent>
           </Card>
 
-          <Card className="shadow-md border-0">
+          <Card className="clean-card">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <Pill className="h-5 w-5 text-secondary-accent" />

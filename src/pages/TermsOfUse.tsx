@@ -7,7 +7,7 @@ const TermsOfUse = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 p-4 pb-20">
+    <div className="min-h-screen bg-background p-4 pb-20">
       <div className="mx-auto max-w-2xl space-y-6 pt-8">
         {/* Header */}
         <div className="flex items-center gap-4">

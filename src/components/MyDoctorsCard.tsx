@@ -15,7 +15,7 @@ export const MyDoctorsCard = () => {
 
   if (loading) {
     return (
-      <div className="luxury-card p-6 border-2 border-primary/20">
+      <div className="clean-card p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
             <Stethoscope className="h-5 w-5 text-primary" />
@@ -64,15 +64,14 @@ export const MyDoctorsCard = () => {
   };
 
   return (
-    <div className="luxury-card p-6 border-2 border-primary/20 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent"></div>
+    <div className="clean-card p-6 relative overflow-hidden">
       <div className="relative">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
               <Stethoscope className="h-5 w-5 text-primary" />
             </div>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+            <h2 className="text-lg font-semibold text-foreground">
               Meus Médicos
             </h2>
           </div>
@@ -90,7 +89,7 @@ export const MyDoctorsCard = () => {
           {activeDoctors.map((doctor) => (
             <div
               key={doctor.connection_id}
-              className="glass-effect p-4 rounded-xl border border-primary/20"
+              className="bg-card p-4 rounded-2xl border border-border"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">

@@ -95,7 +95,7 @@ export const SimpleQRScanner: React.FC<SimpleQRScannerProps> = ({
   // Modo de entrada manual de texto
   if (scannerMode === 'text') {
     return (
-      <Card className="luxury-card">
+      <Card className="clean-card">
         <CardContent className="p-6 space-y-4">
           <div className="text-center space-y-2">
             <Type className="h-12 w-12 text-primary mx-auto" />
@@ -131,7 +131,7 @@ export const SimpleQRScanner: React.FC<SimpleQRScannerProps> = ({
   // Modo de upload de arquivo
   if (scannerMode === 'file') {
     return (
-      <Card className="luxury-card">
+      <Card className="clean-card">
         <CardContent className="p-6 space-y-4">
           <div className="text-center space-y-2">
             <Upload className="h-12 w-12 text-primary mx-auto" />
@@ -177,7 +177,7 @@ export const SimpleQRScanner: React.FC<SimpleQRScannerProps> = ({
 
   // Modo câmera
   return (
-    <Card className="luxury-card overflow-hidden">
+    <Card className="clean-card overflow-hidden">
       <CardContent className="p-0 h-full relative">
         {cameraError ? (
           <div className="flex items-center justify-center h-96 bg-gradient-to-br from-muted to-muted/50">

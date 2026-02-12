@@ -170,10 +170,11 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
   };
 
   return (
-    <div className="container max-w-7xl mx-auto p-6 space-y-6">
+    <div className="min-h-screen bg-background p-4 pb-20">
+      <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex justify-between items-start">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Tratamento</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Tratamento</h1>
           <p className="text-muted-foreground">
             {isDoctorContext ? 'Gerencie os planos de tratamento do paciente' : 'Acompanhe seus planos de tratamento oncológico'}
           </p>
@@ -852,6 +853,7 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </div>
   );
 }
