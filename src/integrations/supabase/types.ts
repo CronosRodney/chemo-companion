@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_insights: {
+        Row: {
+          clinical_state: Json
+          clinical_state_hash: string
+          content_json: Json
+          created_at: string
+          generated_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          clinical_state: Json
+          clinical_state_hash: string
+          content_json: Json
+          created_at?: string
+          generated_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          clinical_state?: Json
+          clinical_state_hash?: string
+          content_json?: Json
+          created_at?: string
+          generated_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       clinic_responsible: {
         Row: {
           clinic_id: string
