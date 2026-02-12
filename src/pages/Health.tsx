@@ -113,7 +113,7 @@ export default function Health() {
             <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-3xl font-bold">Monitoramento de Saúde</h1>
+            <h1 className="text-2xl font-semibold text-foreground">Monitoramento de Saúde</h1>
           </div>
           <div className="text-center py-12">
             <RefreshCw className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
@@ -132,7 +132,7 @@ export default function Health() {
             <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-3xl font-bold">Monitoramento de Saúde</h1>
+            <h1 className="text-2xl font-semibold text-foreground">Monitoramento de Saúde</h1>
           </div>
           <Button onClick={loadData} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />

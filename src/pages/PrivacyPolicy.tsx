@@ -7,23 +7,21 @@ const PrivacyPolicy = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 p-4 pb-20">
+    <div className="min-h-screen bg-background p-4 pb-20">
       <div className="mx-auto max-w-2xl space-y-6 pt-8">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/auth')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold">Política de Privacidade</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Política de Privacidade</h1>
         </div>
 
-        {/* Last Update */}
         <p className="text-sm text-muted-foreground">
           Última atualização: {new Date().toLocaleDateString('pt-BR')}
         </p>
 
-        {/* Introduction */}
-        <Card className="shadow-md border-0">
+        <Card className="clean-card">
           <CardContent className="p-6 space-y-4">
             <div className="flex items-center gap-3">
               <Shield className="h-6 w-6 text-primary" />
@@ -45,11 +43,10 @@ const PrivacyPolicy = () => {
           </CardContent>
         </Card>
 
-        {/* Data Collection */}
-        <Card className="shadow-md border-0">
+        <Card className="clean-card">
           <CardContent className="p-6 space-y-4">
             <div className="flex items-center gap-3">
-              <Database className="h-6 w-6 text-secondary-accent" />
+              <Database className="h-6 w-6 text-primary" />
               <h2 className="text-lg font-semibold">Dados que Coletamos</h2>
             </div>
             <div className="space-y-3">
@@ -74,8 +71,7 @@ const PrivacyPolicy = () => {
           </CardContent>
         </Card>
 
-        {/* Data Usage */}
-        <Card className="shadow-md border-0">
+        <Card className="clean-card">
           <CardContent className="p-6 space-y-4">
             <div className="flex items-center gap-3">
               <FileText className="h-6 w-6 text-primary" />
@@ -106,8 +102,7 @@ const PrivacyPolicy = () => {
           </CardContent>
         </Card>
 
-        {/* Data Storage */}
-        <Card className="shadow-md border-0">
+        <Card className="clean-card">
           <CardContent className="p-6 space-y-4">
             <div className="flex items-center gap-3">
               <Lock className="h-6 w-6 text-success" />
@@ -118,31 +113,18 @@ const PrivacyPolicy = () => {
               baseada em Amazon Web Services (AWS). Utilizamos as seguintes medidas de proteção:
             </p>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-start gap-2">
-                <span className="text-success">✓</span>
-                Criptografia de dados em trânsito (HTTPS/TLS) e em repouso
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-success">✓</span>
-                Autenticação segura com tokens JWT
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-success">✓</span>
-                Controle de acesso por Row Level Security (RLS)
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-success">✓</span>
-                Backups automáticos e recuperação de dados
-              </li>
+              <li className="flex items-start gap-2"><span className="text-success">✓</span>Criptografia de dados em trânsito (HTTPS/TLS) e em repouso</li>
+              <li className="flex items-start gap-2"><span className="text-success">✓</span>Autenticação segura com tokens JWT</li>
+              <li className="flex items-start gap-2"><span className="text-success">✓</span>Controle de acesso por Row Level Security (RLS)</li>
+              <li className="flex items-start gap-2"><span className="text-success">✓</span>Backups automáticos e recuperação de dados</li>
             </ul>
           </CardContent>
         </Card>
 
-        {/* Data Sharing */}
-        <Card className="shadow-md border-0">
+        <Card className="clean-card">
           <CardContent className="p-6 space-y-4">
             <div className="flex items-center gap-3">
-              <Users className="h-6 w-6 text-secondary-accent" />
+              <Users className="h-6 w-6 text-primary" />
               <h2 className="text-lg font-semibold">Compartilhamento de Dados</h2>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
@@ -166,8 +148,7 @@ const PrivacyPolicy = () => {
           </CardContent>
         </Card>
 
-        {/* User Rights (LGPD) */}
-        <Card className="shadow-md border-0">
+        <Card className="clean-card">
           <CardContent className="p-6 space-y-4">
             <div className="flex items-center gap-3">
               <Shield className="h-6 w-6 text-primary" />
@@ -201,11 +182,10 @@ const PrivacyPolicy = () => {
           </CardContent>
         </Card>
 
-        {/* Contact */}
-        <Card className="shadow-md border-0">
+        <Card className="clean-card">
           <CardContent className="p-6 space-y-4">
             <div className="flex items-center gap-3">
-              <Mail className="h-6 w-6 text-secondary-accent" />
+              <Mail className="h-6 w-6 text-primary" />
               <h2 className="text-lg font-semibold">Contato</h2>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
@@ -218,7 +198,6 @@ const PrivacyPolicy = () => {
           </CardContent>
         </Card>
 
-        {/* Back Button */}
         <div className="pt-4">
           <Button 
             variant="outline" 

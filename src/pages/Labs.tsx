@@ -110,7 +110,7 @@ const Labs = ({ patientId }: LabsProps) => {
           <>
             {/* Latest Results from Cycles */}
             {latestCycle && (
-              <Card className="luxury-card border-2 border-primary/20">
+              <Card className="clean-card">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-xl flex items-center gap-3">
@@ -131,7 +131,7 @@ const Labs = ({ patientId }: LabsProps) => {
                       const status = getLabStatus(value, param.min, param.max);
                       
                       return (
-                        <div key={param.key} className="glass-effect p-4 rounded-lg border-2 border-accent/20">
+                        <div key={param.key} className="bg-card p-4 rounded-2xl border border-border">
                           <div className="flex items-center justify-between mb-2">
                             <p className="text-sm font-medium text-muted-foreground">{param.label}</p>
                             {getStatusBadge(status)}
@@ -187,7 +187,7 @@ const Labs = ({ patientId }: LabsProps) => {
                 <CardContent>
                   <div className="space-y-3">
                     {cyclesWithLabs.map(cycle => (
-                      <div key={cycle.id} className="glass-effect p-4 rounded-lg border border-accent/20">
+                      <div key={cycle.id} className="bg-card p-4 rounded-2xl border border-border">
                         <div className="flex items-center justify-between mb-3">
                           <p className="font-bold">Ciclo {cycle.cycle_number}</p>
                           <p className="text-sm text-muted-foreground">
@@ -225,18 +225,18 @@ const Labs = ({ patientId }: LabsProps) => {
 
   // Se standalone, mostra com header
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5 p-4 pb-20">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background p-4 pb-20">
+      <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4 pt-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+            <h1 className="text-2xl font-semibold text-foreground">
               Exames Laboratoriais
             </h1>
-            <p className="text-muted-foreground">Histórico e tendências dos seus exames</p>
+            <p className="text-sm text-muted-foreground">Histórico e tendências dos seus exames</p>
           </div>
         </div>
 

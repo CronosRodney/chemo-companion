@@ -116,7 +116,7 @@ const DoctorProfile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p>Carregando...</p>
@@ -126,7 +126,7 @@ const DoctorProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-accent/20 p-4 pb-24">
+    <div className="min-h-screen bg-background p-4 pb-24">
       <div className="mx-auto max-w-md space-y-6 pt-8">
         {/* Header */}
         <div className="flex items-center justify-between">

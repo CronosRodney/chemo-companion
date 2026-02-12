@@ -459,7 +459,7 @@ export default function Medications() {
 
   // Desktop layout (unchanged)
   const renderDesktopForm = () => (
-    <Card className="luxury-card border-2 border-primary/20">
+    <Card className="clean-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Plus className="h-5 w-5 text-primary" />
@@ -482,14 +482,14 @@ export default function Medications() {
   );
 
   return (
-    <div className={`min-h-screen p-4 pb-20 ${isMobile ? 'bg-[#F7F9FC]' : 'bg-gradient-to-br from-background via-primary/5 to-secondary/5'}`}>
+    <div className="min-h-screen bg-background p-4 pb-20">
       <div className={`container mx-auto space-y-6 ${isMobile ? 'max-w-lg' : 'max-w-2xl'}`}>
         <div className="flex items-center gap-4 pt-4">
           <Button variant="outline" size="icon" onClick={() => navigate('/')}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className={`text-3xl font-bold ${isMobile ? 'text-slate-800' : 'bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent'}`}>
+            <h1 className="text-2xl font-semibold text-foreground">
               Medicamentos
             </h1>
             <p className="text-sm text-muted-foreground">Busque e adicione medicamentos oncológicos</p>

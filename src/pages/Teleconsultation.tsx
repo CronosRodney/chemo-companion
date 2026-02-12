@@ -131,7 +131,7 @@ export default function Teleconsultation() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">Teleconsulta</h1>
+              <h1 className="text-2xl font-semibold text-foreground">Teleconsulta</h1>
               <p className="text-sm text-muted-foreground">
                 Consultas virtuais com sua equipe médica
               </p>
