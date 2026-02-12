@@ -172,11 +172,11 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-20">
-      <div className={`mx-auto ${isMobile ? 'space-y-5' : 'max-w-2xl space-y-6'}`}>
+    <div className="min-h-screen bg-background p-4 pb-20 lg:px-8 lg:py-8">
+      <div className={`mx-auto ${isMobile ? 'space-y-5' : 'max-w-6xl space-y-8'}`}>
       <div className={`flex justify-between items-start ${isMobile ? 'flex-col gap-2' : ''}`}>
-        <div className={isMobile ? 'space-y-1' : 'space-y-2'}>
-          <h1 className="text-2xl font-semibold text-foreground">Tratamento</h1>
+      <div className={isMobile ? 'space-y-1' : 'space-y-2 mb-2'}>
+          <h1 className={`font-semibold text-foreground ${isMobile ? 'text-2xl' : 'text-2xl'}`}>Tratamento</h1>
           {!isMobile && (
             <p className="text-muted-foreground">
               {isDoctorContext ? 'Gerencie os planos de tratamento do paciente' : 'Acompanhe seus planos de tratamento oncológico'}
@@ -213,15 +213,15 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
       )}
 
       <Tabs defaultValue="plans" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="plans">Planos</TabsTrigger>
-          <TabsTrigger value="current">Ciclo Atual</TabsTrigger>
-          <TabsTrigger value="schedule">Cronograma</TabsTrigger>
-          <TabsTrigger value="history">Histórico</TabsTrigger>
+        <TabsList className={`grid w-full grid-cols-4 ${isMobile ? '' : 'bg-muted/60 p-1 rounded-xl h-12'}`}>
+          <TabsTrigger value="plans" className={isMobile ? '' : 'rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm text-sm'}>Planos</TabsTrigger>
+          <TabsTrigger value="current" className={isMobile ? '' : 'rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm text-sm'}>Ciclo Atual</TabsTrigger>
+          <TabsTrigger value="schedule" className={isMobile ? '' : 'rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm text-sm'}>Cronograma</TabsTrigger>
+          <TabsTrigger value="history" className={isMobile ? '' : 'rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm text-sm'}>Histórico</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="plans" className="space-y-4 animate-fade-in">
-          <Card>
+        <TabsContent value="plans" className={`animate-fade-in ${isMobile ? 'space-y-4' : 'space-y-6'}`}>
+          <Card className={isMobile ? '' : 'rounded-2xl shadow-sm border-border'}>
             <CardHeader>
               <div className="flex justify-between items-center">
                 <div>
@@ -256,7 +256,7 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
                     const progress = Math.round(((getCurrentCycleNumber(plan) - 1) / plan.planned_cycles) * 100);
                     
                     return (
-                    <Card key={plan.id} className={isMobile ? 'border border-border rounded-2xl shadow-sm' : 'border border-border rounded-2xl shadow-sm'}>
+                    <Card key={plan.id} className={`border border-border rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 ${isMobile ? '' : 'animate-fade-in'}`}>
                       <CardContent className={isMobile ? 'p-5 space-y-4' : 'p-6 space-y-4'}>
                         {/* Line 1: Header */}
                         <div className="flex justify-between items-start">
@@ -298,7 +298,7 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
                         )}
 
                         {/* Line 3: Clinical info grid */}
-                        <div className={isMobile ? 'grid grid-cols-2 gap-4' : 'grid grid-cols-3 gap-4'}>
+                        <div className={isMobile ? 'grid grid-cols-2 gap-4' : 'grid grid-cols-3 gap-6'}>
                           <div className="flex items-start gap-2">
                             <Clock className={`${isMobile ? 'h-3.5 w-3.5' : 'h-4 w-4'} text-muted-foreground mt-0.5`} />
                             <div>

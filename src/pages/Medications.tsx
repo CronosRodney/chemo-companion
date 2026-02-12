@@ -459,9 +459,9 @@ export default function Medications() {
 
   // Desktop layout (unchanged)
   const renderDesktopForm = () => (
-    <Card className="clean-card">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <Card className="rounded-2xl shadow-sm border-border">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2 text-xl">
           <Plus className="h-5 w-5 text-primary" />
           Adicionar Medicamento
         </CardTitle>
@@ -482,8 +482,8 @@ export default function Medications() {
   );
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-20">
-      <div className={`container mx-auto space-y-6 ${isMobile ? 'max-w-lg' : 'max-w-2xl'}`}>
+    <div className="min-h-screen bg-background p-4 pb-20 lg:px-8 lg:py-8">
+      <div className={`container mx-auto space-y-8 ${isMobile ? 'max-w-lg' : 'max-w-4xl'}`}>
         <div className="flex items-center gap-4 pt-4">
           <Button variant="outline" size="icon" onClick={() => navigate('/')}>
             <ArrowLeft className="h-4 w-4" />
@@ -512,7 +512,7 @@ export default function Medications() {
           <div className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">Meus Medicamentos</h2>
             {userMedications.map((med: any) => (
-              <Card key={med.id} className="bg-card rounded-2xl shadow-sm border border-border relative">
+              <Card key={med.id} className="bg-card rounded-2xl shadow-sm border border-border relative hover:shadow-md transition-shadow duration-200">
                 <div className="absolute top-3 right-3 flex gap-1">
                   <Button
                     variant="ghost"

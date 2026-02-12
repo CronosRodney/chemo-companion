@@ -125,8 +125,8 @@ export default function Health() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background p-4 lg:px-8 lg:py-8">
+      <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
@@ -140,11 +140,11 @@ export default function Health() {
           </Button>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
-            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="devices">Dispositivos</TabsTrigger>
-            <TabsTrigger value="alerts">
+        <Tabs defaultValue="overview" className="space-y-8">
+          <TabsList className="grid w-full grid-cols-3 max-w-md bg-muted/60 p-1 rounded-xl h-12">
+            <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm text-sm">Visão Geral</TabsTrigger>
+            <TabsTrigger value="devices" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm text-sm">Dispositivos</TabsTrigger>
+            <TabsTrigger value="alerts" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm text-sm">
               Alertas
               {alerts.length > 0 && (
                 <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-destructive text-destructive-foreground">

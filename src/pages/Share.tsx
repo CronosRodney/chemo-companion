@@ -116,8 +116,8 @@ Telefone: ${profile?.emergency_contact_phone || '(11) 88888-8888'}`;
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-20">
-      <div className="mx-auto max-w-md space-y-6 pt-8">
+    <div className="min-h-screen bg-background p-4 pb-20 lg:px-8 lg:py-8">
+      <div className="mx-auto max-w-md lg:max-w-2xl space-y-6 lg:space-y-8 pt-8 lg:pt-0">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/profile')}>

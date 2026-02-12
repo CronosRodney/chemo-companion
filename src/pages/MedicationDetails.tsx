@@ -109,7 +109,7 @@ export default function MedicationDetails() {
   };
 
   return (
-    <div className="container mx-auto p-4 space-y-6 max-w-2xl">
+    <div className="container mx-auto p-4 lg:px-8 lg:py-8 space-y-6 max-w-2xl lg:max-w-3xl">
       <div className="flex items-center gap-4">
         <Button 
           variant="outline" 
@@ -121,7 +121,7 @@ export default function MedicationDetails() {
         <h1 className="text-2xl font-semibold">Dados do Medicamento</h1>
       </div>
 
-      <Card>
+      <Card className="rounded-2xl shadow-sm border-border">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Informações Extraídas</CardTitle>
           <Button

@@ -78,10 +78,10 @@ const Labs = ({ patientId }: LabsProps) => {
   }
 
   const content = (
-    <Tabs defaultValue="exams" className="space-y-4">
-      <TabsList className="grid grid-cols-2 w-full">
-        <TabsTrigger value="exams">Exames</TabsTrigger>
-        <TabsTrigger value="trends">Tendências</TabsTrigger>
+    <Tabs defaultValue="exams" className="space-y-6">
+      <TabsList className="grid grid-cols-2 w-full bg-muted/60 p-1 rounded-xl h-12">
+        <TabsTrigger value="exams" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm text-sm">Exames</TabsTrigger>
+        <TabsTrigger value="trends" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm text-sm">Tendências</TabsTrigger>
       </TabsList>
 
       {/* Aba de Exames - CRUD completo */}
@@ -225,8 +225,8 @@ const Labs = ({ patientId }: LabsProps) => {
 
   // Se standalone, mostra com header
   return (
-    <div className="min-h-screen bg-background p-4 pb-20">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background p-4 pb-20 lg:px-8 lg:py-8">
+      <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex items-center gap-4 pt-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
