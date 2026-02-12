@@ -336,7 +336,8 @@ const Home = () => {
             {profile?.emergency_contact_name || 'Maria Silva'} - {profile?.emergency_contact_phone || '(11) 88888-8888'}
           </p>
           <Button 
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-semibold rounded-full px-6 shadow-sm"
+            variant="destructive"
+            className="rounded-full px-6 shadow-sm font-semibold"
             size="lg"
             asChild
           >
