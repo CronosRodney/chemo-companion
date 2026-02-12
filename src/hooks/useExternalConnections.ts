@@ -26,6 +26,17 @@ export interface VaccinationSummary {
   clinical_alerts: ClinicalAlert[];
 }
 
+export interface VaccineRecord {
+  id: string;
+  name: string;
+  date: string;
+  dose: string;
+  status: 'up_to_date' | 'pending' | 'overdue' | 'unknown';
+  observations?: string;
+  source?: string;
+  confidence?: number;
+}
+
 export interface ClinicalAlert {
   id: string;
   source: 'minha_caderneta' | 'oncotrack';
@@ -39,6 +50,7 @@ interface UseExternalConnectionsReturn {
   isLoading: boolean;
   isConnected: boolean;
   vaccinationData: VaccinationSummary | null;
+  vaccines: VaccineRecord[];
   isLoadingVaccination: boolean;
   connect: () => void;
   disconnect: () => Promise<void>;
@@ -70,6 +82,7 @@ export function useExternalConnections(provider: ExternalProvider = 'minha_cader
   const [connection, setConnection] = useState<ExternalConnection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [vaccinationData, setVaccinationData] = useState<VaccinationSummary | null>(null);
+  const [vaccines, setVaccines] = useState<VaccineRecord[]>([]);
   const [isLoadingVaccination, setIsLoadingVaccination] = useState(false);
 
   // Fetch existing connection
@@ -171,6 +184,7 @@ export function useExternalConnections(provider: ExternalProvider = 'minha_cader
 
       setConnection(null);
       setVaccinationData(null);
+      setVaccines([]);
       toast.success('Desconectado da Minha Caderneta');
     } catch (error) {
       console.error('Error disconnecting:', error);
@@ -191,12 +205,19 @@ export function useExternalConnections(provider: ExternalProvider = 'minha_cader
       }
 
       // Edge function retorna { connected, summary, vaccines }
-      const payload = data as { connected?: boolean; summary?: VaccinationSummary; vaccines?: unknown[] } | null;
+      const payload = data as { connected?: boolean; summary?: VaccinationSummary; vaccines?: VaccineRecord[] } | null;
       if (payload?.summary) {
         setVaccinationData(payload.summary);
       } else {
         // Fallback: resposta pode ser o summary direto (compatibilidade)
         setVaccinationData(data as VaccinationSummary);
+      }
+      
+      // Extrair array de vacinas
+      if (payload?.vaccines && Array.isArray(payload.vaccines)) {
+        setVaccines(payload.vaccines);
+      } else {
+        setVaccines([]);
       }
     } catch (error) {
       console.error('Error fetching vaccination data:', error);
@@ -218,6 +239,7 @@ export function useExternalConnections(provider: ExternalProvider = 'minha_cader
     isLoading,
     isConnected: !!connection && connection.status === 'active',
     vaccinationData,
+    vaccines,
     isLoadingVaccination,
     connect,
     disconnect,
