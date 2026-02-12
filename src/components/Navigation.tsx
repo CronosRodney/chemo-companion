@@ -68,9 +68,9 @@ const Navigation = () => {
     );
   }
 
-  // Desktop/Tablet: centered nav items
+  // Desktop/Tablet: centered nav items (hidden on lg+ where sidebar takes over)
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border shadow-lg z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border shadow-lg z-50 lg:hidden">
       <div className="flex items-center justify-center py-2 px-4">
         {/* All Navigation Items - Centered */}
         <div className="flex items-center gap-1">

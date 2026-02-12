@@ -28,6 +28,7 @@ import Health from "./pages/Health";
 import Vaccination from "./pages/Vaccination";
 import Teleconsultation from "./pages/Teleconsultation";
 import Navigation from "./components/Navigation";
+import MainLayout from "./components/MainLayout";
 import NotFound from "./pages/NotFound";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfUse from "./pages/TermsOfUse";
@@ -52,7 +53,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <AppProvider>
-          <div className="relative">
+          <MainLayout>
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
@@ -195,7 +196,7 @@ const App = () => (
             </Routes>
             <Navigation />
             <OfflineBanner />
-          </div>
+          </MainLayout>
           </AppProvider>
         </AuthProvider>
       </BrowserRouter>
