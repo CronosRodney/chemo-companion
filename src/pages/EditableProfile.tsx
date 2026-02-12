@@ -22,11 +22,43 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAppContext } from "@/contexts/AppContext";
+import { MedicalReportExport } from "@/components/MedicalReportExport";
+
+// Extracted outside the component to avoid re-creation on every render
+function EditableField({ 
+  label, 
+  value, 
+  onChange, 
+  type = "text",
+  isEditing
+}: { 
+  label: string; 
+  value: string; 
+  onChange: (value: string) => void; 
+  type?: string;
+  isEditing: boolean;
+}) {
+  return (
+    <div className="p-3 bg-muted/50 rounded-lg">
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      {isEditing ? (
+        <Input
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="mt-1 h-8 text-sm"
+        />
+      ) : (
+        <p className="font-medium text-sm">{value}</p>
+      )}
+    </div>
+  );
+}
 
 const EditableProfile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { profile, stats, updateProfile, clinics, loading } = useAppContext();
+  const { profile, stats, updateProfile, clinics, loading, medications, events, treatmentPlans, treatmentCycles } = useAppContext();
   const [isEditing, setIsEditing] = useState(false);
 
   const [editableData, setEditableData] = useState({
@@ -59,17 +91,9 @@ const EditableProfile = () => {
     try {
       await updateProfile(editableData);
       setIsEditing(false);
-      
-      toast({
-        title: "Sucesso",
-        description: "Perfil atualizado com sucesso"
-      });
+      toast({ title: "Sucesso", description: "Perfil atualizado com sucesso" });
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível salvar as alterações",
-        variant: "destructive"
-      });
+      toast({ title: "Erro", description: "Não foi possível salvar as alterações", variant: "destructive" });
     }
   };
 
@@ -99,32 +123,6 @@ const EditableProfile = () => {
       </div>
     );
   }
-
-  const EditableField = ({ 
-    label, 
-    value, 
-    onChange, 
-    type = "text" 
-  }: { 
-    label: string; 
-    value: string; 
-    onChange: (value: string) => void; 
-    type?: string;
-  }) => (
-    <div className="p-3 bg-muted/50 rounded-lg">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
-      {isEditing ? (
-        <Input
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="mt-1 h-8 text-sm"
-        />
-      ) : (
-        <p className="font-medium text-sm">{value}</p>
-      )}
-    </div>
-  );
 
   return (
     <div className={`min-h-screen bg-background p-4 ${isEditing ? 'pb-36' : 'pb-20'}`}>
@@ -224,12 +222,14 @@ const EditableProfile = () => {
                 label="Histórico Médico"
                 value={editableData.medical_history}
                 onChange={(value) => setEditableData({...editableData, medical_history: value})}
+                isEditing={isEditing}
               />
               <EditableField
                 label="Data Nascimento"
                 value={editableData.birth_date || ""}
                 onChange={(value) => setEditableData({...editableData, birth_date: value})}
                 type="date"
+                isEditing={isEditing}
               />
             </div>
             <div className="p-3 bg-primary/10 rounded-lg">
@@ -265,6 +265,7 @@ const EditableProfile = () => {
               value={editableData.phone}
               onChange={(value) => setEditableData({...editableData, phone: value})}
               type="tel"
+              isEditing={isEditing}
             />
             <div className="p-3 bg-warning/10 rounded-lg border border-warning/30">
               <div className="flex items-center gap-2 mb-1">
@@ -316,10 +317,52 @@ const EditableProfile = () => {
             <Shield className="h-4 w-4 mr-3" />
             Segurança e Privacidade
           </Button>
-          <Button variant="outline" className="w-full justify-start" size="lg">
-            <FileText className="h-4 w-4 mr-3" />
-            Exportar Dados (PDF)
-          </Button>
+          <MedicalReportExport
+            data={{
+              profile: {
+                first_name: profile?.first_name || '',
+                last_name: profile?.last_name || undefined,
+                birth_date: profile?.birth_date || undefined,
+                email: profile?.email || undefined,
+                phone: profile?.phone || undefined,
+                medical_history: profile?.medical_history || undefined,
+                allergies: profile?.allergies || undefined,
+                emergency_contact_name: profile?.emergency_contact_name || undefined,
+                emergency_contact_phone: profile?.emergency_contact_phone || undefined,
+              },
+              treatments: treatmentPlans.map((tp: any) => ({
+                regimen_name: tp.regimen_name,
+                line_of_therapy: tp.line_of_therapy,
+                treatment_intent: tp.treatment_intent,
+                planned_cycles: tp.planned_cycles,
+                start_date: tp.start_date,
+                status: tp.status,
+              })),
+              cycles: treatmentCycles.map((c: any) => ({
+                cycle_number: c.cycle_number,
+                scheduled_date: c.scheduled_date,
+                actual_date: c.actual_date,
+                status: c.status,
+                release_status: c.release_status,
+              })),
+              medications: medications.map((m: any) => ({
+                name: m.name,
+                dose: m.dose,
+                frequency: m.frequency,
+                scanned_at: m.scanned_at,
+              })),
+              events: events.map((e: any) => ({
+                title: e.title,
+                event_type: e.event_type,
+                event_date: e.event_date,
+                severity: e.severity,
+                description: e.description,
+              })),
+              generatedAt: new Date(),
+            }}
+            variant="outline"
+            size="lg"
+          />
           <Button 
             variant="outline" 
             className="w-full justify-start" 
