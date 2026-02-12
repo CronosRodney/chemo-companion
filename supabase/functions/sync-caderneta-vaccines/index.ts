@@ -43,6 +43,8 @@ Deno.serve(async (req) => {
       );
     }
 
+    console.log('[sync] userId:', user.id);
+
     // Buscar conexão ativa via RLS
     const { data: connection, error: connError } = await supabase
       .from('external_connections')
@@ -52,8 +54,14 @@ Deno.serve(async (req) => {
       .eq('status', 'active')
       .maybeSingle();
 
+    console.log('[sync] connection found:', !!connection);
+    if (connection) {
+      console.log('[sync] connection id:', connection.id);
+      console.log('[sync] token length:', connection.connection_token?.length ?? 0);
+    }
+
     if (connError) {
-      console.error('Erro ao buscar conexão:', connError);
+      console.error('[sync] Erro ao buscar conexão:', connError);
       return new Response(
         JSON.stringify({ error: 'Erro ao buscar conexão' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -68,6 +76,7 @@ Deno.serve(async (req) => {
     }
 
     // Fetch B2B para endpoint protegido do projeto parceiro
+    console.log('[sync] calling oncotrack-get-vaccines');
     const b2bResponse = await fetch(
       `${CADERNETA_API_URL}/oncotrack-get-vaccines`,
       {
@@ -79,9 +88,11 @@ Deno.serve(async (req) => {
       },
     );
 
+    console.log('[sync] B2B status:', b2bResponse.status);
+
     if (!b2bResponse.ok) {
       const errorText = await b2bResponse.text();
-      console.error('Erro B2B:', b2bResponse.status, errorText);
+      console.error('[sync] B2B error body:', errorText);
       return new Response(
         JSON.stringify({
           error: 'Erro ao obter dados vacinais do parceiro',
@@ -92,10 +103,32 @@ Deno.serve(async (req) => {
     }
 
     const rawData = await b2bResponse.json();
+    console.log('[sync] B2B raw body:', JSON.stringify(rawData));
 
-    // Validar e mapear resposta para VaccinationSummary
+    // Tentar extrair vacinas de diferentes formatos possíveis
+    const vaccines = Array.isArray(rawData.vaccines)
+      ? rawData.vaccines
+      : Array.isArray(rawData.vaccinations)
+        ? rawData.vaccinations
+        : Array.isArray(rawData.data)
+          ? rawData.data
+          : [];
+
+    console.log('[sync] extracted vaccines array length:', vaccines.length);
+
+    if (vaccines.length === 0) {
+      console.warn('[sync] B2B returned empty vaccines array — keys in response:', Object.keys(rawData));
+    }
+
+    // Mapear para VaccinationSummary
+    const totalVaccines = typeof rawData.total_vaccines === 'number'
+      ? rawData.total_vaccines
+      : typeof rawData.total === 'number'
+        ? rawData.total
+        : vaccines.length;
+
     const summary = {
-      total_vaccines: typeof rawData.total_vaccines === 'number' ? rawData.total_vaccines : 0,
+      total_vaccines: totalVaccines,
       up_to_date: typeof rawData.up_to_date === 'number' ? rawData.up_to_date : 0,
       pending: typeof rawData.pending === 'number' ? rawData.pending : 0,
       overdue: typeof rawData.overdue === 'number' ? rawData.overdue : 0,
@@ -112,6 +145,8 @@ Deno.serve(async (req) => {
           }))
         : [],
     };
+
+    console.log('[sync] final summary:', JSON.stringify(summary));
 
     // Atualizar last_sync_at via client autenticado (RLS)
     await supabase
