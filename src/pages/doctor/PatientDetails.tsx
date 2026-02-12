@@ -322,7 +322,7 @@ const PatientDetails = () => {
               )}
               <div className="flex gap-2 mt-2">
                 {profile.phone && (
-                  <Button variant="outline" size="sm" asChild>
+                  <Button variant="outline" size="sm" asChild className="border-primary text-primary hover:bg-primary/10">
                     <a href={`tel:${profile.phone}`}>
                       <Phone className="h-3 w-3 mr-1" />
                       Ligar
@@ -330,7 +330,7 @@ const PatientDetails = () => {
                   </Button>
                 )}
                 {profile.email && (
-                  <Button variant="outline" size="sm" asChild>
+                  <Button variant="outline" size="sm" asChild className="border-primary text-primary hover:bg-primary/10">
                     <a href={`mailto:${profile.email}`}>
                       <Mail className="h-3 w-3 mr-1" />
                       Email

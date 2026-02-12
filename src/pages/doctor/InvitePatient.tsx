@@ -200,7 +200,7 @@ const InvitePatient = () => {
                 <Button 
                   variant="outline" 
                   onClick={shareViaWhatsApp}
-                  className="w-full flex items-center gap-2"
+                  className="w-full flex items-center gap-2 border-primary text-primary hover:bg-primary/10"
                 >
                   <MessageCircle className="h-4 w-4" />
                   Enviar lembrete por WhatsApp
