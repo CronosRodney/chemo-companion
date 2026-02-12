@@ -129,7 +129,7 @@ export default function Vaccination() {
         </div>
       </div>
 
-      <div className="p-4 lg:max-w-3xl lg:mx-auto space-y-4 lg:space-y-6">
+      <div className="p-4 space-y-4 lg:space-y-6">
         {/* Not Connected State */}
         {!isConnected && (
           <Card className="border-dashed">
