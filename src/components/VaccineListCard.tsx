@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Syringe, ShieldCheck, ChevronRight } from 'lucide-react';
+import { Syringe, ShieldCheck, ChevronRight, Plus } from 'lucide-react';
 import type { VaccineRecord } from '@/hooks/useExternalConnections';
 import { VaccineDetailDialog } from './VaccineDetailDialog';
+import { AddVaccineDialog, type CreateVaccineData } from './AddVaccineDialog';
 
 const statusConfig = {
   up_to_date: { label: 'Em dia', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
@@ -16,10 +18,12 @@ const statusConfig = {
 interface VaccineListCardProps {
   vaccines: VaccineRecord[];
   isLoading: boolean;
+  onCreateVaccine?: (data: CreateVaccineData) => Promise<boolean>;
 }
 
-export function VaccineListCard({ vaccines, isLoading }: VaccineListCardProps) {
+export function VaccineListCard({ vaccines, isLoading, onCreateVaccine }: VaccineListCardProps) {
   const [selectedVaccine, setSelectedVaccine] = useState<VaccineRecord | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
   // Fecha dialog ao desconectar (vaccines fica vazio)
   useEffect(() => {
@@ -56,10 +60,18 @@ export function VaccineListCard({ vaccines, isLoading }: VaccineListCardProps) {
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Syringe className="h-4 w-4" />
-            Suas Vacinas
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Syringe className="h-4 w-4" />
+              Suas Vacinas
+            </CardTitle>
+            {onCreateVaccine && (
+              <Button size="sm" variant="outline" onClick={() => setShowAddDialog(true)}>
+                <Plus className="h-4 w-4 mr-1" />
+                Adicionar
+              </Button>
+            )}
+          </div>
           {vaccines.length > 0 && (
             <CardDescription>
               {vaccines.length} {vaccines.length === 1 ? 'vacina registrada' : 'vacinas registradas'}
@@ -111,6 +123,14 @@ export function VaccineListCard({ vaccines, isLoading }: VaccineListCardProps) {
         open={!!selectedVaccine}
         onOpenChange={(open) => { if (!open) setSelectedVaccine(null); }}
       />
+
+      {onCreateVaccine && (
+        <AddVaccineDialog
+          open={showAddDialog}
+          onOpenChange={setShowAddDialog}
+          onSubmit={onCreateVaccine}
+        />
+      )}
     </>
   );
 }

@@ -56,6 +56,7 @@ interface UseExternalConnectionsReturn {
   disconnect: () => Promise<void>;
   refreshVaccinationData: () => Promise<void>;
   completeConnection: () => Promise<boolean>;
+  createVaccine: (data: { name: string; date: string; dose: string; observations?: string }) => Promise<boolean>;
 }
 
 const CADERNETA_APP_URL = 'https://chronicle-my-health.lovable.app';
@@ -234,6 +235,35 @@ export function useExternalConnections(provider: ExternalProvider = 'minha_cader
     }
   }, [connection, refreshVaccinationData]);
 
+  // Create vaccine via B2B (persisted in Minha Caderneta)
+  const createVaccine = useCallback(async (data: { name: string; date: string; dose: string; observations?: string }): Promise<boolean> => {
+    if (!connection?.connection_token) {
+      toast.error('Conexão com Minha Caderneta não encontrada');
+      return false;
+    }
+
+    try {
+      const { data: result, error } = await supabase.functions.invoke('create-caderneta-vaccine', {
+        body: data,
+      });
+
+      if (error) throw error;
+
+      if (result?.success) {
+        toast.success('Vacina registrada na Minha Caderneta!');
+        // Re-sync para atualizar lista
+        await refreshVaccinationData();
+        return true;
+      } else {
+        throw new Error(result?.error || 'Falha ao registrar vacina');
+      }
+    } catch (error) {
+      console.error('Error creating vaccine:', error);
+      toast.error('Erro ao registrar vacina');
+      return false;
+    }
+  }, [connection, refreshVaccinationData]);
+
   return {
     connection,
     isLoading,
@@ -244,6 +274,7 @@ export function useExternalConnections(provider: ExternalProvider = 'minha_cader
     connect,
     disconnect,
     refreshVaccinationData,
-    completeConnection
+    completeConnection,
+    createVaccine,
   };
 }
