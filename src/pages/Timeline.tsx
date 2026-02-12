@@ -394,7 +394,7 @@ const Timeline = () => {
             variant={filter === 'all' ? 'default' : 'outline'}
             size="sm"
             onClick={() => handleFilterChange('all')}
-            className="whitespace-nowrap"
+            className={`whitespace-nowrap ${filter === 'all' ? 'bg-primary/15 text-primary border-primary/30 hover:bg-primary/25' : ''}`}
           >
             Todos
           </Button>
@@ -402,7 +402,7 @@ const Timeline = () => {
             variant={filter === 'medication' ? 'default' : 'outline'}
             size="sm"
             onClick={() => handleFilterChange('medication')}
-            className="whitespace-nowrap"
+            className={`whitespace-nowrap ${filter === 'medication' ? 'bg-primary/15 text-primary border-primary/30 hover:bg-primary/25' : ''}`}
           >
             Medicamentos
           </Button>
@@ -410,7 +410,7 @@ const Timeline = () => {
             variant={filter === 'appointment' ? 'default' : 'outline'}
             size="sm"
             onClick={() => handleFilterChange('appointment')}
-            className="whitespace-nowrap"
+            className={`whitespace-nowrap ${filter === 'appointment' ? 'bg-primary/15 text-primary border-primary/30 hover:bg-primary/25' : ''}`}
           >
             Consultas
           </Button>
@@ -418,7 +418,7 @@ const Timeline = () => {
             variant={filter === 'exam' ? 'default' : 'outline'}
             size="sm"
             onClick={() => handleFilterChange('exam')}
-            className="whitespace-nowrap"
+            className={`whitespace-nowrap ${filter === 'exam' ? 'bg-primary/15 text-primary border-primary/30 hover:bg-primary/25' : ''}`}
           >
             Exames
           </Button>
@@ -426,7 +426,7 @@ const Timeline = () => {
             variant={filter === 'mood' ? 'default' : 'outline'}
             size="sm"
             onClick={() => handleFilterChange('mood')}
-            className="whitespace-nowrap"
+            className={`whitespace-nowrap ${filter === 'mood' ? 'bg-primary/15 text-primary border-primary/30 hover:bg-primary/25' : ''}`}
           >
             Eventos
           </Button>
