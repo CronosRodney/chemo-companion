@@ -101,6 +101,14 @@ Deno.serve(async (req) => {
     }
 
     // Chamar endpoint B2B da Minha Caderneta
+    const b2bPayload = {
+      vaccine_name: name.trim(),
+      application_date: date,
+      dose_number: parseInt(dose, 10) || 1,
+      notes: observations?.trim() || '',
+      source: 'oncotrack',
+    };
+    console.log('[create-vaccine] payload enviado:', JSON.stringify(b2bPayload));
     console.log('[create-vaccine] calling oncotrack-create-vaccine');
     const b2bResponse = await fetch(
       `${CADERNETA_API_URL}/oncotrack-create-vaccine`,
@@ -110,13 +118,7 @@ Deno.serve(async (req) => {
           Authorization: `Bearer ${connection.connection_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: name.trim(),
-          date,
-          dose: dose.trim(),
-          observations: observations?.trim() || null,
-          source: 'oncotrack',
-        }),
+        body: JSON.stringify(b2bPayload),
       },
     );
 
@@ -125,10 +127,13 @@ Deno.serve(async (req) => {
     if (!b2bResponse.ok) {
       const errorText = await b2bResponse.text();
       console.error('[create-vaccine] B2B error:', errorText);
+      let partnerError = errorText;
+      try { partnerError = JSON.parse(errorText); } catch (_) { /* keep as string */ }
       return new Response(
         JSON.stringify({
           error: 'Erro ao criar vacina no parceiro',
-          status: b2bResponse.status,
+          partner_status: b2bResponse.status,
+          partner_error: partnerError,
         }),
         { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
