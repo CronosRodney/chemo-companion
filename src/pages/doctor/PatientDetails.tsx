@@ -18,7 +18,8 @@ import {
   Edit,
   Trash2,
   TestTube,
-  TrendingUp
+  TrendingUp,
+  Syringe
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useDoctorAuth } from '@/hooks/useDoctorAuth';
@@ -26,6 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 import DoctorNavigation from '@/components/doctor/DoctorNavigation';
 import Treatment from '@/pages/Treatment';
 import Labs from '@/pages/Labs';
+import Vaccination from '@/pages/Vaccination';
 
 interface PatientProfile {
   first_name: string;
@@ -344,7 +346,7 @@ const PatientDetails = () => {
       {/* Content */}
       <div className="max-w-4xl mx-auto p-4">
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="grid grid-cols-5 w-full">
+          <TabsList className="grid grid-cols-6 w-full">
             <TabsTrigger value="overview" className="text-xs sm:text-sm">
               <Eye className="h-3 w-3 mr-1 hidden sm:inline" />
               Resumo
@@ -356,6 +358,10 @@ const PatientDetails = () => {
             <TabsTrigger value="labs" className="text-xs sm:text-sm">
               <TestTube className="h-3 w-3 mr-1 hidden sm:inline" />
               Exames
+            </TabsTrigger>
+            <TabsTrigger value="vaccination" className="text-xs sm:text-sm">
+              <Syringe className="h-3 w-3 mr-1 hidden sm:inline" />
+              Vacinação
             </TabsTrigger>
             <TabsTrigger value="health" className="text-xs sm:text-sm">
               <Heart className="h-3 w-3 mr-1 hidden sm:inline" />
@@ -438,6 +444,11 @@ const PatientDetails = () => {
               patientId={patientId} 
               canEditOverride={true}
             />
+          </TabsContent>
+
+          {/* Vacinação Tab - Read-only via Vaccination component */}
+          <TabsContent value="vaccination">
+            <Vaccination patientId={patientId} />
           </TabsContent>
 
           {/* Exames Tab - Usa componente compartilhado Labs */}

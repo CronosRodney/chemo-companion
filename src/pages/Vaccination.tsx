@@ -34,13 +34,18 @@ import {
 
 const CADERNETA_APP_URL = 'https://chronicle-my-health.lovable.app';
 
-export default function Vaccination() {
+interface VaccinationProps {
+  patientId?: string;
+}
+
+export default function Vaccination({ patientId: propPatientId }: VaccinationProps = {}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isCompletingConnection, setIsCompletingConnection] = useState(false);
   const { userRole } = useAuth();
-  const { patientId } = useParams<{ patientId?: string }>();
+  const { patientId: routePatientId } = useParams<{ patientId?: string }>();
+  const patientId = propPatientId || routePatientId;
 
   // Doctor viewing patient = read-only mode
   const isDoctorView = userRole === 'doctor' && !!patientId;
