@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Plus, Activity, Calendar as CalendarIcon, Clock, CheckCircle2, AlertCircle, Beaker, Syringe, Eye, Stethoscope, Trash2, Pencil } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { useAppContext } from "@/contexts/AppContext";
 import TreatmentPlanDialog from "@/components/TreatmentPlanDialog";
@@ -50,6 +51,7 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
   // Use AppContext for patient's own view, or usePatientTreatment for doctor's view
   const appContext = useAppContext();
   const patientTreatment = usePatientTreatment(patientId);
+  const isMobile = useIsMobile();
   
   // Determine which data source to use
   const isViewingPatient = !!patientId;
@@ -171,31 +173,30 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
 
   return (
     <div className="min-h-screen bg-background p-4 pb-20">
-      <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex justify-between items-start">
-        <div className="space-y-2">
+      <div className={`mx-auto ${isMobile ? 'space-y-5' : 'max-w-2xl space-y-6'}`}>
+      <div className={`flex justify-between items-start ${isMobile ? 'flex-col gap-2' : ''}`}>
+        <div className={isMobile ? 'space-y-1' : 'space-y-2'}>
           <h1 className="text-2xl font-semibold text-foreground">Tratamento</h1>
-          <p className="text-muted-foreground">
-            {isDoctorContext ? 'Gerencie os planos de tratamento do paciente' : 'Acompanhe seus planos de tratamento oncológico'}
-          </p>
+          {!isMobile && (
+            <p className="text-muted-foreground">
+              {isDoctorContext ? 'Gerencie os planos de tratamento do paciente' : 'Acompanhe seus planos de tratamento oncológico'}
+            </p>
+          )}
           
           {/* Responsible Doctor Badge - only show in patient's own view */}
           {!isViewingPatient && !isDoctor && (
             doctorsLoading ? (
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-1">
                 <Skeleton className="h-4 w-4 rounded-full" />
                 <Skeleton className="h-4 w-40" />
               </div>
             ) : primaryDoctor ? (
-              <div className="flex items-center gap-2 p-2 bg-primary/10 rounded-lg mt-2">
-                <Stethoscope className="h-4 w-4 text-primary" />
-                <div className="text-sm">
-                  <span className="font-medium">Dr. {primaryDoctor.first_name} {primaryDoctor.last_name}</span>
-                  {primaryDoctor.specialty && (
-                    <span className="text-muted-foreground"> · {primaryDoctor.specialty}</span>
-                  )}
-                  <span className="text-muted-foreground"> · Médico responsável</span>
-                </div>
+              <div className={`flex items-center gap-2 ${isMobile ? 'px-2 py-1.5 bg-muted/60 rounded-lg mt-1' : 'p-2 bg-primary/10 rounded-lg mt-2'}`}>
+                <Stethoscope className="h-3.5 w-3.5 text-primary" />
+                <span className="text-xs text-muted-foreground">
+                  Dr. {primaryDoctor.first_name} {primaryDoctor.last_name}
+                  {primaryDoctor.specialty && ` · ${primaryDoctor.specialty}`}
+                </span>
               </div>
             ) : null
           )}
@@ -241,96 +242,126 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
                   )}
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {treatmentPlans.map((plan: any) => (
-                    <Card key={plan.id} className="border-2">
-                      <CardContent className="pt-6">
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <div className="flex items-center gap-2 mb-2">
-                              <h3 className="font-bold text-xl">{plan.regimen_name}</h3>
-                              <Badge variant={getStatusVariant(plan.status)}>
+                <div className={isMobile ? 'space-y-5' : 'space-y-4'}>
+                  {treatmentPlans.map((plan: any) => {
+                    const progress = Math.round(((getCurrentCycleNumber(plan) - 1) / plan.planned_cycles) * 100);
+                    
+                    return (
+                    <Card key={plan.id} className={isMobile ? 'border border-border rounded-2xl shadow-sm' : 'border-2'}>
+                      <CardContent className={isMobile ? 'p-5 space-y-4' : 'pt-6'}>
+                        {/* Line 1: Header */}
+                        <div className="flex justify-between items-start">
+                          <div className={isMobile ? 'space-y-0.5' : ''}>
+                            <div className="flex items-center gap-2">
+                              <h3 className={isMobile ? 'font-semibold text-lg text-foreground' : 'font-bold text-xl'}>{plan.regimen_name}</h3>
+                              <Badge variant={getStatusVariant(plan.status)} className={isMobile ? 'text-[10px] px-2 py-0.5' : ''}>
                                 {getStatusLabel(plan.status)}
                               </Badge>
                             </div>
-                            <p className="text-sm text-muted-foreground">
-                              {plan.line_of_therapy} • {plan.treatment_intent}
-                            </p>
-                            {plan.diagnosis_cid && (
+                            {!isMobile && (
+                              <p className="text-sm text-muted-foreground">
+                                {plan.line_of_therapy} • {plan.treatment_intent}
+                              </p>
+                            )}
+                            {!isMobile && plan.diagnosis_cid && (
                               <p className="text-xs text-muted-foreground mt-1">
                                 CID: {plan.diagnosis_cid}
                               </p>
                             )}
                           </div>
                           <div className="text-right">
-                            <p className="text-2xl font-bold">
+                            <p className={isMobile ? 'text-lg font-semibold text-foreground' : 'text-2xl font-bold'}>
                               {getCurrentCycleNumber(plan)}/{plan.planned_cycles}
                             </p>
-                            <p className="text-xs text-muted-foreground">ciclos</p>
+                            <p className="text-[10px] text-muted-foreground">ciclos</p>
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4 mb-4">
+                        {/* Line 2: Progress bar (mobile only inline, desktop keeps original) */}
+                        {isMobile && (
+                          <div className="space-y-1.5">
+                            <Progress value={progress} className="h-2" />
+                            <div className="flex justify-between">
+                              <span className="text-[11px] text-muted-foreground">Progresso do tratamento</span>
+                              <span className="text-[11px] font-medium text-muted-foreground">{progress}%</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Line 3: Clinical info grid */}
+                        <div className={isMobile ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-3 gap-4 mb-4'}>
                           <div className="flex items-start gap-2">
-                            <Clock className="h-4 w-4 text-muted-foreground mt-0.5" />
+                            <Clock className={`${isMobile ? 'h-3.5 w-3.5' : 'h-4 w-4'} text-muted-foreground mt-0.5`} />
                             <div>
-                              <p className="text-xs text-muted-foreground">Periodicidade</p>
-                              <p className="text-sm font-medium">a cada {plan.periodicity_days} dias</p>
+                              <p className={`${isMobile ? 'text-[10px]' : 'text-xs'} text-muted-foreground`}>Periodicidade</p>
+                              <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium`}>a cada {plan.periodicity_days} dias</p>
                             </div>
                           </div>
                           
                           <div className="flex items-start gap-2">
-                            <CalendarIcon className="h-4 w-4 text-muted-foreground mt-0.5" />
+                            <CalendarIcon className={`${isMobile ? 'h-3.5 w-3.5' : 'h-4 w-4'} text-muted-foreground mt-0.5`} />
                             <div>
-                              <p className="text-xs text-muted-foreground">Próximo Ciclo</p>
-                              <p className="text-sm font-medium">{getNextCycleDate(plan)}</p>
+                              <p className={`${isMobile ? 'text-[10px]' : 'text-xs'} text-muted-foreground`}>Próximo Ciclo</p>
+                              <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium`}>{getNextCycleDate(plan)}</p>
                             </div>
                           </div>
                           
                           <div className="flex items-start gap-2">
-                            <Activity className="h-4 w-4 text-muted-foreground mt-0.5" />
+                            <Activity className={`${isMobile ? 'h-3.5 w-3.5' : 'h-4 w-4'} text-muted-foreground mt-0.5`} />
                             <div>
-                              <p className="text-xs text-muted-foreground">SC (BSA)</p>
-                              <p className="text-sm font-medium">{plan.bsa_m2?.toFixed(2) || '-'} m²</p>
+                              <p className={`${isMobile ? 'text-[10px]' : 'text-xs'} text-muted-foreground`}>SC (BSA)</p>
+                              <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium`}>{plan.bsa_m2?.toFixed(2) || '-'} m²</p>
                             </div>
                           </div>
+
+                          {isMobile && (
+                            <div className="flex items-start gap-2">
+                              <Syringe className="h-3.5 w-3.5 text-muted-foreground mt-0.5" />
+                              <div>
+                                <p className="text-[10px] text-muted-foreground">Linha</p>
+                                <p className="text-xs font-medium">{plan.line_of_therapy}</p>
+                              </div>
+                            </div>
+                          )}
                         </div>
 
+                        {/* Line 4: Drug chips */}
                         {plan.drugs && plan.drugs.length > 0 && (
-                          <div className="mb-4">
-                            <p className="text-xs text-muted-foreground mb-2">Drogas do protocolo:</p>
+                          <div className={isMobile ? '' : 'mb-4'}>
+                            <p className={`${isMobile ? 'text-[10px]' : 'text-xs'} text-muted-foreground mb-1.5`}>Drogas do protocolo:</p>
                             <div className="flex flex-wrap gap-1">
-                              {plan.drugs.slice(0, 4).map((drug: any, idx: number) => (
-                                <Badge key={idx} variant="outline" className="text-xs">
+                              {plan.drugs.slice(0, isMobile ? 6 : 4).map((drug: any, idx: number) => (
+                                <Badge key={idx} variant="outline" className={isMobile ? 'text-[10px] px-2 py-0.5 bg-muted/40 border-border font-normal' : 'text-xs'}>
                                   {drug.drug_name}
                                 </Badge>
                               ))}
-                              {plan.drugs.length > 4 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{plan.drugs.length - 4} mais
+                              {plan.drugs.length > (isMobile ? 6 : 4) && (
+                                <Badge variant="outline" className={isMobile ? 'text-[10px] px-2 py-0.5 bg-muted/40 border-border font-normal' : 'text-xs'}>
+                                  +{plan.drugs.length - (isMobile ? 6 : 4)} mais
                                 </Badge>
                               )}
                             </div>
                           </div>
                         )}
 
-                        <div className="flex gap-2 border-t pt-4">
+                        {/* Line 5: Buttons */}
+                        <div className={`flex gap-2 ${isMobile ? 'pt-3 border-t border-border' : 'border-t pt-4'}`}>
                           <Button 
                             size="sm" 
                             variant="outline" 
-                            className="flex-1"
+                            className={`flex-1 ${isMobile ? 'rounded-xl border-border bg-card hover:bg-muted/50 text-xs h-9' : ''}`}
                             onClick={() => handleViewDetails(plan)}
                           >
-                            <Eye className="h-4 w-4 mr-1" />
+                            <Eye className="h-3.5 w-3.5 mr-1" />
                             Ver Detalhes
                           </Button>
                           <Button 
                             size="sm" 
                             variant="outline" 
-                            className="flex-1"
+                            className={`flex-1 ${isMobile ? 'rounded-xl border-border bg-card hover:bg-muted/50 text-xs h-9' : ''}`}
                             onClick={() => handleViewCycles(plan)}
                           >
-                            <CalendarIcon className="h-4 w-4 mr-1" />
+                            <CalendarIcon className="h-3.5 w-3.5 mr-1" />
                             Ver Ciclos
                           </Button>
                           {canEditTreatment && plan.status === 'active' && (
@@ -338,23 +369,26 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
                               <Button 
                                 size="sm" 
                                 variant="outline"
+                                className={isMobile ? 'rounded-xl border-border h-9' : ''}
                                 onClick={() => handleEditPlan(plan)}
                               >
-                                <Pencil className="h-4 w-4" />
+                                <Pencil className="h-3.5 w-3.5" />
                               </Button>
                               <Button 
                                 size="sm" 
                                 variant="destructive"
+                                className={isMobile ? 'rounded-xl h-9' : ''}
                                 onClick={() => setPlanToDelete(plan)}
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-3.5 w-3.5" />
                               </Button>
                             </>
                           )}
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
