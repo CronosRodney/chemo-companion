@@ -190,7 +190,14 @@ export function useExternalConnections(provider: ExternalProvider = 'minha_cader
         throw error;
       }
 
-      setVaccinationData(data);
+      // Edge function retorna { connected, summary, vaccines }
+      const payload = data as { connected?: boolean; summary?: VaccinationSummary; vaccines?: unknown[] } | null;
+      if (payload?.summary) {
+        setVaccinationData(payload.summary);
+      } else {
+        // Fallback: resposta pode ser o summary direto (compatibilidade)
+        setVaccinationData(data as VaccinationSummary);
+      }
     } catch (error) {
       console.error('Error fetching vaccination data:', error);
       toast.error('Erro ao carregar dados vacinais');

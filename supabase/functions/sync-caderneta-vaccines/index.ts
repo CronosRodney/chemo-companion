@@ -154,10 +154,17 @@ Deno.serve(async (req) => {
       .update({ last_sync_at: new Date().toISOString() })
       .eq('id', connection.id);
 
-    return new Response(JSON.stringify(summary), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({
+        connected: true,
+        summary,
+        vaccines,
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
+    );
   } catch (err) {
     console.error('Erro inesperado:', err);
     return new Response(
