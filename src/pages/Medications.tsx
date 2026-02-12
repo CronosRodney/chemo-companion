@@ -313,7 +313,7 @@ export default function Medications() {
     </div>
   );
 
-  const DoseFreqFields = () => (
+  const doseFreqFields = (
     <>
       <div className="space-y-2">
         <Label htmlFor="dose">Dose Prescrita</Label>
@@ -346,7 +346,7 @@ export default function Medications() {
     </>
   );
 
-  const SaveButtons = () => (
+  const saveButtons = (
     <div className="flex gap-3">
       <Button 
         onClick={handleSave} 
@@ -406,8 +406,8 @@ export default function Medications() {
             <CardContent className="pt-5 pb-5 space-y-5">
               {availableRoutes.length > 0 && <RouteField />}
               <ClinicField />
-              <DoseFreqFields />
-              <SaveButtons />
+              {doseFreqFields}
+              {saveButtons}
             </CardContent>
           </Card>
         </div>
@@ -433,8 +433,8 @@ export default function Medications() {
         <FormField />
         <RouteField />
         <ClinicField />
-        <DoseFreqFields />
-        <SaveButtons />
+        {doseFreqFields}
+        {saveButtons}
       </CardContent>
     </Card>
   );
