@@ -184,9 +184,9 @@ export const LabResultsManager = ({ patientId, userId, userRole }: LabResultsMan
             return (
               <Card key={result.id} className="border-2 border-border/50 hover:border-primary/30 transition-colors">
                 <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
                         <Badge variant="outline">
                           {EXAM_TYPE_LABELS[result.exam_type] || result.exam_type}
                         </Badge>
@@ -198,10 +198,29 @@ export const LabResultsManager = ({ patientId, userId, userRole }: LabResultsMan
                           {result.created_by_role === 'doctor' ? '👨‍⚕️ Médico' : '🧑 Paciente'}
                         </Badge>
                       </div>
+                      <div className="flex gap-1 flex-shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleEdit(result)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteClick(result)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
 
-                      <h4 className="font-medium">{result.exam_name}</h4>
+                    <h4 className="font-medium">{result.exam_name}</h4>
 
-                      <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+                    <div className="flex gap-4 text-sm text-muted-foreground">
                         {result.scheduled_at && (
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
@@ -214,11 +233,11 @@ export const LabResultsManager = ({ patientId, userId, userRole }: LabResultsMan
                             Resultado: {format(new Date(result.result_at), "dd/MM/yyyy", { locale: ptBR })}
                           </span>
                         )}
-                      </div>
+                    </div>
 
                       {/* Valores laboratoriais */}
                       {labValues.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-3">
+                        <div className="flex flex-wrap gap-2">
                           {labValues.map((v, i) => (
                             <span key={i} className="text-xs bg-muted px-2 py-1 rounded">
                               <span className="font-medium">{v.label}:</span> {v.value}
@@ -228,29 +247,10 @@ export const LabResultsManager = ({ patientId, userId, userRole }: LabResultsMan
                       )}
 
                       {result.notes && (
-                        <p className="text-sm text-muted-foreground mt-2 italic">
+                        <p className="text-sm text-muted-foreground italic">
                           {result.notes}
                         </p>
                       )}
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(result)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteClick(result)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
