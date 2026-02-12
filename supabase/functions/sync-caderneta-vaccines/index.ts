@@ -25,6 +25,7 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
     // Client autenticado – respeita RLS, sem service role
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -43,13 +44,37 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('[sync] userId:', user.id);
+    // Suportar contexto de médico: se patient_id for enviado, verificar vínculo
+    let body: Record<string, unknown> = {};
+    try { body = await req.json(); } catch { /* empty body is OK */ }
+    const requestedPatientId = body.patient_id as string | undefined;
+    let targetUserId = user.id;
 
-    // Buscar conexão ativa via RLS
-    const { data: connection, error: connError } = await supabase
+    if (requestedPatientId && requestedPatientId !== user.id) {
+      // Verificar que o médico tem acesso ao paciente
+      const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+      const { data: hasAccess } = await adminClient.rpc('doctor_has_patient_access', {
+        _doctor_id: user.id,
+        _patient_id: requestedPatientId,
+      });
+      if (!hasAccess) {
+        return new Response(
+          JSON.stringify({ error: 'Sem acesso a este paciente' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+      targetUserId = requestedPatientId;
+      console.log('[sync] doctor context: doctor=', user.id, 'patient=', targetUserId);
+    }
+
+    console.log('[sync] targetUserId:', targetUserId);
+
+    // Buscar conexão ativa do paciente (usar service role quando em contexto de médico)
+    const queryClient = requestedPatientId ? createClient(supabaseUrl, supabaseServiceKey) : supabase;
+    const { data: connection, error: connError } = await queryClient
       .from('external_connections')
       .select('id, connection_token')
-      .eq('user_id', user.id)
+      .eq('user_id', targetUserId)
       .eq('provider', 'minha_caderneta')
       .eq('status', 'active')
       .maybeSingle();

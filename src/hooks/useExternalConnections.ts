@@ -78,8 +78,25 @@ function getPreferredCallbackOrigin(): string {
   return origin;
 }
 
-export function useExternalConnections(provider: ExternalProvider = 'minha_caderneta'): UseExternalConnectionsReturn {
+interface UseExternalConnectionsOptions {
+  provider?: ExternalProvider;
+  patientId?: string;  // For doctor context: load patient's connection
+  readOnly?: boolean;  // Disable write operations
+}
+
+export function useExternalConnections(
+  providerOrOptions: ExternalProvider | UseExternalConnectionsOptions = 'minha_caderneta',
+): UseExternalConnectionsReturn {
   const { user } = useAuth();
+
+  // Normalize args
+  const opts = typeof providerOrOptions === 'string'
+    ? { provider: providerOrOptions as ExternalProvider }
+    : providerOrOptions;
+  const provider = opts.provider ?? 'minha_caderneta';
+  const patientId = opts.patientId;
+  const readOnly = opts.readOnly ?? false;
+  const targetUserId = patientId || user?.id;
   const [connection, setConnection] = useState<ExternalConnection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [vaccinationData, setVaccinationData] = useState<VaccinationSummary | null>(null);
@@ -88,7 +105,7 @@ export function useExternalConnections(provider: ExternalProvider = 'minha_cader
 
   // Fetch existing connection
   const fetchConnection = useCallback(async () => {
-    if (!user) {
+    if (!targetUserId) {
       setConnection(null);
       setIsLoading(false);
       return;
@@ -98,7 +115,7 @@ export function useExternalConnections(provider: ExternalProvider = 'minha_cader
       const { data, error } = await supabase
         .from('external_connections')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', targetUserId)
         .eq('provider', provider)
         .eq('status', 'active')
         .maybeSingle();
@@ -113,7 +130,7 @@ export function useExternalConnections(provider: ExternalProvider = 'minha_cader
     } finally {
       setIsLoading(false);
     }
-  }, [user, provider]);
+  }, [targetUserId, provider]);
 
   useEffect(() => {
     fetchConnection();
@@ -199,7 +216,10 @@ export function useExternalConnections(provider: ExternalProvider = 'minha_cader
 
     setIsLoadingVaccination(true);
     try {
-      const { data, error } = await supabase.functions.invoke('sync-caderneta-vaccines');
+      const invokeBody = patientId ? { patient_id: patientId } : undefined;
+      const { data, error } = await supabase.functions.invoke('sync-caderneta-vaccines', {
+        body: invokeBody,
+      });
 
       if (error) {
         throw error;
