@@ -5,21 +5,21 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "medical-gradient text-primary-foreground shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-luxury)] hover:scale-[1.02] premium-button",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-luxury)] premium-button",
-        outline: "border-2 border-primary/20 bg-background/50 backdrop-blur-sm hover:bg-primary/5 hover:border-primary/40 hover:shadow-[var(--shadow-card)]",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary-accent shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-luxury)] premium-button",
-        ghost: "hover:bg-accent/50 hover:text-accent-foreground backdrop-blur-sm",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm",
+        outline: "border border-primary text-primary bg-background hover:bg-primary/10",
+        secondary: "bg-secondary text-secondary-foreground border border-border hover:bg-accent",
+        ghost: "text-foreground hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline font-medium",
-        medical: "medical-gradient text-primary-foreground shadow-[var(--shadow-luxury)] hover:shadow-[var(--shadow-premium)] transform hover:scale-105 glow",
-        success: "bg-success text-success-foreground hover:bg-success/90 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-luxury)] premium-button",
-        warning: "bg-warning text-warning-foreground hover:bg-warning/90 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-luxury)] premium-button",
-        hero: "hero-gradient text-white hover:shadow-[var(--shadow-premium)] shadow-[var(--shadow-luxury)] transform hover:scale-105 font-bold text-shadow",
-        luxury: "luxury-gradient text-white shadow-[var(--shadow-premium)] hover:shadow-[var(--shadow-glow)] transform hover:scale-105 font-bold glow",
+        medical: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
+        success: "bg-success text-success-foreground hover:bg-success/90 shadow-sm",
+        warning: "bg-warning text-warning-foreground hover:bg-warning/90 shadow-sm",
+        hero: "bg-primary text-primary-foreground hover:bg-primary/85 shadow-md font-bold",
+        luxury: "bg-primary text-primary-foreground hover:bg-primary/85 shadow-md font-bold",
       },
       size: {
         default: "h-12 px-6 py-3",
