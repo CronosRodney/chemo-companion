@@ -138,7 +138,7 @@ const DoctorProfile = () => {
           </div>
           
           {!isEditing && (
-            <Button variant="outline" size="sm" onClick={handleEdit}>
+            <Button variant="outline" size="sm" onClick={handleEdit} className="border-primary text-primary hover:bg-primary/10">
               <Edit2 className="h-4 w-4 mr-2" />
               Editar
             </Button>
@@ -305,7 +305,7 @@ const DoctorProfile = () => {
           <div className="flex gap-3">
             <Button 
               variant="outline" 
-              className="flex-1" 
+              className="flex-1 border-muted-foreground/30 text-muted-foreground hover:bg-muted" 
               onClick={handleCancel}
               disabled={saving}
             >
@@ -313,7 +313,7 @@ const DoctorProfile = () => {
               Cancelar
             </Button>
             <Button 
-              className="flex-1" 
+              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" 
               onClick={handleSave}
               disabled={saving}
             >
