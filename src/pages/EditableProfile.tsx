@@ -359,7 +359,7 @@ const EditableProfile = () => {
               <X className="h-4 w-4 mr-2" />
               Cancelar
             </Button>
-            <Button className="flex-1" onClick={handleSave}>
+            <Button className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleSave}>
               <Save className="h-4 w-4 mr-2" />
               Salvar Alterações
             </Button>
