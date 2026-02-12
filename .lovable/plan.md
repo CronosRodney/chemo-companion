@@ -1,169 +1,205 @@
 
 
-# Elevar UI do OncoTrack para Nivel Premium
+# OncoTrack AI -- Plano Revisado com Ajustes de Seguranca
 
-Refinamento visual completo de todas as telas do OncoTrack, mantendo 100% da logica, dados, rotas e backend intactos. Apenas CSS, classes Tailwind, microinteracoes e espacamentos serao alterados.
+## Resumo das Correcoes Solicitadas
 
----
-
-## Resumo das Mudancas
-
-### 1. Sistema de Design Global (`src/index.css` + `tailwind.config.ts`)
-
-**index.css:**
-- Ajustar variavel `--background` para tom mais proximo de `#F6F9FC` (azul clinico muito suave)
-- Refinar `--border` para tom mais leve (`gray-100` equivalente)
-- Adicionar keyframes globais: `fade-in-up` (cards ao renderizar), `progress-fill` (barra de progresso), `scale-press` (toque mobile)
-- Atualizar `.clean-card` para incluir `transition-shadow duration-200 hover:shadow-md`
-- Adicionar classe utilitaria `.card-press` para `active:scale-[0.98]` no mobile
-
-**tailwind.config.ts:**
-- Adicionar keyframes: `fade-in-up`, `progress-fill`
-- Adicionar animations correspondentes
-- Nenhuma mudanca estrutural
+Todos os 5 pontos levantados foram incorporados ao plano.
 
 ---
 
-### 2. Home do Paciente (`src/pages/Home.tsx`)
+## 1. Banco de Dados -- Tabela `ai_insights` (com auditoria)
 
-- Aplicar `animate-fade-in` com delays escalonados nos cards (staggered entrance)
-- Refinar espacamento entre cards: `space-y-5` para `space-y-6`
-- Card OncoTrack AI: usar variaveis CSS ao inves de cores hardcoded (`bg-primary/5`, `border-primary/15`)
-- Card Emergencia: manter vermelho (regra inviolavel), refinar padding interno para `p-6`
-- Card Laboratorios e Monitoramento: adicionar `active:scale-[0.98] transition-transform` no mobile
-- Feeling Logger buttons: hover mais suave, sem mudancas de logica
-- Reminders: refinar badges com cores mais suaves (amarelo claro para urgente)
+Nova tabela com campo `clinical_state` para auditoria hospitalar:
 
----
+```sql
+CREATE TABLE public.ai_insights (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  content_json jsonb NOT NULL,
+  clinical_state jsonb NOT NULL,
+  clinical_state_hash text NOT NULL,
+  generated_at timestamptz NOT NULL DEFAULT now(),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 
-### 3. Tela Tratamento (`src/pages/Treatment.tsx`) — Prioridade Maxima
+ALTER TABLE public.ai_insights ENABLE ROW LEVEL SECURITY;
 
-- Aumentar padding interno dos cards de plano: `p-5` para `p-6`
-- Reduzir densidade: aumentar `space-y` entre blocos internos
-- Badges de status: cores mais suaves
-  - "Ativo" -> `bg-emerald-50 text-emerald-700 border-emerald-200`
-  - "Concluido" -> `bg-slate-50 text-slate-600 border-slate-200`
-  - "Suspenso" -> `bg-red-50 text-red-600 border-red-200`
-- Barra de progresso: adicionar animacao `progress-fill` ao montar
-- Cards de ciclo no cronograma: bordas mais leves, sem `border-2`, usar `border`
-- Abas (Tabs): transicao suave entre conteudos com `animate-fade-in`
-- Estados vazios: texto empatico + icone maior + CTA claro
-- Grid de info clinica: aumentar gap para `gap-4`
-- Botoes de acao: `rounded-xl` consistente, hover discreto
+-- Politicas RLS
+CREATE POLICY "Users can view own insights" ON public.ai_insights
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own insights" ON public.ai_insights
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own insights" ON public.ai_insights
+  FOR DELETE USING (auth.uid() = user_id);
 
----
-
-### 4. Tela Medicamentos (`src/pages/Medications.tsx`)
-
-- Cards de medicamento: padronizar `bg-card rounded-2xl shadow-sm border border-border` (usar variaveis CSS)
-- Lista "Meus Medicamentos": fade-in ao renderizar
-- Badge de dose/frequencia: cores suaves consistentes com sistema
-- Mobile form cards: usar variaveis ao inves de `bg-white border-gray-100`
-- Titulo "Meus Medicamentos": usar `text-foreground` ao inves de `text-slate-800`
-
----
-
-### 5. Tela Labs (`src/pages/Labs.tsx`)
-
-- Padronizar cards com `clean-card`
-- Badges de status (Normal/Baixo/Alto): cores suaves consistentes
-- Espacamento maior entre parametros
-
----
-
-### 6. Tela Health (`src/pages/Health.tsx`)
-
-- Padronizar cards com `clean-card`
-- Adicionar `animate-fade-in` nos cards de conexao
-
----
-
-### 7. Tela Timeline (`src/pages/Timeline.tsx`)
-
-- Cards de evento: padronizar com sistema visual
-- Badges de tipo: cores suaves
-- Espacamento vertical mais confortavel
-
----
-
-### 8. Tela Profile e EditableProfile (`src/pages/Profile.tsx`, `src/pages/EditableProfile.tsx`)
-
-- Padronizar com sistema de cards
-- Badges de adesao: verde suave consistente
-
----
-
-### 9. Tela Vaccination, Share, Events
-
-- Aplicar mesmo padrao de card, badge e espacamento
-- Estados vazios com texto empatico e CTA
-
----
-
-### 10. Componentes Compartilhados
-
-**TreatmentProgressWidget:**
-- Animacao `progress-fill` na barra de progresso
-- Badge "Proximo ciclo": amarelo suave quando proximo
-- Fade-in ao montar
-
-**FeelingLogger:**
-- Hover mais sutil, bordas mais leves
-- Active state: `scale-[0.96]` no mobile
-
-**Navigation:**
-- Sem alteracoes (regra inviolavel)
-
----
-
-## Detalhes Tecnicos
-
-### Novas classes CSS (index.css)
-
-```text
-.animate-fade-in-up  -> opacity 0->1, translateY(12px)->0, 0.4s ease-out
-.animate-progress    -> width 0->var(--progress), 0.8s ease-out
-.card-press          -> active:scale-[0.98] transition-transform duration-150
+CREATE INDEX idx_ai_insights_user_generated
+  ON public.ai_insights(user_id, generated_at DESC);
 ```
 
-### Padrao de Card Unificado (todas as telas)
+Campo `clinical_state` armazena o snapshot exato enviado ao modelo, permitindo auditoria completa.
 
-```text
-bg-card rounded-2xl shadow-sm border border-border p-6
-hover:shadow-md transition-shadow duration-200 (onde interativo)
+---
+
+## 2. Edge Function -- `generate-onco-insights`
+
+### 2.1 Configuracao
+
+```toml
+[functions.generate-onco-insights]
+verify_jwt = false
 ```
 
-### Padrao de Badge Unificado
+Nota tecnica: `verify_jwt = false` e necessario neste ambiente (Lovable Cloud/signing-keys). A autenticacao e validada explicitamente no codigo usando `supabase.auth.getUser()`, que verifica o token contra o servidor. Chamadas sem token valido recebem 401.
 
-```text
-Status Ativo:    bg-emerald-50 text-emerald-700 border-emerald-200
-Status Pendente: bg-amber-50 text-amber-700 border-amber-200
-Status Normal:   bg-emerald-50 text-emerald-600 border-emerald-200
-Status Alerta:   bg-red-50 text-red-600 border-red-200
-Informativo:     bg-primary/5 text-primary border-primary/20
+### 2.2 Autenticacao no codigo
+
+Usar o helper `_shared/auth.ts` existente (`getUserFromRequest`) que ja valida via `supabase.auth.getUser()`.
+
+### 2.3 Sanitizacao de dados (Governanca Medica)
+
+Antes de enviar ao modelo, construir payload minimo estruturado:
+
+```typescript
+const sanitizedInput = {
+  protocol: String(protocol).slice(0, 50),
+  cycleCurrent: Number(cycleCurrent),
+  totalCycles: Number(totalCycles),
+  adherence: Number(adherence),
+  abnormalLabs: abnormalLabs.map(l => String(l).slice(0, 60)).slice(0, 10),
+  recentSymptoms: recentSymptoms.map(s => String(s).slice(0, 60)).slice(0, 10),
+};
 ```
 
-### Arquivos Modificados (estimativa: 12 arquivos)
+Nunca enviar: nome do paciente, CPF, dados identificaveis, texto livre medico, resultados completos de exames.
 
-1. `src/index.css` — variaveis, keyframes, classes utilitarias
-2. `tailwind.config.ts` — keyframes e animations
-3. `src/pages/Home.tsx` — espacamento, animacoes, cores
-4. `src/pages/Treatment.tsx` — espacamento, badges, animacoes, estados vazios
-5. `src/pages/Medications.tsx` — padronizacao de cards e cores
-6. `src/pages/Labs.tsx` — padronizacao
-7. `src/pages/Health.tsx` — padronizacao
-8. `src/pages/Timeline.tsx` — padronizacao
-9. `src/pages/Profile.tsx` — padronizacao
-10. `src/pages/EditableProfile.tsx` — padronizacao
-11. `src/pages/Events.tsx` — padronizacao
-12. `src/components/TreatmentProgressWidget.tsx` — animacao da barra
-13. `src/components/FeelingLogger.tsx` — hover refinado
+### 2.4 System prompt com controle de severidade
 
-### O que NAO sera alterado
+```
+Voce e um assistente educacional oncologico.
+Nao forneca diagnostico medico.
+Nao prescreva medicamentos.
+Nao substitua equipe medica.
+Forneca apenas orientacoes educativas baseadas nos dados recebidos.
+Nunca utilize linguagem alarmista.
+Caso detecte padrao preocupante, use severity "warning" com texto moderado e educativo.
+Nunca use termos como "grave", "risco imediato", "emergencial" ou "interrompa tratamento".
+Maximo 3 recomendacoes.
+```
 
-- Hooks, contexts, services
-- Rotas, navegacao inferior
-- Backend, edge functions, banco de dados
-- Logica de negocios
-- Dados exibidos
+### 2.5 Tool calling para forcar JSON estruturado
+
+```json
+{
+  "type": "function",
+  "function": {
+    "name": "generate_insights",
+    "description": "Gera insights oncologicos educativos estruturados",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "summary": { "type": "string", "maxLength": 200 },
+        "recommendations": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "content": { "type": "string" },
+              "severity": { "type": "string", "enum": ["info", "warning"] }
+            },
+            "required": ["title", "content", "severity"]
+          }
+        }
+      },
+      "required": ["summary", "recommendations"]
+    }
+  }
+}
+```
+
+### 2.6 Hash com SHA-256
+
+```typescript
+const stateString = JSON.stringify(sanitizedInput);
+const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(stateString));
+const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+```
+
+### 2.7 Cache check
+
+Antes de chamar Gemini, verificar se ja existe insight do dia com mesmo hash. Se sim, retornar o existente.
+
+### 2.8 Fallback seguro
+
+Se o modelo falhar ou retornar dados invalidos:
+
+```json
+{
+  "summary": "Analise diaria concluida. Nenhuma alteracao significativa detectada.",
+  "recommendations": []
+}
+```
+
+### 2.9 Rate limiting
+
+Usar `checkRateLimit` existente com 5 req/min.
+
+### 2.10 Tratamento de erros 429/402
+
+Capturar erros do gateway e retornar status codes adequados ao frontend.
+
+---
+
+## 3. Componente Frontend -- `OncoInsights.tsx`
+
+### Logica
+
+1. Ao montar, buscar ultimo insight via query Supabase
+2. Se cache valido (hoje + mesmo hash), usar
+3. Se nao, chamar edge function via `supabase.functions.invoke`
+4. Exibir card com resultados
+
+### Visual
+
+- Card com `bg-card rounded-2xl border border-primary/15 p-5`
+- Barra lateral decorativa azul
+- Icone Bot + titulo "ONCOTRACK AI"
+- Badges: `info` em azul, `warning` em amarelo
+- **Timestamp**: "Atualizado hoje as HH:MM"
+- **Botao "Atualizar"**: pequeno, permite regeneracao manual (respeitando rate limit)
+- Rodape fixo: "Conteudo informativo. Nao substitui orientacao medica."
+- Estados: loading (skeleton), erro (fallback com mensagem amigavel), sucesso
+- Toast para erros 429/402
+
+---
+
+## 4. Integracao na Home
+
+Substituir o `aiSection` estatico atual pelo componente `<OncoInsights />`.
+
+- Passar dados do contexto: `treatmentPlans`, `stats`
+- Posicao mantida: mobile abaixo de tratamento, desktop na coluna principal
+
+---
+
+## Secao Tecnica -- Arquivos
+
+| Arquivo | Acao |
+|---|---|
+| Migration SQL | Criar tabela `ai_insights` |
+| `supabase/functions/generate-onco-insights/index.ts` | Criar |
+| `supabase/config.toml` | Adicionar funcao |
+| `src/components/OncoInsights.tsx` | Criar |
+| `src/pages/Home.tsx` | Substituir aiSection |
+
+### Nao sera alterado
+
+- Hooks existentes
+- Rotas
+- Backend existente
+- Navegacao mobile/desktop
+- Dados existentes
+- Logica medica
 
