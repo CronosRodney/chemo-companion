@@ -220,7 +220,7 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
           <TabsTrigger value="history">Histórico</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="plans" className="space-y-4">
+        <TabsContent value="plans" className="space-y-4 animate-fade-in">
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
@@ -256,14 +256,14 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
                     const progress = Math.round(((getCurrentCycleNumber(plan) - 1) / plan.planned_cycles) * 100);
                     
                     return (
-                    <Card key={plan.id} className={isMobile ? 'border border-border rounded-2xl shadow-sm' : 'border-2'}>
-                      <CardContent className={isMobile ? 'p-5 space-y-4' : 'pt-6'}>
+                    <Card key={plan.id} className={isMobile ? 'border border-border rounded-2xl shadow-sm' : 'border border-border rounded-2xl shadow-sm'}>
+                      <CardContent className={isMobile ? 'p-5 space-y-4' : 'p-6 space-y-4'}>
                         {/* Line 1: Header */}
                         <div className="flex justify-between items-start">
                           <div className={isMobile ? 'space-y-0.5' : ''}>
                             <div className="flex items-center gap-2">
                               <h3 className={isMobile ? 'font-semibold text-lg text-foreground' : 'font-bold text-xl'}>{plan.regimen_name}</h3>
-                              <Badge variant={getStatusVariant(plan.status)} className={isMobile ? 'text-[10px] px-2 py-0.5' : ''}>
+                              <Badge variant="outline" className={`text-[10px] px-2 py-0.5 ${plan.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : plan.status === 'completed' ? 'bg-slate-50 text-slate-600 border-slate-200' : plan.status === 'suspended' ? 'bg-red-50 text-red-600 border-red-200' : ''}`}>
                                 {getStatusLabel(plan.status)}
                               </Badge>
                             </div>
@@ -298,7 +298,7 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
                         )}
 
                         {/* Line 3: Clinical info grid */}
-                        <div className={isMobile ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-3 gap-4 mb-4'}>
+                        <div className={isMobile ? 'grid grid-cols-2 gap-4' : 'grid grid-cols-3 gap-4'}>
                           <div className="flex items-start gap-2">
                             <Clock className={`${isMobile ? 'h-3.5 w-3.5' : 'h-4 w-4'} text-muted-foreground mt-0.5`} />
                             <div>
@@ -404,7 +404,7 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
           </Card>
         </TabsContent>
 
-        <TabsContent value="current">
+        <TabsContent value="current" className="animate-fade-in">
           {(() => {
             const activePlan = treatmentPlans?.find((p: any) => p.status === 'active');
             
@@ -586,7 +586,7 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
           })()}
         </TabsContent>
 
-        <TabsContent value="schedule">
+        <TabsContent value="schedule" className="animate-fade-in">
           {(() => {
             const activePlan = treatmentPlans?.find((p: any) => p.status === 'active');
             
@@ -629,10 +629,10 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
                       return (
                         <div
                           key={cycle.id}
-                          className={`flex items-start gap-4 p-4 rounded-lg border-2 transition-colors ${
-                            isTodayCycle ? 'border-primary bg-primary/5' :
-                            cycle.status === 'completed' ? 'border-green-500/50 bg-green-500/5' :
-                            isPastCycle ? 'border-red-500/50 bg-red-500/5' :
+                          className={`flex items-start gap-4 p-4 rounded-xl border transition-colors ${
+                            isTodayCycle ? 'border-primary/30 bg-primary/5' :
+                            cycle.status === 'completed' ? 'border-emerald-200 bg-emerald-50/50' :
+                            isPastCycle ? 'border-red-200 bg-red-50/50' :
                             'border-border'
                           }`}
                         >
@@ -706,7 +706,7 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
           })()}
         </TabsContent>
 
-        <TabsContent value="history">
+        <TabsContent value="history" className="animate-fade-in">
           {(() => {
             const allCompletedCycles = treatmentPlans?.flatMap((plan: any) => 
               (plan.cycles || [])
@@ -747,7 +747,7 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
                     {sortedCompleted.map((cycle: any) => (
                       <div
                         key={cycle.id}
-                        className="border rounded-lg p-4 space-y-3 bg-green-500/5 border-green-500/30"
+                        className="border border-emerald-200 rounded-xl p-4 space-y-3 bg-emerald-50/50"
                       >
                         <div className="flex items-start justify-between">
                           <div>

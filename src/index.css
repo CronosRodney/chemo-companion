@@ -2,12 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* OncoTrack Clean Design System — Hospital Premium, Minimal */
+/* OncoTrack Premium Clinical Design System */
 
 @layer base {
   :root {
-    /* Clean Medical Base */
-    --background: 214 32% 97%;
+    /* Background: #F6F9FC equivalent */
+    --background: 214 40% 98%;
     --foreground: 214 15% 15%;
 
     /* Cards — pure white */
@@ -127,9 +127,9 @@
 }
 
 @layer components {
-  /* Clean card — the only card style */
+  /* Clean card — the unified card style */
   .clean-card {
-    @apply bg-card rounded-2xl shadow-sm border border-border;
+    @apply bg-card rounded-2xl shadow-sm border border-border transition-shadow duration-200 hover:shadow-md;
   }
 
   /* Legacy aliases — redirect to clean style */
@@ -138,19 +138,42 @@
   }
 
   .luxury-card {
-    @apply bg-card rounded-2xl shadow-sm border border-border;
+    @apply bg-card rounded-2xl shadow-sm border border-border transition-shadow duration-200 hover:shadow-md;
   }
 
   .medical-card {
-    @apply bg-card rounded-2xl shadow-sm border border-border;
+    @apply bg-card rounded-2xl shadow-sm border border-border transition-shadow duration-200 hover:shadow-md;
   }
 
   .clinical-button {
     @apply bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200;
   }
+
+  /* Card press — subtle mobile touch feedback */
+  .card-press {
+    @apply active:scale-[0.98] transition-transform duration-150;
+  }
 }
 
 @layer utilities {
+  /* Fade-in-up animation for cards */
+  .animate-fade-in-up {
+    animation: fade-in-up 0.4s ease-out forwards;
+    opacity: 0;
+  }
+
+  /* Progress bar fill animation */
+  .animate-progress-fill {
+    animation: progress-fill 0.8s ease-out forwards;
+  }
+
+  /* Stagger delay utilities */
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+
   /* Esconder controles desnecessários do QR scanner */
   #qr-reader__dashboard_section_csr,
   #qr-reader__dashboard_section_swaplink,
@@ -172,5 +195,25 @@
 
   #qr-reader__dashboard_section_stop {
     display: none !important;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes progress-fill {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(var(--progress-value, -0%));
   }
 }

@@ -18,13 +18,14 @@ export const TreatmentProgressWidget = ({ treatmentPlans, adherence }: Treatment
   
   if (!activePlan) {
     return (
-      <div className="bg-card rounded-2xl shadow-md border border-[hsl(214,30%,93%)] p-8">
+      <div className="bg-card rounded-2xl shadow-sm border border-border p-8">
         <div className="text-center py-6">
-          <div className="w-14 h-14 rounded-full bg-[hsl(214,30%,93%)] flex items-center justify-center mx-auto mb-4">
-            <Activity className="h-7 w-7 text-primary/60" />
+          <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+            <Activity className="h-7 w-7 text-muted-foreground" />
           </div>
-          <p className="text-muted-foreground mb-4 text-sm">Nenhum tratamento ativo</p>
-          <Button onClick={() => navigate('/treatment')} variant="outline" className="border-primary/20 text-primary hover:bg-primary/5">
+          <p className="text-muted-foreground mb-1 text-base font-medium">Nenhum tratamento ativo</p>
+          <p className="text-sm text-muted-foreground mb-4">Crie seu primeiro plano para acompanhar o progresso</p>
+          <Button onClick={() => navigate('/treatment')} variant="outline" className="border-primary/20 text-primary hover:bg-primary/5 rounded-xl">
             Criar Plano de Tratamento
           </Button>
         </div>
@@ -43,7 +44,7 @@ export const TreatmentProgressWidget = ({ treatmentPlans, adherence }: Treatment
   const daysUntilNext = nextCycle ? differenceInDays(new Date(nextCycle.scheduled_date), new Date()) : null;
 
   return (
-    <div className="bg-card rounded-2xl shadow-md border border-[hsl(214,30%,93%)] p-6 space-y-5">
+    <div className="bg-card rounded-2xl shadow-sm border border-border p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-base font-semibold text-foreground flex items-center gap-3">
@@ -79,22 +80,22 @@ export const TreatmentProgressWidget = ({ treatmentPlans, adherence }: Treatment
               {completedCycles}/{totalCycles} ciclos
             </Badge>
             {adherence !== undefined && (
-              <Badge className="text-xs font-semibold bg-[hsl(142,60%,95%)] text-[hsl(142,60%,30%)] border-0 px-2.5 rounded-full">
+              <Badge variant="outline" className="text-xs font-semibold bg-emerald-50 text-emerald-700 border-emerald-200 px-2.5 rounded-full">
                 Adesão: {adherence}%
               </Badge>
             )}
           </div>
         </div>
-        <Progress value={progressPercentage} className="h-2 bg-[hsl(214,40%,92%)]" />
+        <Progress value={progressPercentage} className="h-2 bg-muted" />
         <p className="text-xs text-muted-foreground mt-1.5">{progressPercentage.toFixed(0)}% concluído</p>
       </div>
 
       {/* Next Cycle Info */}
       {nextCycle && (
-        <div className="p-4 rounded-xl border border-[hsl(214,30%,93%)] bg-[hsl(214,30%,98%)]">
+        <div className={`p-4 rounded-xl border ${daysUntilNext !== null && daysUntilNext <= 3 ? 'border-amber-200 bg-amber-50/50' : 'border-border bg-muted/30'}`}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Calendar className="h-5 w-5 text-primary" />
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${daysUntilNext !== null && daysUntilNext <= 3 ? 'bg-amber-100' : 'bg-primary/10'}`}>
+              <Calendar className={`h-5 w-5 ${daysUntilNext !== null && daysUntilNext <= 3 ? 'text-amber-700' : 'text-primary'}`} />
             </div>
             <div className="flex-1">
               <p className="text-xs text-muted-foreground">Próximo Ciclo</p>
@@ -116,11 +117,11 @@ export const TreatmentProgressWidget = ({ treatmentPlans, adherence }: Treatment
 
       {/* Treatment Details */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="p-3 rounded-xl border border-[hsl(214,30%,93%)] bg-[hsl(214,30%,98%)]">
+        <div className="p-3 rounded-xl border border-border bg-muted/30">
           <p className="text-xs text-muted-foreground mb-1">Linha de Terapia</p>
           <p className="font-medium text-sm text-foreground">{activePlan.line_of_therapy}</p>
         </div>
-        <div className="p-3 rounded-xl border border-[hsl(214,30%,93%)] bg-[hsl(214,30%,98%)]">
+        <div className="p-3 rounded-xl border border-border bg-muted/30">
           <p className="text-xs text-muted-foreground mb-1">Periodicidade</p>
           <p className="font-medium text-sm text-foreground">{activePlan.periodicity_days} dias</p>
         </div>

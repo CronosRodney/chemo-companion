@@ -33,7 +33,7 @@ function MobileStepIndicator({ currentStep, totalSteps }: { currentStep: number;
         <div
           key={i}
           className={`w-2 h-2 rounded-full transition-all duration-300 ${
-            i < currentStep ? 'bg-primary w-2.5 h-2.5' : i === currentStep ? 'bg-primary/60' : 'bg-gray-300'
+            i < currentStep ? 'bg-primary w-2.5 h-2.5' : i === currentStep ? 'bg-primary/60' : 'bg-muted-foreground/30'
           }`}
         />
       ))}
@@ -413,7 +413,7 @@ export default function Medications() {
       <MobileStepIndicator currentStep={mobileStep} totalSteps={4} />
 
       {/* Step 1: always visible */}
-      <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
+      <Card className="bg-card rounded-2xl shadow-sm border border-border">
         <CardContent className="pt-5 pb-5 space-y-4">
           <MedNameField />
         </CardContent>
@@ -422,7 +422,7 @@ export default function Medications() {
       {/* Step 2: concentration */}
       {selectedMedNames.length > 0 && availableStrengths.length > 0 && (
         <div className="animate-fade-in">
-          <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
+          <Card className="bg-card rounded-2xl shadow-sm border border-border">
             <CardContent className="pt-5 pb-5 space-y-4">
               <StrengthField />
             </CardContent>
@@ -433,7 +433,7 @@ export default function Medications() {
       {/* Step 3: form */}
       {selectedMedNames.length > 0 && (selectedStrengths.length > 0 || availableStrengths.length === 0) && availableForms.length > 0 && (
         <div className="animate-fade-in">
-          <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
+          <Card className="bg-card rounded-2xl shadow-sm border border-border">
             <CardContent className="pt-5 pb-5 space-y-4">
               <FormField />
             </CardContent>
@@ -444,7 +444,7 @@ export default function Medications() {
       {/* Step 4: route, dose, freq, clinic, save */}
       {selectedMedNames.length > 0 && (selectedStrengths.length > 0 || availableStrengths.length === 0) && (selectedForms.length > 0 || availableForms.length === 0) && (
         <div className="animate-fade-in">
-          <Card className="bg-white rounded-2xl shadow-sm border border-gray-100">
+          <Card className="bg-card rounded-2xl shadow-sm border border-border">
             <CardContent className="pt-5 pb-5 space-y-5">
               {availableRoutes.length > 0 && <RouteField />}
               <ClinicField />
@@ -510,9 +510,9 @@ export default function Medications() {
         {/* Lista de medicamentos do usuário */}
         {userMedications.length > 0 && (
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold text-slate-800">Meus Medicamentos</h2>
+            <h2 className="text-lg font-semibold text-foreground">Meus Medicamentos</h2>
             {userMedications.map((med: any) => (
-              <Card key={med.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 relative">
+              <Card key={med.id} className="bg-card rounded-2xl shadow-sm border border-border relative">
                 <div className="absolute top-3 right-3 flex gap-1">
                   <Button
                     variant="ghost"
@@ -551,7 +551,7 @@ export default function Medications() {
                       <Pill className="h-5 w-5 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-800 truncate">{med.name}</p>
+                      <p className="font-semibold text-foreground truncate">{med.name}</p>
                       {med.concentration && (
                         <p className="text-sm text-muted-foreground">{med.concentration}</p>
                       )}
