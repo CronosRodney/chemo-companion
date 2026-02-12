@@ -483,7 +483,7 @@ export default function Medications() {
 
   return (
     <div className="min-h-screen bg-background p-4 pb-20 lg:px-8 lg:py-8">
-      <div className={`container mx-auto space-y-8 ${isMobile ? 'max-w-lg' : 'max-w-4xl'}`}>
+      <div className={`container mx-auto space-y-8 ${isMobile ? 'max-w-lg' : ''}`}>
         <div className="flex items-center gap-4 pt-4">
           <Button variant="outline" size="icon" onClick={() => navigate('/')}>
             <ArrowLeft className="h-4 w-4" />
