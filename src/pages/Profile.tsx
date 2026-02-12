@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AvatarUpload } from "@/components/AvatarUpload";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -50,8 +51,14 @@ const Profile = () => {
         {/* Profile Header */}
         <Card className="clean-card">
           <CardContent className="p-6 text-center">
-            <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <User className="h-10 w-10 text-primary" />
+            <div className="mb-4">
+              <AvatarUpload
+                avatarUrl={profile?.avatar_url || null}
+                userId={profile?.user_id || ''}
+                onAvatarChange={() => {}}
+                editable={false}
+                size="md"
+              />
             </div>
             <h2 className="text-xl font-semibold">{profile?.first_name || 'Maria'} {profile?.last_name || 'Silva'}</h2>
             <p className="text-sm text-muted-foreground">{profile?.email || 'maria@email.com'}</p>

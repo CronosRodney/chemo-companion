@@ -695,6 +695,7 @@ export type Database = {
         Row: {
           address: string | null
           allergies: string | null
+          avatar_url: string | null
           birth_date: string | null
           city: string | null
           cpf: string | null
@@ -717,6 +718,7 @@ export type Database = {
         Insert: {
           address?: string | null
           allergies?: string | null
+          avatar_url?: string | null
           birth_date?: string | null
           city?: string | null
           cpf?: string | null
@@ -739,6 +741,7 @@ export type Database = {
         Update: {
           address?: string | null
           allergies?: string | null
+          avatar_url?: string | null
           birth_date?: string | null
           city?: string | null
           cpf?: string | null

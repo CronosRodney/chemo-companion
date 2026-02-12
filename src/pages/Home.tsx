@@ -128,8 +128,12 @@ const Home = () => {
                   </p>
                 )}
               </div>
-              <div className="w-14 h-14 rounded-full border-2 border-white/80 shadow-md bg-[hsl(214,30%,86%)] flex items-center justify-center flex-shrink-0 ml-4">
-                <User className="h-6 w-6 text-[hsl(214,30%,45%)]" />
+              <div className="w-14 h-14 rounded-full border-2 border-white/80 shadow-md bg-[hsl(214,30%,86%)] flex items-center justify-center flex-shrink-0 ml-4 overflow-hidden cursor-pointer" onClick={() => navigate('/profile')}>
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="h-6 w-6 text-[hsl(214,30%,45%)]" />
+                )}
               </div>
             </div>
 
