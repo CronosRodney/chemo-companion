@@ -347,18 +347,18 @@ export default function Medications() {
   );
 
   const SaveButtons = () => (
-    <div className="flex gap-2">
+    <div className="flex gap-3">
       <Button 
         onClick={handleSave} 
         disabled={isSaving || selectedMedNames.length === 0} 
-        className="flex-1 h-12 text-base font-semibold"
+        className="flex-1 h-12 text-base font-semibold rounded-xl"
       >
-        {isSaving ? 'Salvando...' : 'Salvar Medicamento'}
+        {isSaving ? 'Salvando...' : 'Salvar'}
       </Button>
       <Button 
         variant="outline"
         onClick={resetForm} 
-        className="h-12"
+        className="h-12 rounded-xl"
       >
         Limpar
       </Button>
