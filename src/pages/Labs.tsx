@@ -96,7 +96,7 @@ const Labs = ({ patientId }: LabsProps) => {
       {/* Aba de Tendências - visualização dos dados de ciclos */}
       <TabsContent value="trends" className="space-y-4">
         {!activePlan && (
-          <Card className="border-2 border-warning/30 bg-warning/5">
+          <Card className="border border-amber-200 bg-amber-50/50 rounded-2xl">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3 text-warning">
                 <AlertTriangle className="h-5 w-5" />
@@ -180,7 +180,7 @@ const Labs = ({ patientId }: LabsProps) => {
 
             {/* Historical Data Table */}
             {cyclesWithLabs.length > 0 && (
-              <Card className="border-2 border-secondary/20">
+              <Card className="border border-border rounded-2xl shadow-sm">
                 <CardHeader>
                   <CardTitle>Histórico de Ciclos</CardTitle>
                 </CardHeader>

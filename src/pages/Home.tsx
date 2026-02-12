@@ -56,7 +56,7 @@ const Home = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[hsl(214,32%,97%)] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Carregando...</p>
@@ -68,10 +68,10 @@ const Home = () => {
   // Doctor Home
   if (isDoctor) {
     return (
-      <div className="min-h-screen bg-[hsl(214,32%,97%)] p-4 pb-20">
+      <div className="min-h-screen bg-background p-4 pb-20">
         <div className="max-w-md mx-auto space-y-6">
-          <div className="text-center pt-8 pb-4">
-            <div className="bg-card rounded-2xl shadow-sm border border-[hsl(214,30%,93%)] p-10 space-y-5">
+          <div className="text-center pt-8 pb-4 animate-fade-in-up">
+            <div className="bg-card rounded-2xl shadow-sm border border-border p-10 space-y-5">
               <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-5">
                 <Stethoscope className="h-8 w-8 text-primary" />
               </div>
@@ -84,7 +84,7 @@ const Home = () => {
             </div>
           </div>
           <div 
-            className="bg-card rounded-2xl shadow-sm border border-[hsl(214,30%,93%)] p-8 cursor-pointer hover:shadow-md transition-shadow"
+            className="bg-card rounded-2xl shadow-sm border border-border p-8 cursor-pointer hover:shadow-md transition-shadow card-press animate-fade-in-up delay-100"
             onClick={() => navigate('/doctor')}
           >
             <div className="flex items-center justify-between">
@@ -107,61 +107,63 @@ const Home = () => {
 
   // Patient Home
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[hsl(214,25%,97%)] to-[hsl(214,20%,93%)] pb-20">
+    <div className="min-h-screen bg-background pb-20">
       <div className="max-w-3xl mx-auto space-y-6 px-4">
 
         {/* ─── 1. HEADER — Full-width organic shape ─── */}
-        <div className="-mx-4 px-6 pt-6 pb-8 bg-gradient-to-br from-[hsl(214,55%,92%)] to-[hsl(214,40%,96%)] rounded-b-[2rem]">
+        <div className="-mx-4 px-6 pt-6 pb-8 bg-gradient-to-br from-primary/8 to-primary/3 rounded-b-[2rem]">
           <div className="max-w-3xl mx-auto">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <h1 className="text-2xl font-semibold text-[hsl(214,40%,22%)]">
+                <h1 className="text-2xl font-semibold text-foreground">
                   {getGreeting()}, {profile?.first_name || 'Maria'}
                 </h1>
                 {activePlan ? (
-                  <p className="text-sm text-[hsl(214,20%,42%)] mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     Tratamento {activePlan.regimen_name} · Ciclo {completedCycles + 1} de {totalCycles}
                   </p>
                 ) : (
-                  <p className="text-sm text-[hsl(214,20%,42%)] mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     Como você está se sentindo hoje?
                   </p>
                 )}
               </div>
-              <div className="w-14 h-14 rounded-full border-2 border-white/80 shadow-md bg-[hsl(214,30%,86%)] flex items-center justify-center flex-shrink-0 ml-4 overflow-hidden cursor-pointer" onClick={() => navigate('/profile')}>
+              <div className="w-14 h-14 rounded-full border-2 border-border shadow-sm bg-muted flex items-center justify-center flex-shrink-0 ml-4 overflow-hidden cursor-pointer" onClick={() => navigate('/profile')}>
                 {profile?.avatar_url ? (
                   <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
-                  <User className="h-6 w-6 text-[hsl(214,30%,45%)]" />
+                  <User className="h-6 w-6 text-muted-foreground" />
                 )}
               </div>
             </div>
 
             {/* Feeling Logger */}
             <div className="mt-5">
-              <p className="text-xs text-[hsl(214,20%,48%)] mb-2.5 font-medium">Como você está hoje?</p>
+              <p className="text-xs text-muted-foreground mb-2.5 font-medium">Como você está hoje?</p>
               <FeelingLogger onFeelingLogged={handleFeelingLogged} />
             </div>
           </div>
         </div>
 
         {/* ─── 2. TREATMENT (elevated card) ─── */}
-        <TreatmentProgressWidget treatmentPlans={treatmentPlans || []} adherence={stats.adherence} />
+        <div className="animate-fade-in-up">
+          <TreatmentProgressWidget treatmentPlans={treatmentPlans || []} adherence={stats.adherence} />
+        </div>
 
         {/* ─── 3. ONCOTRACK AI — refined ─── */}
-        <div className="bg-[hsl(214,45%,97%)] rounded-2xl border border-[hsl(214,40%,90%)] p-5 flex overflow-hidden">
+        <div className="bg-primary/5 rounded-2xl border border-primary/15 p-5 flex overflow-hidden animate-fade-in-up delay-100">
           {/* Left accent bar */}
           <div className="w-[3px] bg-primary/40 rounded-full mr-4 flex-shrink-0" />
           <div className="flex items-start gap-3 flex-1">
-            <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
               <Bot className="h-4 w-4 text-primary" strokeWidth={1.5} />
             </div>
             <div>
               <p className="text-[11px] font-semibold text-primary/70 uppercase tracking-wider mb-1.5">OncoTrack AI</p>
-              <p className="text-sm text-[hsl(214,15%,35%)] leading-relaxed">
+              <p className="text-sm text-foreground/80 leading-relaxed">
                 Análise diária concluída
               </p>
-              <p className="text-sm text-[hsl(214,15%,50%)] leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 Nenhum sinal fora do padrão hoje.
               </p>
             </div>
@@ -169,7 +171,7 @@ const Home = () => {
         </div>
 
         {/* ─── 4. REMINDERS ─── */}
-        <div className="bg-card rounded-2xl shadow-sm border border-[hsl(214,30%,93%)] p-6 space-y-4">
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-6 space-y-4 animate-fade-in-up delay-200">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-base font-semibold text-foreground flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
@@ -188,18 +190,18 @@ const Home = () => {
           </div>
           <div className="space-y-3">
             {displayedReminders.map((reminder) => (
-              <div key={reminder.id} className={`p-4 rounded-xl border ${reminder.urgent ? 'border-primary/20 bg-primary/5' : 'border-[hsl(214,30%,93%)] bg-[hsl(214,30%,98%)]'}`}>
+              <div key={reminder.id} className={`p-4 rounded-xl border ${reminder.urgent ? 'border-amber-200 bg-amber-50' : 'border-border bg-muted/30'}`}>
                 <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${reminder.urgent ? 'bg-primary/10' : 'bg-[hsl(214,30%,93%)]'}`}>
-                    <Pill className={`h-5 w-5 ${reminder.urgent ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${reminder.urgent ? 'bg-amber-100' : 'bg-muted'}`}>
+                    <Pill className={`h-5 w-5 ${reminder.urgent ? 'text-amber-700' : 'text-muted-foreground'}`} />
                   </div>
                   <div className="flex-1">
                     <p className="font-semibold text-sm text-foreground">{reminder.medication}</p>
                     <p className="text-xs text-muted-foreground">{reminder.cycle}</p>
                   </div>
                   <div className="text-right">
-                    <p className={`font-bold text-base ${reminder.urgent ? 'text-primary' : 'text-foreground'}`}>{reminder.time}</p>
-                    <Badge variant={reminder.urgent ? "secondary" : "outline"} className="text-xs">
+                    <p className={`font-bold text-base ${reminder.urgent ? 'text-amber-700' : 'text-foreground'}`}>{reminder.time}</p>
+                    <Badge variant="outline" className={`text-xs ${reminder.urgent ? 'border-amber-200 text-amber-700 bg-amber-50' : ''}`}>
                       {reminder.type}
                     </Badge>
                   </div>
@@ -214,7 +216,7 @@ const Home = () => {
             )}
             
             {showReminderManager && (
-              <div className="pt-4 border-t border-[hsl(214,30%,93%)]">
+              <div className="pt-4 border-t border-border">
                 <ReminderManager reminders={reminders} onUpdate={updateReminders} />
               </div>
             )}
@@ -223,23 +225,23 @@ const Home = () => {
 
         {/* ─── Connected Clinics (desktop) ─── */}
         {!isMobile && !clinicsLoading && clinics.length > 0 && (
-          <div className="bg-card rounded-2xl shadow-sm border border-[hsl(214,30%,93%)] p-6 space-y-4">
+          <div className="bg-card rounded-2xl shadow-sm border border-border p-6 space-y-4 animate-fade-in-up delay-300">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-foreground flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-[hsl(214,30%,93%)] flex items-center justify-center">
+                <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
                   <Building2 className="h-4 w-4 text-primary" />
                 </div>
                 Clínica Conectada
               </h2>
-              <Badge variant="outline" className="text-xs font-medium border-[hsl(142,60%,70%)] text-[hsl(142,60%,30%)] bg-[hsl(142,60%,95%)]">
+              <Badge variant="outline" className="text-xs font-medium border-emerald-200 text-emerald-700 bg-emerald-50">
                 ● Ativa
               </Badge>
             </div>
             <div className="space-y-3">
               {clinics.slice(0, 1).map((clinic) => (
-                <div key={clinic.id} className="p-4 rounded-xl border border-[hsl(214,30%,93%)] bg-[hsl(214,30%,98%)]">
+                <div key={clinic.id} className="p-4 rounded-xl border border-border bg-muted/30">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-[hsl(214,30%,93%)] flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
                       <Building2 className="h-5 w-5 text-primary" />
                     </div>
                     <div className="flex-1">
@@ -253,7 +255,7 @@ const Home = () => {
                     </div>
                   </div>
                   {clinic.clinic_responsible && clinic.clinic_responsible.length > 0 && (
-                    <div className="bg-[hsl(214,30%,96%)] p-3 rounded-lg">
+                    <div className="bg-muted/50 p-3 rounded-lg">
                       <p className="text-xs text-muted-foreground mb-1">Responsável</p>
                       <p className="text-sm font-medium text-foreground">{clinic.clinic_responsible[0].name}</p>
                       {clinic.clinic_responsible[0].role && (
@@ -275,7 +277,7 @@ const Home = () => {
         {/* ─── 5. LABS ─── */}
         {treatmentPlans && treatmentPlans.length > 0 && (
           <div 
-            className="bg-card rounded-2xl shadow-sm border border-[hsl(214,30%,93%)] p-5 cursor-pointer hover:shadow-md transition-shadow"
+            className="bg-card rounded-2xl shadow-sm border border-border p-5 cursor-pointer hover:shadow-md transition-shadow card-press animate-fade-in-up delay-300"
             onClick={() => navigate('/labs')}
           >
             <div className="flex items-center justify-between">
@@ -295,7 +297,7 @@ const Home = () => {
 
         {/* ─── 5. HEALTH MONITORING ─── */}
         <div 
-          className="bg-card rounded-2xl shadow-sm border border-[hsl(214,30%,93%)] p-5 cursor-pointer hover:shadow-md transition-shadow"
+          className="bg-card rounded-2xl shadow-sm border border-border p-5 cursor-pointer hover:shadow-md transition-shadow card-press animate-fade-in-up delay-400"
           onClick={() => navigate('/health')}
         >
           <div className="flex items-center justify-between">
@@ -316,7 +318,7 @@ const Home = () => {
         <PendingInvitesNotification />
 
         {/* ─── 6. EMERGENCY ─── */}
-        <div className="bg-[hsl(0,60%,97%)] rounded-2xl border border-[hsl(0,50%,85%)] p-5">
+        <div className="bg-destructive/5 rounded-2xl border border-destructive/20 p-6 animate-fade-in-up delay-500">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-destructive text-base flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
@@ -333,7 +335,7 @@ const Home = () => {
               Editar
             </Button>
           </div>
-          <p className="text-sm text-[hsl(0,30%,40%)] mb-3">
+          <p className="text-sm text-muted-foreground mb-3">
             Febre &gt; 38°C ou sintomas graves? Entre em contato imediatamente
           </p>
           <p className="text-sm text-muted-foreground mb-4">
