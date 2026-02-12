@@ -68,10 +68,10 @@ export const FeelingLogger = ({ onFeelingLogged }: FeelingLoggerProps) => {
           <button
             key={rating}
             onClick={() => handleClick(rating)}
-            className="flex-1 flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl border border-border bg-card/60 hover:border-primary/30 hover:bg-primary/5 active:scale-[0.96] transition-all duration-200 group"
+            className="flex-1 flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl border-2 border-border bg-muted/30 hover:bg-muted/50 active:scale-95 transition-all duration-150"
           >
-            <Icon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" strokeWidth={1.5} />
-            <span className="text-[10px] text-muted-foreground group-hover:text-primary/80 font-medium leading-tight transition-colors">
+            <Icon className="h-6 w-6 text-muted-foreground" strokeWidth={1.5} />
+            <span className="text-[10px] text-muted-foreground font-medium leading-tight">
               {label}
             </span>
           </button>
