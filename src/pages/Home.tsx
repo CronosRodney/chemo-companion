@@ -140,34 +140,69 @@ const Home = () => {
   // Shared sections as variables for reuse
   const headerSection = (
     <div className={`${isDesktop ? 'rounded-2xl shadow-sm border border-primary/10' : '-mx-4 rounded-b-[2rem] bg-gradient-to-br from-primary/8 to-primary/3'} px-6 pt-6 pb-8`} style={isDesktop ? { background: `linear-gradient(135deg, ${monthlyTheme.gradient}, rgba(59,130,246,0.04))` } : undefined} >
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <h1 className={`${isDesktop ? 'text-2xl' : 'text-2xl'} font-semibold text-foreground`}>
-              {getGreeting()}, {profile?.first_name || 'Maria'}
-            </h1>
-            {activePlan ? (
-              <p className="text-sm text-muted-foreground mt-1">
-                Tratamento {activePlan.regimen_name} · Ciclo {completedCycles + 1} de {totalCycles}
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground mt-1">
-                Como você está se sentindo hoje?
-              </p>
-            )}
-          </div>
-          <div className="w-14 h-14 rounded-full border-2 border-border shadow-sm bg-muted flex items-center justify-center flex-shrink-0 ml-4 overflow-hidden cursor-pointer" onClick={() => navigate('/profile')}>
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-            ) : (
-              <User className="h-6 w-6 text-muted-foreground" />
-            )}
-          </div>
-        </div>
-        <div className="mt-5">
-          <p className="text-xs text-muted-foreground mb-2.5 font-medium">Como você está hoje?</p>
-          <FeelingLogger onFeelingLogged={handleFeelingLogged} />
-        </div>
+      <div className={`${isDesktop ? 'max-w-3xl mx-auto' : 'max-w-3xl mx-auto'}`}>
+        {/* Desktop: avatar top-right corner, centered text */}
+        {isDesktop ? (
+          <>
+            <div className="flex justify-end -mb-2">
+              <div className="w-18 h-18 rounded-full border-2 border-border shadow-sm bg-muted flex items-center justify-center overflow-hidden cursor-pointer" style={{ width: 72, height: 72 }} onClick={() => navigate('/profile')}>
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="h-8 w-8 text-muted-foreground" />
+                )}
+              </div>
+            </div>
+            <div className="text-center -mt-6">
+              <h1 className="text-3xl font-semibold text-foreground">
+                {getGreeting()}, {profile?.first_name || 'Maria'}
+              </h1>
+              {activePlan ? (
+                <p className="text-base text-muted-foreground mt-2">
+                  Tratamento {activePlan.regimen_name} · Ciclo {completedCycles + 1} de {totalCycles}
+                </p>
+              ) : (
+                <p className="text-base text-muted-foreground mt-2">
+                  Como você está se sentindo hoje?
+                </p>
+              )}
+            </div>
+            <div className="mt-8">
+              <p className="text-sm text-muted-foreground mb-4 font-medium text-center">Como você está hoje?</p>
+              <FeelingLogger onFeelingLogged={handleFeelingLogged} isDesktop />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h1 className="text-2xl font-semibold text-foreground">
+                  {getGreeting()}, {profile?.first_name || 'Maria'}
+                </h1>
+                {activePlan ? (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Tratamento {activePlan.regimen_name} · Ciclo {completedCycles + 1} de {totalCycles}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Como você está se sentindo hoje?
+                  </p>
+                )}
+              </div>
+              <div className="w-14 h-14 rounded-full border-2 border-border shadow-sm bg-muted flex items-center justify-center flex-shrink-0 ml-4 overflow-hidden cursor-pointer" onClick={() => navigate('/profile')}>
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="h-6 w-6 text-muted-foreground" />
+                )}
+              </div>
+            </div>
+            <div className="mt-5">
+              <p className="text-xs text-muted-foreground mb-2.5 font-medium">Como você está hoje?</p>
+              <FeelingLogger onFeelingLogged={handleFeelingLogged} />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
