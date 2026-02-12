@@ -349,18 +349,20 @@ interface MedicalReportExportProps {
   data: ReportData;
   variant?: 'default' | 'outline' | 'ghost';
   size?: 'default' | 'sm' | 'lg';
+  className?: string;
 }
 
-export function MedicalReportExport({ data, variant = 'outline', size = 'default' }: MedicalReportExportProps) {
+export function MedicalReportExport({ data, variant = 'outline', size = 'default', className }: MedicalReportExportProps) {
   const fileName = `relatorio_oncotrack_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
 
   return (
     <PDFDownloadLink
       document={<MedicalReportDocument data={data} />}
       fileName={fileName}
+      className="w-full"
     >
       {({ loading }) => (
-        <Button variant={variant} size={size} disabled={loading}>
+        <Button variant={variant} size={size} disabled={loading} className={`w-full justify-start ${className || ''}`}>
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -368,8 +370,8 @@ export function MedicalReportExport({ data, variant = 'outline', size = 'default
             </>
           ) : (
             <>
-              <Download className="h-4 w-4 mr-2" />
-              Exportar PDF
+              <FileText className="h-4 w-4 mr-3" />
+              Exportar Dados (PDF)
             </>
           )}
         </Button>
