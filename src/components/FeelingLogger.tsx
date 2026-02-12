@@ -7,6 +7,7 @@ import { Frown, Meh, Smile, SmilePlus, HeartCrack } from "lucide-react";
 
 interface FeelingLoggerProps {
   onFeelingLogged?: (rating: number) => void;
+  isDesktop?: boolean;
 }
 
 const feelings = [
@@ -17,7 +18,7 @@ const feelings = [
   { rating: 5, icon: SmilePlus, label: "Muito bem" },
 ];
 
-export const FeelingLogger = ({ onFeelingLogged }: FeelingLoggerProps) => {
+export const FeelingLogger = ({ onFeelingLogged, isDesktop }: FeelingLoggerProps) => {
   const { toast } = useToast();
   const { refetchEvents } = useAppContext();
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
@@ -63,15 +64,17 @@ export const FeelingLogger = ({ onFeelingLogged }: FeelingLoggerProps) => {
 
   return (
     <>
-      <div className="flex gap-2">
+      <div className={`flex ${isDesktop ? 'gap-4 justify-center' : 'gap-2'}`}>
         {feelings.map(({ rating, icon: Icon, label }) => (
           <button
             key={rating}
             onClick={() => handleClick(rating)}
-            className="flex-1 flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl border border-border bg-card/60 hover:border-primary/30 hover:bg-primary/5 active:scale-[0.96] transition-all duration-200 group"
+            className={`flex flex-col items-center gap-2 rounded-xl border border-border bg-card/60 hover:border-primary/30 hover:bg-primary/5 active:scale-[0.96] transition-all duration-200 group ${
+              isDesktop ? 'py-4 px-6 min-w-[120px]' : 'flex-1 py-3 px-1 gap-1.5'
+            }`}
           >
-            <Icon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" strokeWidth={1.5} />
-            <span className="text-[10px] text-muted-foreground group-hover:text-primary/80 font-medium leading-tight transition-colors">
+            <Icon className={`text-muted-foreground group-hover:text-primary transition-colors ${isDesktop ? 'h-7 w-7' : 'h-5 w-5'}`} strokeWidth={1.5} />
+            <span className={`text-muted-foreground group-hover:text-primary/80 font-medium leading-tight transition-colors ${isDesktop ? 'text-xs' : 'text-[10px]'}`}>
               {label}
             </span>
           </button>
