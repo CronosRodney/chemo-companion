@@ -200,22 +200,7 @@ export default function Treatment({ patientId, canEditOverride, onRefetch }: Tre
             ) : null
           )}
         </div>
-        {!canEditTreatment && (
-          <Badge variant="outline" className="flex items-center gap-1">
-            <Eye className="h-3 w-3" />
-            Somente visualização
-          </Badge>
-        )}
       </div>
-
-      {!canEditTreatment && (
-        <Alert>
-          <Eye className="h-4 w-4" />
-          <AlertDescription>
-            Esta página é somente para visualização. Alterações devem ser feitas pelo seu médico.
-          </AlertDescription>
-        </Alert>
-      )}
 
       <Tabs defaultValue="plans" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
