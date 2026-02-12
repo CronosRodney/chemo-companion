@@ -49,7 +49,8 @@ export default function Vaccination() {
     connect,
     disconnect,
     refreshVaccinationData,
-    completeConnection
+    completeConnection,
+    createVaccine,
   } = useExternalConnections('minha_caderneta');
 
   // Handle callback from Minha Caderneta
@@ -196,6 +197,7 @@ export default function Vaccination() {
             <VaccineListCard
               vaccines={vaccines}
               isLoading={isLoadingVaccination}
+              onCreateVaccine={createVaccine}
             />
 
             {/* Clinical Alerts */}
