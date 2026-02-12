@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Pill, Clock, Building2 } from 'lucide-react';
+import { ArrowLeft, Plus, Pill, Clock, Building2, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -485,9 +485,42 @@ export default function Medications() {
           <div className="space-y-3">
             <h2 className="text-lg font-semibold text-slate-800">Meus Medicamentos</h2>
             {userMedications.map((med: any) => (
-              <Card key={med.id} className="bg-white rounded-2xl shadow-sm border border-gray-100">
+              <Card key={med.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 relative">
+                <div className="absolute top-3 right-3 flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => {
+                      setSelectedMedNames([med.name]);
+                      setDose(med.dose || '');
+                      setFrequency(med.frequency || '');
+                      setInstructions(med.instructions || '');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                  >
+                    <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={async () => {
+                      if (!confirm('Remover este medicamento?')) return;
+                      const { error } = await supabase.from('user_medications').delete().eq('id', med.id);
+                      if (error) {
+                        toast({ title: 'Erro', description: 'Não foi possível remover.', variant: 'destructive' });
+                      } else {
+                        refetchMedications();
+                        toast({ title: 'Removido', description: 'Medicamento removido com sucesso.' });
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                  </Button>
+                </div>
                 <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3 pr-16">
                     <div className="p-2 rounded-xl bg-primary/10">
                       <Pill className="h-5 w-5 text-primary" />
                     </div>
@@ -505,9 +538,9 @@ export default function Medications() {
                             <Clock className="h-3 w-3" />{med.frequency}
                           </span>
                         )}
-                        {med.clinicName && (
+                        {med.clinic?.clinic_name && (
                           <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <Building2 className="h-3 w-3" />{med.clinicName}
+                            <Building2 className="h-3 w-3" />{med.clinic.clinic_name}
                           </span>
                         )}
                       </div>
