@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -11,11 +11,12 @@ import {
   ExternalLink, 
   Unlink,
   CheckCircle,
-  Loader2,
-  ShieldCheck
+  ShieldCheck,
+  Eye
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useExternalConnections } from '@/hooks/useExternalConnections';
+import { useAuth } from '@/hooks/useAuth';
 import { VaccinationSummaryCard } from '@/components/VaccinationSummaryCard';
 import { VaccinationAlertsCard } from '@/components/VaccinationAlertsCard';
 import { VaccineListCard } from '@/components/VaccineListCard';
@@ -38,7 +39,12 @@ export default function Vaccination() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isCompletingConnection, setIsCompletingConnection] = useState(false);
-  
+  const { userRole } = useAuth();
+  const { patientId } = useParams<{ patientId?: string }>();
+
+  // Doctor viewing patient = read-only mode
+  const isDoctorView = userRole === 'doctor' && !!patientId;
+
   const {
     connection,
     isLoading,
@@ -51,14 +57,17 @@ export default function Vaccination() {
     refreshVaccinationData,
     completeConnection,
     createVaccine,
-  } = useExternalConnections('minha_caderneta');
+  } = useExternalConnections(
+    isDoctorView
+      ? { provider: 'minha_caderneta', patientId, readOnly: true }
+      : 'minha_caderneta'
+  );
 
-  // Handle callback from Minha Caderneta
+  // Handle callback from Minha Caderneta (patient only)
   useEffect(() => {
-    const connected = searchParams.get('connected');
+    if (isDoctorView) return;
 
-    // Fluxo resiliente: se voltamos para esta tela após iniciar conexão,
-    // completamos o handshake mesmo que o parceiro não retorne querystring.
+    const connected = searchParams.get('connected');
     let pending = false;
     try {
       pending = sessionStorage.getItem('caderneta_connect_pending') === '1';
@@ -68,23 +77,15 @@ export default function Vaccination() {
 
     if ((connected === 'true' || pending) && !isConnected && !isCompletingConnection) {
       setIsCompletingConnection(true);
-
-      // Consome o flag de pending imediatamente para evitar loops
       try {
         sessionStorage.removeItem('caderneta_connect_pending');
-      } catch {
-        // ignore
-      }
-      
-      // Clean URL immediately
+      } catch { /* ignore */ }
       setSearchParams({}, { replace: true });
-      
-      // Complete the B2B handshake
       completeConnection().finally(() => {
         setIsCompletingConnection(false);
       });
     }
-  }, [searchParams, isConnected, isCompletingConnection, completeConnection, setSearchParams]);
+  }, [searchParams, isConnected, isCompletingConnection, completeConnection, setSearchParams, isDoctorView]);
 
   const handleOpenCaderneta = () => {
     window.open(CADERNETA_APP_URL, '_blank');
@@ -104,7 +105,6 @@ export default function Vaccination() {
             </div>
           </div>
         </div>
-        
         <div className="p-4 space-y-4">
           <Skeleton className="h-40" />
           <Skeleton className="h-32" />
@@ -126,15 +126,27 @@ export default function Vaccination() {
               {t('vaccination.title', 'Vacinação')}
             </h1>
             <p className="text-xs text-muted-foreground">
-              {t('vaccination.subtitle', 'Integração com Minha Caderneta')}
+              {isDoctorView
+                ? t('vaccination.subtitleDoctor', 'Visualização do paciente (somente leitura)')
+                : t('vaccination.subtitle', 'Integração com Minha Caderneta')}
             </p>
           </div>
         </div>
       </div>
 
       <div className="p-4 space-y-4 lg:space-y-6">
-        {/* Not Connected State */}
-        {!isConnected && (
+        {/* Doctor read-only banner */}
+        {isDoctorView && (
+          <Alert className="border-blue-200 bg-blue-50/50 dark:border-blue-900/50 dark:bg-blue-950/20">
+            <Eye className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-700 dark:text-blue-400">
+              Modo somente leitura — visualizando dados vacinais do paciente.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Not Connected State (patient only) */}
+        {!isConnected && !isDoctorView && (
           <Card className="border-dashed">
             <CardHeader className="text-center pb-2">
               <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
@@ -158,17 +170,27 @@ export default function Vaccination() {
                     </p>
                   </div>
                 </div>
-                
-                <Button 
-                  onClick={connect} 
-                  className="w-full" 
-                  size="lg"
-                >
+                <Button onClick={connect} className="w-full" size="lg">
                   <Link2 className="h-5 w-5 mr-2" />
                   {t('vaccination.notConnected.button', 'Conectar Minha Caderneta')}
                 </Button>
               </div>
             </CardContent>
+          </Card>
+        )}
+
+        {/* Doctor view: patient not connected */}
+        {!isConnected && isDoctorView && (
+          <Card className="border-dashed">
+            <CardHeader className="text-center pb-2">
+              <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                <Syringe className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <CardTitle className="text-xl">Caderneta não conectada</CardTitle>
+              <CardDescription className="text-base mt-2">
+                Este paciente ainda não conectou a Minha Caderneta ao OncoTrack.
+              </CardDescription>
+            </CardHeader>
           </Card>
         )}
 
@@ -193,11 +215,11 @@ export default function Vaccination() {
               lastSyncAt={connection?.last_sync_at || null}
             />
 
-            {/* Vaccine List */}
+            {/* Vaccine List — hide create for doctors */}
             <VaccineListCard
               vaccines={vaccines}
               isLoading={isLoadingVaccination}
-              onCreateVaccine={createVaccine}
+              onCreateVaccine={isDoctorView ? undefined : createVaccine}
             />
 
             {/* Clinical Alerts */}
@@ -205,45 +227,47 @@ export default function Vaccination() {
               alerts={vaccinationData?.clinical_alerts || []}
             />
 
-            {/* Actions */}
-            <div className="flex flex-col gap-2">
-              <Button 
-                variant="outline" 
-                onClick={handleOpenCaderneta}
-                className="w-full"
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                {t('vaccination.connected.openButton', 'Abrir Minha Caderneta')}
-              </Button>
-              
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Unlink className="h-4 w-4 mr-2" />
-                    {t('vaccination.connected.disconnectButton', 'Desconectar')}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      {t('vaccination.connected.disconnectConfirm', 'Tem certeza que deseja desconectar?')}
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Ao desconectar, o OncoTrack não terá mais acesso aos seus dados vacinais da Minha Caderneta.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={disconnect} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      Desconectar
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
+            {/* Actions — patient only */}
+            {!isDoctorView && (
+              <div className="flex flex-col gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={handleOpenCaderneta}
+                  className="w-full"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  {t('vaccination.connected.openButton', 'Abrir Minha Caderneta')}
+                </Button>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Unlink className="h-4 w-4 mr-2" />
+                      {t('vaccination.connected.disconnectButton', 'Desconectar')}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        {t('vaccination.connected.disconnectConfirm', 'Tem certeza que deseja desconectar?')}
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Ao desconectar, o OncoTrack não terá mais acesso aos seus dados vacinais da Minha Caderneta.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={disconnect} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Desconectar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
           </>
         )}
       </div>
