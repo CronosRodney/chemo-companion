@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Pill, AlertTriangle, Building2, MapPin, Beaker, Activity, Stethoscope, Bot, User, ChevronRight } from "lucide-react";
+import { Bell, Pill, AlertTriangle, Building2, MapPin, Beaker, Activity, Stethoscope, User, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ReminderManager } from "@/components/ReminderManager";
@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useDoctorAuth } from "@/hooks/useDoctorAuth";
 import { PendingInvitesNotification } from "@/components/PendingInvitesNotification";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { OncoInsights } from "@/components/OncoInsights";
 
 const getMonthlyTheme = () => {
   const month = new Date().getMonth();
@@ -213,21 +214,14 @@ const Home = () => {
     </div>
   );
 
-  const aiSection = (
-    <div className="bg-primary/5 rounded-2xl border border-primary/15 p-5 flex overflow-hidden animate-fade-in-up delay-100">
-      <div className="w-[3px] bg-primary/40 rounded-full mr-4 flex-shrink-0" />
-      <div className="flex items-start gap-3 flex-1">
-        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-          <Bot className="h-4 w-4 text-primary" strokeWidth={1.5} />
-        </div>
-        <div>
-          <p className="text-[11px] font-semibold text-primary/70 uppercase tracking-wider mb-1.5">OncoTrack AI</p>
-          <p className="text-sm text-foreground/80 leading-relaxed">Análise diária concluída</p>
-          <p className="text-sm text-muted-foreground leading-relaxed">Nenhum sinal fora do padrão hoje.</p>
-        </div>
-      </div>
-    </div>
-  );
+  const aiSection = activePlan ? (
+    <OncoInsights
+      protocol={activePlan.regimen_name}
+      cycleCurrent={completedCycles + 1}
+      totalCycles={totalCycles}
+      adherence={stats.adherence}
+    />
+  ) : null;
 
   const remindersSection = (
     <div className={`bg-card rounded-2xl shadow-sm border border-border ${isDesktop ? 'p-8' : 'p-6'} space-y-4 animate-fade-in-up delay-200`}>

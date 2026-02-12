@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.disconnect-caderneta]
 verify_jwt = false
+
+[functions.generate-onco-insights]
+verify_jwt = false
